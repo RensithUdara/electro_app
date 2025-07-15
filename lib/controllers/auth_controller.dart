@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/user.dart';
 import '../services/auth_service.dart';
-import '../services/google_signin_service.dart';
 
 class AuthController extends ChangeNotifier {
   final AuthService _authService = AuthService();
-  final GoogleSignInService _googleSignInService = GoogleSignInService();
-  
+
   User? _currentUser;
   bool _isLoading = false;
   bool _rememberMe = false;
@@ -38,11 +37,11 @@ class AuthController extends ChangeNotifier {
       final user = await _authService.login(email, password);
       if (user != null) {
         _currentUser = user;
-        
+
         if (_rememberMe) {
           await _saveLoginState();
         }
-        
+
         _isLoading = false;
         notifyListeners();
         return true;
@@ -60,13 +59,15 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  Future<bool> signup(String name, String email, String phoneNumber, String password) async {
+  Future<bool> signup(
+      String name, String email, String phoneNumber, String password) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final user = await _authService.signup(name, email, phoneNumber, password);
+      final user =
+          await _authService.signup(name, email, phoneNumber, password);
       if (user != null) {
         _currentUser = user;
         _isLoading = false;
@@ -88,10 +89,6 @@ class AuthController extends ChangeNotifier {
 
   Future<void> logout() async {
     _currentUser = null;
-    
-    // Sign out from Google as well
-    await _googleSignInService.signOut();
-    
     await _clearLoginState();
     notifyListeners();
   }
@@ -99,7 +96,7 @@ class AuthController extends ChangeNotifier {
   Future<void> checkLoginState() async {
     final prefs = await SharedPreferences.getInstance();
     final isRemembered = prefs.getBool('remember_me') ?? false;
-    
+
     if (isRemembered) {
       final userEmail = prefs.getString('user_email');
       if (userEmail != null) {
@@ -131,37 +128,5 @@ class AuthController extends ChangeNotifier {
     await prefs.remove('user_name');
     await prefs.remove('user_email');
     await prefs.remove('user_phone');
-  }
-
-  Future<bool> signInWithGoogle() async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
-
-    try {
-      // Use mock Google Sign-In for demo (replace with real implementation when Firebase is configured)
-      final user = await _googleSignInService.signInWithGoogleMock();
-      
-      if (user != null) {
-        _currentUser = user;
-        
-        // Save Google sign-in state
-        await _saveLoginState();
-        
-        _isLoading = false;
-        notifyListeners();
-        return true;
-      } else {
-        _errorMessage = 'Google Sign-In was cancelled';
-        _isLoading = false;
-        notifyListeners();
-        return false;
-      }
-    } catch (e) {
-      _errorMessage = 'Google Sign-In failed: ${e.toString()}';
-      _isLoading = false;
-      notifyListeners();
-      return false;
-    }
   }
 }

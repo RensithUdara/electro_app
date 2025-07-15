@@ -1,8 +1,8 @@
+import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:email_validator/email_validator.dart';
+
 import '../controllers/auth_controller.dart';
-import '../widgets/google_icon.dart';
 import 'home_screen.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -34,32 +34,21 @@ class _SignupScreenState extends State<SignupScreen> {
 
   Future<void> _signup() async {
     if (_formKey.currentState!.validate()) {
-      final authController = Provider.of<AuthController>(context, listen: false);
-      
+      final authController =
+          Provider.of<AuthController>(context, listen: false);
+
       final success = await authController.signup(
         _nameController.text.trim(),
         _emailController.text.trim(),
         _phoneController.text.trim(),
         _passwordController.text,
       );
-      
+
       if (success && mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const HomeScreen()),
         );
       }
-    }
-  }
-
-  Future<void> _signInWithGoogle() async {
-    final authController = Provider.of<AuthController>(context, listen: false);
-    
-    final success = await authController.signInWithGoogle();
-    
-    if (success && mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
     }
   }
 
@@ -79,7 +68,7 @@ class _SignupScreenState extends State<SignupScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 20),
-              
+
               // Logo and Title
               const Icon(
                 Icons.electrical_services,
@@ -106,7 +95,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
               ),
               const SizedBox(height: 32),
-              
+
               // Signup Form
               Form(
                 key: _formKey,
@@ -127,7 +116,8 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF1E3A8A)),
+                          borderSide:
+                              const BorderSide(color: Color(0xFF1E3A8A)),
                         ),
                       ),
                       validator: (value) {
@@ -141,7 +131,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       },
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // Email Field
                     TextFormField(
                       controller: _emailController,
@@ -158,7 +148,8 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF1E3A8A)),
+                          borderSide:
+                              const BorderSide(color: Color(0xFF1E3A8A)),
                         ),
                       ),
                       validator: (value) {
@@ -172,7 +163,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       },
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // Phone Field
                     TextFormField(
                       controller: _phoneController,
@@ -189,7 +180,8 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF1E3A8A)),
+                          borderSide:
+                              const BorderSide(color: Color(0xFF1E3A8A)),
                         ),
                       ),
                       validator: (value) {
@@ -203,7 +195,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       },
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // Password Field
                     TextFormField(
                       controller: _passwordController,
@@ -213,9 +205,9 @@ class _SignupScreenState extends State<SignupScreen> {
                         prefixIcon: const Icon(Icons.lock_outlined),
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _obscurePassword 
-                              ? Icons.visibility_outlined 
-                              : Icons.visibility_off_outlined,
+                            _obscurePassword
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
                           ),
                           onPressed: () {
                             setState(() {
@@ -232,7 +224,8 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF1E3A8A)),
+                          borderSide:
+                              const BorderSide(color: Color(0xFF1E3A8A)),
                         ),
                       ),
                       validator: (value) {
@@ -246,7 +239,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       },
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // Confirm Password Field
                     TextFormField(
                       controller: _confirmPasswordController,
@@ -256,13 +249,14 @@ class _SignupScreenState extends State<SignupScreen> {
                         prefixIcon: const Icon(Icons.lock_outlined),
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _obscureConfirmPassword 
-                              ? Icons.visibility_outlined 
-                              : Icons.visibility_off_outlined,
+                            _obscureConfirmPassword
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
                           ),
                           onPressed: () {
                             setState(() {
-                              _obscureConfirmPassword = !_obscureConfirmPassword;
+                              _obscureConfirmPassword =
+                                  !_obscureConfirmPassword;
                             });
                           },
                         ),
@@ -275,7 +269,8 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF1E3A8A)),
+                          borderSide:
+                              const BorderSide(color: Color(0xFF1E3A8A)),
                         ),
                       ),
                       validator: (value) {
@@ -289,7 +284,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       },
                     ),
                     const SizedBox(height: 24),
-                    
+
                     // Signup Button
                     Consumer<AuthController>(
                       builder: (context, authController, child) {
@@ -297,7 +292,8 @@ class _SignupScreenState extends State<SignupScreen> {
                           width: double.infinity,
                           height: 48,
                           child: ElevatedButton(
-                            onPressed: authController.isLoading ? null : _signup,
+                            onPressed:
+                                authController.isLoading ? null : _signup,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF1E3A8A),
                               foregroundColor: Colors.white,
@@ -307,97 +303,27 @@ class _SignupScreenState extends State<SignupScreen> {
                               elevation: 2,
                             ),
                             child: authController.isLoading
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                          Colors.white),
+                                    ),
+                                  )
+                                : const Text(
+                                    'Create Account',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
-                                )
-                              : const Text(
-                                  'Create Account',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
                           ),
                         );
                       },
                     ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // OR Divider
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Divider(
-                            color: Colors.grey[400],
-                            thickness: 1,
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Text(
-                            'OR',
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: Divider(
-                            color: Colors.grey[400],
-                            thickness: 1,
-                          ),
-                        ),
-                      ],
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Google Sign-In Button
-                    Consumer<AuthController>(
-                      builder: (context, authController, child) {
-                        return SizedBox(
-                          width: double.infinity,
-                          height: 48,
-                          child: OutlinedButton.icon(
-                            onPressed: authController.isLoading ? null : _signInWithGoogle,
-                            icon: authController.isLoading
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.grey),
-                                  ),
-                                )
-                              : const GoogleIcon(size: 20),
-                            label: Text(
-                              authController.isLoading ? 'Signing in...' : 'Continue with Google',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              side: BorderSide(color: Colors.grey[300]!),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              elevation: 1,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                    
+
                     // Error Message
                     Consumer<AuthController>(
                       builder: (context, authController, child) {
@@ -412,7 +338,8 @@ class _SignupScreenState extends State<SignupScreen> {
                             ),
                             child: Row(
                               children: [
-                                Icon(Icons.error_outline, color: Colors.red[600], size: 20),
+                                Icon(Icons.error_outline,
+                                    color: Colors.red[600], size: 20),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
@@ -430,9 +357,9 @@ class _SignupScreenState extends State<SignupScreen> {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               // Login Link
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,

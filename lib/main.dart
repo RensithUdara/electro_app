@@ -1,17 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import 'controllers/auth_controller.dart';
 import 'controllers/device_controller.dart';
 import 'controllers/device_data_controller.dart';
-import 'services/firebase_config.dart';
 import 'views/splash_screen.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  
-  // Initialize Firebase (will fail gracefully in demo mode)
-  await FirebaseConfig.initialize();
-  
+void main() {
   runApp(const MyApp());
 }
 
