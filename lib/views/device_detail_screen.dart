@@ -2,7 +2,9 @@ import 'dart:math';
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../controllers/device_data_controller.dart';
 import '../controllers/realtime_data_controller.dart';
@@ -21,6 +23,7 @@ class DeviceDetailScreen extends StatefulWidget {
 
 class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
   int _selectedTabIndex = 0;
+  List<String> _parameterOrder = []; // Store the order of parameters for drag & drop
 
   @override
   void initState() {
@@ -33,6 +36,14 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
       // Connect to real-time data
       Provider.of<RealtimeDataController>(context, listen: false)
           .connectToDevice(widget.device);
+      
+      // Load saved parameter order after a short delay to ensure data is loaded
+      Future.delayed(const Duration(milliseconds: 500), () {
+        final realtimeController = Provider.of<RealtimeDataController>(context, listen: false);
+        if (realtimeController.filteredData != null && realtimeController.filteredData!.isNotEmpty) {
+          _loadParameterOrder(realtimeController.filteredData!);
+        }
+      });
     });
   }
 
@@ -821,6 +832,16 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
 
   Widget _buildRealtimeDataSection(RealtimeDataController realtimeController) {
     final filteredData = realtimeController.filteredData!;
+    
+    // Initialize parameter order if empty or if data structure changed
+    if (_parameterOrder.isEmpty || 
+        _parameterOrder.length != filteredData.keys.length ||
+        !_parameterOrder.every((param) => filteredData.containsKey(param))) {
+      _parameterOrder = filteredData.keys.toList();
+      
+      // Load saved order asynchronously
+      _loadParameterOrder(filteredData);
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -837,70 +858,225 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                 color: Colors.grey[800],
               ),
             ),
+            const Spacer(),
+            // Help button
+            IconButton(
+              icon: Icon(Icons.help_outline, size: 18, color: Colors.grey[600]),
+              onPressed: _showDragInstructions,
+              tooltip: 'How to reorder cards',
+            ),
+            // Reset order button
+            IconButton(
+              icon: Icon(Icons.refresh, size: 18, color: Colors.grey[600]),
+              onPressed: () async {
+                setState(() {
+                  _parameterOrder = filteredData.keys.toList();
+                });
+                
+                // Clear saved order
+                try {
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.remove('parameter_order_${widget.device.id}');
+                } catch (e) {
+                  // Handle error silently
+                }
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Card order reset to default'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              },
+              tooltip: 'Reset order',
+            ),
+            const SizedBox(width: 4),
+            // Container(
+            //   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            //   decoration: BoxDecoration(
+            //     color: Colors.blue[50],
+            //     borderRadius: BorderRadius.circular(12),
+            //     border: Border.all(color: Colors.blue[200]!),
+            //   ),
+            //   // child: Row(
+            //   //   mainAxisSize: MainAxisSize.min,
+            //   //   children: [
+            //   //     Icon(Icons.drag_indicator, size: 16, color: Colors.blue[600]),
+            //   //     const SizedBox(width: 4),
+            //   //     Text(
+            //   //       'D',
+            //   //       style: TextStyle(
+            //   //         fontSize: 12,
+            //   //         color: Colors.blue[600],
+            //   //         fontWeight: FontWeight.w500,
+            //   //       ),
+            //   //     ),
+            //   //   ],
+            //   // ),
+            // ),
           ],
         ),
         const SizedBox(height: 16),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 1.5,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-          ),
-          itemCount: filteredData.keys.length,
-          itemBuilder: (context, index) {
-            final parameter = filteredData.keys.elementAt(index);
-            final value = filteredData[parameter];
-            final parameterInfo =
-                realtimeController.getParameterInfo(parameter);
-
-            return _buildRealtimeDataCard(
-              parameter,
-              value,
-              parameterInfo['unit']!,
-              parameterInfo['description']!,
-            );
-          },
-        ),
+        _buildDraggableGrid(filteredData, realtimeController),
       ],
     );
   }
 
+  Widget _buildDraggableGrid(Map<String, dynamic> filteredData, RealtimeDataController realtimeController) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Calculate card width for 2 columns with spacing
+        final cardWidth = (constraints.maxWidth - 12) / 2;
+        
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: _parameterOrder.map((parameter) {
+            final value = filteredData[parameter];
+            final parameterInfo = realtimeController.getParameterInfo(parameter);
+            
+            return SizedBox(
+              width: cardWidth,
+              child: LongPressDraggable<String>(
+                data: parameter,
+                onDragStarted: () {
+                  // Provide haptic feedback when drag starts
+                  HapticFeedback.mediumImpact();
+                },
+                onDragCompleted: () {
+                  // Light haptic feedback when drag completes
+                  HapticFeedback.lightImpact();
+                },
+                feedback: Material(
+                  elevation: 8,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    width: cardWidth,
+                    child: _buildRealtimeDataCard(
+                      parameter,
+                      value,
+                      parameterInfo['unit']!,
+                      parameterInfo['description']!,
+                      isDragging: true,
+                    ),
+                  ),
+                ),
+                childWhenDragging: Container(
+                  width: cardWidth,
+                  child: _buildRealtimeDataCard(
+                    parameter,
+                    value,
+                    parameterInfo['unit']!,
+                    parameterInfo['description']!,
+                    isPlaceholder: true,
+                  ),
+                ),
+                child: DragTarget<String>(
+                  onAccept: (draggedParameter) {
+                    if (draggedParameter != parameter) {
+                      setState(() {
+                        final draggedIndex = _parameterOrder.indexOf(draggedParameter);
+                        final targetIndex = _parameterOrder.indexOf(parameter);
+                        
+                        _parameterOrder.removeAt(draggedIndex);
+                        _parameterOrder.insert(targetIndex, draggedParameter);
+                      });
+                      
+                      // Save the new order
+                      _saveParameterOrder();
+                    }
+                  },
+                  builder: (context, candidateData, rejectedData) {
+                    final isHovered = candidateData.isNotEmpty;
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      transform: isHovered ? (Matrix4.identity()..scale(1.05)) : Matrix4.identity(),
+                      child: _buildRealtimeDataCard(
+                        parameter,
+                        value,
+                        parameterInfo['unit']!,
+                        parameterInfo['description']!,
+                        isHovered: isHovered,
+                      ),
+                    );
+                  },
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+
   Widget _buildRealtimeDataCard(
-      String parameter, dynamic value, String unit, String description) {
+      String parameter, 
+      dynamic value, 
+      String unit, 
+      String description,
+      {bool isDragging = false, 
+       bool isPlaceholder = false, 
+       bool isHovered = false}) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isPlaceholder 
+            ? Colors.grey[200] 
+            : isHovered 
+                ? Colors.blue[50] 
+                : Colors.white,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 5,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        boxShadow: isDragging
+            ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                ),
+              ]
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 5,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+        border: isHovered 
+            ? Border.all(color: Colors.blue[300]!, width: 2)
+            : isPlaceholder 
+                ? Border.all(color: Colors.grey[400]!, width: 2, style: BorderStyle.solid)
+                : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            parameter,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF1E3A8A),
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  parameter,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: isPlaceholder ? Colors.grey[500] : const Color(0xFF1E3A8A),
+                  ),
+                ),
+              ),
+              if (!isPlaceholder)
+                Icon(
+                  Icons.drag_indicator,
+                  size: 16,
+                  color: Colors.grey[400],
+                ),
+            ],
           ),
           const SizedBox(height: 4),
           Text(
             description,
             style: TextStyle(
               fontSize: 10,
-              color: Colors.grey[600],
+              color: isPlaceholder ? Colors.grey[400] : Colors.grey[600],
             ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -910,15 +1086,15 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
             children: [
               Expanded(
                 child: Text(
-                  value.toString(),
-                  style: const TextStyle(
+                  isPlaceholder ? '---' : value.toString(),
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: isPlaceholder ? Colors.grey[400] : Colors.black87,
                   ),
                 ),
               ),
-              if (unit.isNotEmpty)
+              if (unit.isNotEmpty && !isPlaceholder)
                 Text(
                   unit,
                   style: TextStyle(
@@ -1309,5 +1485,128 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
     } else {
       return Colors.indigo;
     }
+  }
+
+  // Save parameter order to preferences
+  Future<void> _saveParameterOrder() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList('parameter_order_${widget.device.id}', _parameterOrder);
+    } catch (e) {
+      // Handle error silently
+    }
+  }
+
+  // Load parameter order from preferences
+  Future<void> _loadParameterOrder(Map<String, dynamic> filteredData) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedOrder = prefs.getStringList('parameter_order_${widget.device.id}');
+      
+      if (savedOrder != null && savedOrder.isNotEmpty) {
+        // Verify that all saved parameters still exist in current data
+        final validOrder = savedOrder.where((param) => filteredData.containsKey(param)).toList();
+        
+        // Add any new parameters that weren't in the saved order
+        final newParameters = filteredData.keys.where((param) => !validOrder.contains(param)).toList();
+        
+        setState(() {
+          _parameterOrder = [...validOrder, ...newParameters];
+        });
+      }
+    } catch (e) {
+      // Handle error silently
+    }
+  }
+
+  void _showDragInstructions() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.info_outline, color: Colors.blue[600]),
+              const SizedBox(width: 8),
+              const Text('How to Reorder Cards'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildInstructionStep(
+                Icons.touch_app,
+                'Long Press',
+                'Press and hold on any data card for about 1 second',
+              ),
+              const SizedBox(height: 16),
+              _buildInstructionStep(
+                Icons.drag_indicator,
+                'Drag',
+                'While holding, drag the card to your desired position',
+              ),
+              const SizedBox(height: 16),
+              _buildInstructionStep(
+                Icons.place,
+                'Drop',
+                'Release to place the card in the new position',
+              ),
+              const SizedBox(height: 16),
+              _buildInstructionStep(
+                Icons.refresh,
+                'Reset',
+                'Use the refresh button to restore default order',
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Got it!'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildInstructionStep(IconData icon, String title, String description) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.blue[50],
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, size: 20, color: Colors.blue[600]),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                description,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }
