@@ -338,7 +338,7 @@ class AuthController extends ChangeNotifier {
 
     try {
       await _authService.updateProfile(name, phoneNumber);
-      
+
       // Update the current user object
       if (_currentUser != null) {
         _currentUser = User(

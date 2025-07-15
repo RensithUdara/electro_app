@@ -14,7 +14,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
-  
+
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -71,7 +71,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     });
 
     try {
-      final authController = Provider.of<AuthController>(context, listen: false);
+      final authController =
+          Provider.of<AuthController>(context, listen: false);
       final success = await authController.updateProfile(
         _nameController.text.trim(),
         _phoneController.text.trim(),
@@ -86,12 +87,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             duration: Duration(seconds: 2),
           ),
         );
-        
+
         // Go back to profile screen
         Navigator.of(context).pop();
       } else {
         setState(() {
-          _errorMessage = authController.errorMessage ?? 'Failed to update profile';
+          _errorMessage =
+              authController.errorMessage ?? 'Failed to update profile';
         });
       }
     } catch (e) {
@@ -371,8 +373,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       const SizedBox(height: 12),
                       Text(
                         '• Only name and phone number can be updated\n'
-                        '• Email cannot be changed for security reasons\n'
-,
+                        '• Email cannot be changed for security reasons\n',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.blue[600],
