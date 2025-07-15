@@ -73,24 +73,36 @@ A comprehensive Flutter application for monitoring and managing electrical devic
 - **firebase_database ^10.2.4**: Firebase Realtime Database
 - **shared_preferences**: Local data persistence
 
-### 🎨 UI Components
-- **Custom Widgets**: Reusable DeviceTile and AddDeviceDialog
-- **Responsive Layout**: Adaptive design for different screen sizes
+### 🎨 Advanced UI Components
+- **Custom Widgets**: DeviceTile, AddDeviceDialog, EditDeviceDialog
+- **Real-time Data Cards**: Live parameter value displays
+- **Interactive Charts**: Parameter-specific visualizations
+- **Professional Data Tables**: Sortable, responsive data displays
+- **Responsive Layout**: Adaptive design for all screen sizes
 - **Consistent Theming**: Unified color scheme and typography
 
-## Getting Started
+### 📊 Data Models & Services
+- **Device Model**: Complete electrical parameter configuration (33 parameters)
+- **User Model**: Authentication and profile management
+- **DeviceData Model**: Historical and real-time data structures
+- **RealtimeDataService**: Firebase data streaming and filtering
+- **DeviceService**: Firebase CRUD operations
+- **AuthService**: Firebase authentication management
+
+## 🚀 Getting Started
 
 ### Prerequisites
-- Flutter SDK (latest version)
-- Dart SDK
-- Android Studio or VS Code
-- A device or emulator for testing
+- **Flutter SDK**: 3.0+ (latest stable version recommended)
+- **Dart SDK**: 3.0+
+- **Firebase Project**: Configured with Authentication and Realtime Database
+- **Development Environment**: Android Studio, VS Code, or IntelliJ IDEA
+- **Testing Device**: Android/iOS device or emulator
 
-### Installation
+### Installation & Setup
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/RensithUdara/electro_app.git
    cd electro_app
    ```
 
@@ -99,49 +111,126 @@ A comprehensive Flutter application for monitoring and managing electrical devic
    flutter pub get
    ```
 
-3. **Run the application**
+3. **Firebase Configuration**
+   - Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
+   - Enable Authentication (Email/Password)
+   - Enable Realtime Database
+   - Add your platform-specific configuration files:
+     - Android: `android/app/google-services.json`
+     - iOS: `ios/Runner/GoogleService-Info.plist`
+
+4. **Run the application**
    ```bash
    flutter run
    ```
 
-### Project Structure
+### 🏗️ Project Structure
 ```
 lib/
-├── main.dart                 # App entry point
-├── controllers/              # State management controllers
-│   ├── auth_controller.dart
-│   ├── device_controller.dart
-│   └── device_data_controller.dart
-├── models/                   # Data models
-│   ├── user.dart
-│   ├── device.dart
-│   └── device_data.dart
-├── services/                 # API services
-│   ├── auth_service.dart
-│   ├── device_service.dart
-│   └── device_data_service.dart
-├── views/                    # UI screens
-│   ├── splash_screen.dart
-│   ├── login_screen.dart
-│   ├── signup_screen.dart
-│   ├── home_screen.dart
-│   └── device_detail_screen.dart
-└── widgets/                  # Reusable components
-    ├── add_device_dialog.dart
-    └── device_tile.dart
+├── main.dart                           # App entry point with Firebase initialization
+├── controllers/                        # State management controllers
+│   ├── auth_controller.dart           # Authentication state management
+│   ├── device_controller.dart         # Device CRUD operations
+│   ├── device_data_controller.dart    # Historical data management
+│   └── realtime_data_controller.dart  # Live data streaming
+├── models/                            # Data models with JSON serialization
+│   ├── user.dart                      # User authentication model
+│   ├── device.dart                    # Device configuration model (33 parameters)
+│   ├── device.g.dart                 # Generated JSON serialization
+│   ├── device_data.dart               # Device data model
+│   └── device_data.g.dart            # Generated JSON serialization
+├── services/                          # Backend integration services
+│   ├── auth_service.dart              # Firebase authentication
+│   ├── device_service.dart            # Firebase device operations
+│   ├── device_data_service.dart       # Historical data operations
+│   └── realtime_data_service.dart     # Live data streaming
+├── views/                             # UI screens
+│   ├── splash_screen.dart             # App launch screen
+│   ├── login_screen.dart              # User authentication
+│   ├── signup_screen.dart             # User registration
+│   ├── home_screen.dart               # Device management dashboard
+│   ├── device_detail_screen.dart      # Real-time device monitoring
+│   └── profile_screen.dart            # User profile management
+└── widgets/                           # Reusable UI components
+    ├── add_device_dialog.dart         # Device creation form
+    ├── edit_device_dialog.dart        # Device modification form
+    ├── device_tile.dart               # Device list item
+    └── google_icon.dart               # Custom Google sign-in icon
 ```
 
-## API Integration
+## 🔥 Firebase Integration Details
 
-The app is designed to work with a REST API backend. Currently using mock data for demonstration, but easily configurable for real API endpoints.
+### 🗄️ Database Structure
+```
+electro_app_db/
+├── users/
+│   └── {userId}/
+│       └── devices/
+│           └── {deviceId}: true
+├── devices/
+│   └── {deviceId}/
+│       ├── name: "Device Name"
+│       ├── deviceId: "ESP32_001"
+│       ├── meterId: "MTR_001"
+│       ├── averagePF: true/false
+│       ├── avgI: true/false
+│       └── ... (33 electrical parameters)
+└── realtime_data/
+    └── {deviceId}/
+        ├── timestamp: 1234567890
+        ├── voltage: 220.5
+        ├── current: 5.2
+        └── ... (electrical measurements)
+```
 
-### API Endpoints (to be implemented)
-- `POST /auth/login` - User authentication
-- `POST /auth/signup` - User registration
-- `GET /devices` - Fetch user devices
-- `POST /devices` - Add new device
-- `DELETE /devices/{id}` - Remove device
-- `GET /devices/{id}/data` - Fetch device data
+### 🔌 Real-time Data Parameters
+The application supports monitoring of 33 electrical measurement parameters:
+
+**Power Factor & Average Values:**
+- Average_PF, Avg_I, Avg_V_LL, Avg_V_LN, Frequency
+
+**Current Measurements:**
+- I1, I2, I3 (Phase currents)
+
+**Power Factor per Phase:**
+- PF1, PF2, PF3 (Individual phase power factors)
+
+**Total Power Measurements:**
+- Total_kVA, Total_kVAR, Total_kW
+
+**Energy Measurements:**
+- Total_net_kVAh, Total_net_kVArh, Total_net_kWh
+
+**Voltage Measurements:**
+- V12, V1N, V23, V2N, V31, V3N (Line and phase voltages)
+
+**Per-Phase Power Measurements:**
+- kVAR_L1/L2/L3, kVA_L1/L2/L3, kW_L1/L2/L3
+
+## 🎯 Application Workflow
+
+### 1. **User Authentication**
+- User signs up or logs in using Firebase Authentication
+- Authentication state is managed globally using Provider
+- Remember me functionality for persistent sessions
+
+### 2. **Device Management**
+- Users can add new electrical devices with custom parameter selection
+- Each device can monitor specific electrical measurements
+- Device configurations are stored in Firebase Realtime Database
+- Edit functionality allows modification of device parameters
+
+### 3. **Real-time Monitoring**
+- Live data streaming from Firebase Realtime Database
+- Data filtering based on user-selected parameters
+- Real-time charts and data tables update automatically
+- Connection status monitoring with visual indicators
+
+### 4. **Data Visualization**
+- Individual charts for each selected electrical parameter
+- Color-coded parameter tracking for easy identification
+- Real-time data tables with parameter descriptions and units
+- Summary statistics including averages and min/max values
 
 ## Screenshots
 
