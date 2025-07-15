@@ -90,12 +90,36 @@ class _SignupScreenState extends State<SignupScreen> {
               const SizedBox(height: 20),
 
               // Logo and Title
-              const Icon(
-                Icons.electrical_services,
-                size: 60,
-                color: Color(0xFF1E3A8A),
+              Column(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Image.asset(
+                      'assets/images/logo.png',
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        // Fallback if logo.png is not found
+                        return Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E3A8A),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Icon(
+                            Icons.electrical_services,
+                            size: 50,
+                            color: Colors.white,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
               ),
-              const SizedBox(height: 16),
               const Text(
                 'Create Account',
                 textAlign: TextAlign.center,
@@ -400,23 +424,27 @@ class _SignupScreenState extends State<SignupScreen> {
                     // Google Sign-In Button
                     Consumer<AuthController>(
                       builder: (context, authController, child) {
-                        return OutlinedButton.icon(
-                          onPressed: authController.isLoading ? null : _googleSignIn,
-                          icon: const GoogleIcon(size: 20),
-                          label: const Text(
-                            'Continue with Google',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: Color(0xFF1E3A8A),
+                        return SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: OutlinedButton.icon(
+                            onPressed: authController.isLoading ? null : _googleSignIn,
+                            icon: const GoogleIcon(size: 20),
+                            label: const Text(
+                              'Continue with Google',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFF1E3A8A),
+                              ),
                             ),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              side: const BorderSide(color: Color(0xFF1E3A8A)),
                             ),
-                            side: const BorderSide(color: Color(0xFF1E3A8A)),
                           ),
                         );
                       },
