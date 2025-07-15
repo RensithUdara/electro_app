@@ -24,6 +24,10 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) {
           final authController = AuthController();
           authController.initializeAuthListener();
+          // Check login state when app starts
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            authController.checkLoginState();
+          });
           return authController;
         }),
         ChangeNotifierProvider(create: (_) => DeviceController()),
