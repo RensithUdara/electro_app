@@ -4,11 +4,11 @@ import 'package:provider/provider.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/device_controller.dart';
 import '../models/device.dart';
+import '../utils/logout_utils.dart';
 import '../widgets/add_device_dialog.dart';
 import '../widgets/device_tile.dart';
 import '../widgets/edit_device_dialog.dart';
 import 'device_detail_screen.dart';
-import 'login_screen.dart';
 import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -46,14 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _logout() async {
-    final authController = Provider.of<AuthController>(context, listen: false);
-    await authController.logout();
-
-    if (mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-      );
-    }
+    await LogoutUtils.showLogoutConfirmation(context);
   }
 
   @override
