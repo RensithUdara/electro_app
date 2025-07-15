@@ -88,12 +88,27 @@ class AuthController extends ChangeNotifier {
   }
 
   Future<void> logout() async {
-    _currentUser = null;
-    await _clearLoginState();
-    notifyListeners();
+    try {
+      await _authService.signOut();
+      _currentUser = null;
+      await _clearLoginState();
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = 'Logout failed: ${e.toString()}';
+      notifyListeners();
+    }
   }
 
   Future<void> checkLoginState() async {
+    // Listen to Firebase auth state changes
+    final currentFirebaseUser = _authService.currentUser;
+    if (currentFirebaseUser != null) {
+      _currentUser = currentFirebaseUser;
+      notifyListeners();
+      return;
+    }
+    
+    // Fallback to local storage check for backward compatibility
     final prefs = await SharedPreferences.getInstance();
     final isRemembered = prefs.getBool('remember_me') ?? false;
 
@@ -128,5 +143,43 @@ class AuthController extends ChangeNotifier {
     await prefs.remove('user_name');
     await prefs.remove('user_email');
     await prefs.remove('user_phone');
+  }
+
+  Future<bool> signInWithGoogle() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final user = await _authService.signInWithGoogle();
+      if (user != null) {
+        _currentUser = user;
+
+        // Save login state for Google Sign-In users
+        await _saveLoginState();
+
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _errorMessage = 'Google Sign-In was cancelled';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _errorMessage = 'Google Sign-In failed: ${e.toString()}';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  void initializeAuthListener() {
+    // Listen to Firebase auth state changes
+    _authService.authStateChanges.listen((user) {
+      _currentUser = user;
+      notifyListeners();
+    });
   }
 }
