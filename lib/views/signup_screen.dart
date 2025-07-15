@@ -428,7 +428,8 @@ class _SignupScreenState extends State<SignupScreen> {
                           width: double.infinity,
                           height: 50,
                           child: OutlinedButton.icon(
-                            onPressed: authController.isLoading ? null : _googleSignIn,
+                            onPressed:
+                                authController.isLoading ? null : _googleSignIn,
                             icon: const GoogleIcon(size: 20),
                             label: const Text(
                               'Continue with Google',
