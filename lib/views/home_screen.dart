@@ -7,6 +7,7 @@ import 'device_detail_screen.dart';
 import 'login_screen.dart';
 import 'profile_screen.dart';
 import '../widgets/add_device_dialog.dart';
+import '../widgets/edit_device_dialog.dart';
 import '../widgets/device_tile.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -30,6 +31,15 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (BuildContext context) {
         return const AddDeviceDialog();
+      },
+    );
+  }
+
+  void _showEditDeviceDialog(Device device) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return EditDeviceDialog(device: device);
       },
     );
   }
@@ -248,6 +258,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               builder: (context) => DeviceDetailScreen(device: device),
                             ),
                           );
+                        },
+                        onEdit: () {
+                          _showEditDeviceDialog(device);
                         },
                         onDelete: () async {
                           final confirmed = await showDialog<bool>(
