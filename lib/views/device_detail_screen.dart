@@ -6,6 +6,7 @@ import '../controllers/device_data_controller.dart';
 import '../controllers/realtime_data_controller.dart';
 import '../models/device.dart';
 import '../models/device_data.dart';
+import '../widgets/edit_device_dialog.dart';
 
 class DeviceDetailScreen extends StatefulWidget {
   final Device device;
@@ -56,6 +57,17 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.edit),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return EditDeviceDialog(device: widget.device);
+                },
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
