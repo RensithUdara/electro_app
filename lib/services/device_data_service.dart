@@ -7,7 +7,7 @@ import '../models/device_data.dart';
 class DeviceDataService {
   final DatabaseReference _database = FirebaseDatabase.instance.ref();
 
-  Future<DeviceDataSummary> getDeviceDataSummary(String deviceId) async {
+  Future<DeviceDataSummary?> getDeviceDataSummary(String deviceId) async {
     try {
       // Try to get real data from Firebase first
       DataSnapshot snapshot = await _database
@@ -20,16 +20,16 @@ class DeviceDataService {
       if (snapshot.exists && snapshot.value != null) {
         return _processFirebaseData(snapshot);
       } else {
-        // Fallback to mock data if no real data exists
-        return _generateMockData();
+        // Return null if no real data exists - don't show fake historical data
+        return null;
       }
     } catch (e) {
-      // If Firebase fails, fallback to mock data
-      return _generateMockData();
+      // If Firebase fails, return null - don't show fake historical data
+      return null;
     }
   }
 
-  DeviceDataSummary _processFirebaseData(DataSnapshot snapshot) {
+  DeviceDataSummary? _processFirebaseData(DataSnapshot snapshot) {
     final data = Map<String, dynamic>.from(snapshot.value as Map);
     final dataPoints = <DeviceData>[];
 
@@ -45,9 +45,9 @@ class DeviceDataService {
     return _generateChartDataFromPoints(dataPoints);
   }
 
-  DeviceDataSummary _generateChartDataFromPoints(List<DeviceData> dataPoints) {
+  DeviceDataSummary? _generateChartDataFromPoints(List<DeviceData> dataPoints) {
     if (dataPoints.isEmpty) {
-      return _generateMockData();
+      return null; // Don't return mock data if no real data points exist
     }
 
     // Calculate summary statistics
@@ -186,12 +186,12 @@ class DeviceDataService {
 
         return dataPoints;
       } else {
-        // Fallback to mock data
-        return _generateMockRecentData(deviceId, limit);
+        // Return empty list if no real data exists
+        return [];
       }
     } catch (e) {
-      // If Firebase fails, fallback to mock data
-      return _generateMockRecentData(deviceId, limit);
+      // If Firebase fails, return empty list
+      return [];
     }
   }
 
