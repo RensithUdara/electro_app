@@ -22,7 +22,8 @@ dependencies:
   firebase_core: ^2.15.1
   firebase_auth: ^4.7.2
   firebase_database: ^10.2.4
-  # google_sign_in: ^6.1.4  # Temporarily disabled to resolve build issues
+  # Google Sign-In
+  google_sign_in: ^6.1.4
 
 dev_dependencies:
   flutter_test:
