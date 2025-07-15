@@ -5,6 +5,9 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../controllers/auth_controller.dart';
 import '../services/help_support_service.dart';
+import '../services/email_service.dart';
+import '../utils/loading_dialog_helper.dart';
+import 'email_configuration_screen.dart';
 
 class HelpSupportScreen extends StatelessWidget {
   const HelpSupportScreen({super.key});
@@ -197,6 +200,21 @@ class HelpSupportScreen extends StatelessWidget {
                     description: 'Let us know about any problems',
                     color: Colors.red,
                     onTap: () => _showBugReportDialog(context),
+                  ),
+                  const SizedBox(height: 16),
+
+                  _buildContactCard(
+                    icon: Icons.settings,
+                    title: 'Email Configuration',
+                    subtitle: 'Setup email notifications',
+                    description: 'Configure admin email for feedback & bug reports',
+                    color: Colors.indigo,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const EmailConfigurationScreen(),
+                      ),
+                    ),
                   ),
 
                   const SizedBox(height: 40),
@@ -520,47 +538,60 @@ class HelpSupportScreen extends StatelessWidget {
                     if (feedbackController.text.trim().isNotEmpty) {
                       Navigator.of(context).pop();
 
-                      // Show loading dialog
-                      showDialog(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (context) => const AlertDialog(
-                          content: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              CircularProgressIndicator(),
-                              SizedBox(height: 16),
-                              Text('Submitting feedback...'),
-                            ],
-                          ),
-                        ),
-                      );
+                      // Show loading dialog using overlay
+                      LoadingDialogHelper.showLoadingDialog(context, 
+                          message: 'Submitting feedback...');
 
-                      // Get current user ID
-                      final authController =
-                          Provider.of<AuthController>(context, listen: false);
-                      final userId =
-                          authController.currentUser?.id ?? 'anonymous';
+                      try {
+                        // Get current user information
+                        final authController =
+                            Provider.of<AuthController>(context, listen: false);
+                        final userId =
+                            authController.currentUser?.id ?? 'anonymous';
+                        final userEmail = 
+                            authController.currentUser?.email ?? 'unknown@email.com';
+                        final userName = 
+                            authController.currentUser?.name ?? 'Unknown User';
 
-                      // Submit feedback
-                      final success = await HelpSupportService.submitFeedback(
-                        userId: userId,
-                        feedback: feedbackController.text.trim(),
-                        category: selectedCategory,
-                      );
+                        // Submit feedback with email notification
+                        final success = await HelpSupportService.submitFeedback(
+                          userId: userId,
+                          feedback: feedbackController.text.trim(),
+                          category: selectedCategory,
+                          userEmail: userEmail,
+                          userName: userName,
+                        );
 
-                      // Close loading dialog
-                      Navigator.of(context).pop();
+                        // Hide loading dialog
+                        LoadingDialogHelper.hideLoadingDialog();
 
-                      // Show result
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(success
-                              ? 'Thank you for your feedback!'
-                              : 'Failed to submit feedback. Please try again.'),
-                          backgroundColor: success ? Colors.green : Colors.red,
-                        ),
-                      );
+                        // Show result
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(success
+                                  ? 'Thank you for your feedback! Admin has been notified via email.'
+                                  : 'Failed to submit feedback. Please try again.'),
+                              backgroundColor: success ? Colors.green : Colors.red,
+                              duration: const Duration(seconds: 4),
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        // Hide loading dialog on error
+                        LoadingDialogHelper.hideLoadingDialog();
+                        
+                        // Show error message
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Error: ${e.toString()}'),
+                              backgroundColor: Colors.red,
+                              duration: const Duration(seconds: 4),
+                            ),
+                          );
+                        }
+                      }
                     }
                   },
                   child: const Text('Send'),
@@ -631,50 +662,65 @@ class HelpSupportScreen extends StatelessWidget {
                 if (bugController.text.trim().isNotEmpty) {
                   Navigator.of(context).pop();
 
-                  // Show loading dialog
-                  showDialog(
-                    context: context,
-                    barrierDismissible: false,
-                    builder: (context) => const AlertDialog(
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          CircularProgressIndicator(),
-                          SizedBox(height: 16),
-                          Text('Submitting bug report...'),
-                        ],
-                      ),
-                    ),
-                  );
+                  // Show loading dialog using overlay
+                  LoadingDialogHelper.showLoadingDialog(context, 
+                      message: 'Submitting bug report...');
 
-                  // Get current user ID
-                  final authController =
-                      Provider.of<AuthController>(context, listen: false);
-                  final userId = authController.currentUser?.id ?? 'anonymous';
+                  try {
+                    // Get current user information
+                    final authController =
+                        Provider.of<AuthController>(context, listen: false);
+                    final userId = authController.currentUser?.id ?? 'anonymous';
+                    final userEmail = 
+                        authController.currentUser?.email ?? 'unknown@email.com';
+                    final userName = 
+                        authController.currentUser?.name ?? 'Unknown User';
 
-                  // Submit bug report
-                  final success = await HelpSupportService.submitBugReport(
-                    userId: userId,
-                    description: bugController.text.trim(),
-                    deviceInfo:
-                        'Flutter App', // You could add more device info here
-                    steps: stepsController.text.trim().isNotEmpty
-                        ? stepsController.text.trim()
-                        : null,
-                  );
+                    // Get device information
+                    final deviceInfo = EmailService.getDeviceInfo();
 
-                  // Close loading dialog
-                  Navigator.of(context).pop();
+                    // Submit bug report with email notification
+                    final success = await HelpSupportService.submitBugReport(
+                      userId: userId,
+                      description: bugController.text.trim(),
+                      deviceInfo: deviceInfo,
+                      steps: stepsController.text.trim().isNotEmpty
+                          ? stepsController.text.trim()
+                          : null,
+                      userEmail: userEmail,
+                      userName: userName,
+                    );
 
-                  // Show result
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(success
-                          ? 'Bug report submitted. Thank you!'
-                          : 'Failed to submit bug report. Please try again.'),
-                      backgroundColor: success ? Colors.green : Colors.red,
-                    ),
-                  );
+                    // Hide loading dialog
+                    LoadingDialogHelper.hideLoadingDialog();
+
+                    // Show result
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(success
+                              ? 'Bug report submitted! Admin has been notified via email.'
+                              : 'Failed to submit bug report. Please try again.'),
+                          backgroundColor: success ? Colors.green : Colors.red,
+                          duration: const Duration(seconds: 4),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    // Hide loading dialog on error
+                    LoadingDialogHelper.hideLoadingDialog();
+                    
+                    // Show error message
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error: ${e.toString()}'),
+                          backgroundColor: Colors.red,
+                          duration: const Duration(seconds: 4),
+                        ),
+                      );
+                    }
+                  }
                 }
               },
               child: const Text('Submit'),
