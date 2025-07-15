@@ -462,156 +462,329 @@ class HelpSupportScreen extends StatelessWidget {
 
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (BuildContext dialogContext) {
         return StatefulBuilder(
           builder: (context, setState) {
-            return AlertDialog(
+            return Dialog(
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
-              title: const Row(
-                children: [
-                  Icon(Icons.rate_review, color: Color(0xFF1E3A8A)),
-                  SizedBox(width: 8),
-                  Text('Send Feedback'),
-                ],
+                borderRadius: BorderRadius.circular(24),
               ),
-              content: SingleChildScrollView(
+              elevation: 16,
+              backgroundColor: Colors.transparent,
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 400),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('We\'d love to hear your thoughts!'),
-                    const SizedBox(height: 16),
-                    const Text('Category:'),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      value: selectedCategory,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
+                    // Header with gradient background
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(24),
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF1E3A8A), Color(0xFF3B82F6)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(24),
+                          topRight: Radius.circular(24),
+                        ),
                       ),
-                      items: categories.map((category) {
-                        return DropdownMenuItem(
-                          value: category,
-                          child: Text(category),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          selectedCategory = value!;
-                        });
-                      },
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(50),
+                            ),
+                            child: const Icon(
+                              Icons.rate_review,
+                              color: Colors.white,
+                              size: 32,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Send Feedback',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'We\'d love to hear your thoughts!',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white.withOpacity(0.9),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 16),
-                    const Text('Feedback:'),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: feedbackController,
-                      maxLines: 4,
-                      decoration: const InputDecoration(
-                        hintText: 'Share your feedback here...',
-                        border: OutlineInputBorder(),
+
+                    // Content
+                    Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Category',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            child: DropdownButtonFormField<String>(
+                              value: selectedCategory,
+                              decoration: const InputDecoration(
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
+                              ),
+                              items: categories.map((category) {
+                                return DropdownMenuItem(
+                                  value: category,
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        _getCategoryIcon(category),
+                                        size: 20,
+                                        color: const Color(0xFF1E3A8A),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(category),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                              onChanged: (value) {
+                                setState(() {
+                                  selectedCategory = value!;
+                                });
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          const Text(
+                            'Your Feedback',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            child: TextField(
+                              controller: feedbackController,
+                              maxLines: 4,
+                              decoration: const InputDecoration(
+                                hintText:
+                                    'Share your feedback, suggestions, or ideas here...',
+                                hintStyle: TextStyle(color: Colors.grey),
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.all(16),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Action Buttons
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextButton(
+                                  onPressed: () =>
+                                      Navigator.of(dialogContext).pop(),
+                                  style: TextButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 16),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Cancel',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                flex: 2,
+                                child: ElevatedButton(
+                                  onPressed: () async {
+                                    if (feedbackController.text
+                                        .trim()
+                                        .isNotEmpty) {
+                                      // Close the dialog first
+                                      Navigator.of(dialogContext).pop();
+
+                                      // Show loading dialog using screen context
+                                      LoadingDialogHelper.showLoadingDialog(
+                                          screenContext,
+                                          message: 'Submitting feedback...');
+
+                                      try {
+                                        // Get current user information
+                                        final authController =
+                                            Provider.of<AuthController>(
+                                                screenContext,
+                                                listen: false);
+                                        final userId =
+                                            authController.currentUser?.id ??
+                                                'anonymous';
+                                        final userEmail =
+                                            authController.currentUser?.email ??
+                                                'unknown@email.com';
+                                        final userName =
+                                            authController.currentUser?.name ??
+                                                'Unknown User';
+
+                                        // Submit feedback with email notification
+                                        final success = await HelpSupportService
+                                            .submitFeedback(
+                                          userId: userId,
+                                          feedback:
+                                              feedbackController.text.trim(),
+                                          category: selectedCategory,
+                                          userEmail: userEmail,
+                                          userName: userName,
+                                        );
+
+                                        // Hide loading dialog
+                                        LoadingDialogHelper.hideLoadingDialog();
+
+                                        // Wait a moment for the loading dialog to fully disappear
+                                        await Future.delayed(
+                                            const Duration(milliseconds: 300));
+
+                                        // Show success or error dialog using screen context
+                                        if (success) {
+                                          LoadingDialogHelper.showSuccessDialog(
+                                            screenContext,
+                                            title: 'Feedback Sent!',
+                                            message:
+                                                'Thank you for your feedback!\n\nYour message has been successfully sent to our admin team. We appreciate your input and will review it carefully.',
+                                          );
+                                        } else {
+                                          ScaffoldMessenger.of(screenContext)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                  'Failed to submit feedback. Please try again.'),
+                                              backgroundColor: Colors.red,
+                                              duration: Duration(seconds: 4),
+                                            ),
+                                          );
+                                        }
+                                      } catch (e) {
+                                        // Hide loading dialog on error
+                                        LoadingDialogHelper.hideLoadingDialog();
+
+                                        // Show error dialog using screen context
+                                        showDialog(
+                                          context: screenContext,
+                                          builder: (BuildContext
+                                              errorDialogContext) {
+                                            return AlertDialog(
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(15),
+                                              ),
+                                              title: Row(
+                                                children: [
+                                                  Icon(Icons.error,
+                                                      color: Colors.red[600]),
+                                                  const SizedBox(width: 10),
+                                                  const Text('Error'),
+                                                ],
+                                              ),
+                                              content: Text(
+                                                  'Failed to send feedback: ${e.toString()}'),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () => Navigator.of(
+                                                          errorDialogContext)
+                                                      .pop(),
+                                                  child: const Text('OK'),
+                                                ),
+                                              ],
+                                            );
+                                          },
+                                        );
+                                      }
+                                    }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF1E3A8A),
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 16),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    elevation: 2,
+                                  ),
+                                  child: const Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.send, size: 18),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        'Send Feedback',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (feedbackController.text.trim().isNotEmpty) {
-                      // Close the dialog first
-                      Navigator.of(dialogContext).pop();
-
-                      // Show loading dialog using screen context
-                      LoadingDialogHelper.showLoadingDialog(screenContext,
-                          message: 'Submitting feedback...');
-
-                      try {
-                        // Get current user information
-                        final authController = Provider.of<AuthController>(
-                            screenContext,
-                            listen: false);
-                        final userId =
-                            authController.currentUser?.id ?? 'anonymous';
-                        final userEmail = authController.currentUser?.email ??
-                            'unknown@email.com';
-                        final userName =
-                            authController.currentUser?.name ?? 'Unknown User';
-
-                        // Submit feedback with email notification
-                        final success = await HelpSupportService.submitFeedback(
-                          userId: userId,
-                          feedback: feedbackController.text.trim(),
-                          category: selectedCategory,
-                          userEmail: userEmail,
-                          userName: userName,
-                        );
-
-                        // Hide loading dialog
-                        LoadingDialogHelper.hideLoadingDialog();
-
-                        // Wait a moment for the loading dialog to fully disappear
-                        await Future.delayed(const Duration(milliseconds: 300));
-
-                        // Show success or error dialog using screen context
-                        if (success) {
-                          LoadingDialogHelper.showSuccessDialog(
-                            screenContext,
-                            title: 'Feedback Sent!',
-                            message:
-                                'Thank you for your feedback!\n\nYour message has been successfully sent to our admin team. We appreciate your input and will review it carefully.',
-                          );
-                        } else {
-                          ScaffoldMessenger.of(screenContext).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                  'Failed to submit feedback. Please try again.'),
-                              backgroundColor: Colors.red,
-                              duration: Duration(seconds: 4),
-                            ),
-                          );
-                        }
-                      } catch (e) {
-                        // Hide loading dialog on error
-                        LoadingDialogHelper.hideLoadingDialog();
-
-                        // Show error dialog using screen context
-                        showDialog(
-                          context: screenContext,
-                          builder: (BuildContext errorDialogContext) {
-                            return AlertDialog(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(15),
-                              ),
-                              title: Row(
-                                children: [
-                                  Icon(Icons.error, color: Colors.red[600]),
-                                  const SizedBox(width: 10),
-                                  const Text('Error'),
-                                ],
-                              ),
-                              content: Text(
-                                  'Failed to send feedback: ${e.toString()}'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () =>
-                                      Navigator.of(errorDialogContext).pop(),
-                                  child: const Text('OK'),
-                                ),
-                              ],
-                            );
-                          },
-                        );
-                      }
-                    }
-                  },
-                  child: const Text('Send'),
-                ),
-              ],
             );
           },
         );
@@ -622,160 +795,476 @@ class HelpSupportScreen extends StatelessWidget {
   void _showBugReportDialog(BuildContext context) {
     final TextEditingController bugController = TextEditingController();
     final TextEditingController stepsController = TextEditingController();
+    String selectedPriority = 'Medium';
+    final priorities = ['Low', 'Medium', 'High', 'Critical'];
 
     // Capture the screen context before showing dialog
     final screenContext = context;
 
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Row(
-            children: [
-              Icon(Icons.bug_report, color: Colors.red),
-              SizedBox(width: 8),
-              Text('Report a Bug'),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Please describe the issue you encountered:'),
-                const SizedBox(height: 16),
-                const Text('Bug Description:'),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: bugController,
-                  maxLines: 3,
-                  decoration: const InputDecoration(
-                    hintText: 'Describe the bug or issue...',
-                    border: OutlineInputBorder(),
-                  ),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              elevation: 16,
+              backgroundColor: Colors.transparent,
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 450),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                const Text('Steps to Reproduce (optional):'),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: stepsController,
-                  maxLines: 3,
-                  decoration: const InputDecoration(
-                    hintText: '1. Go to...\n2. Click on...\n3. See error...',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (bugController.text.trim().isNotEmpty) {
-                  // Close the dialog first
-                  Navigator.of(dialogContext).pop();
-
-                  // Show loading dialog using screen context
-                  LoadingDialogHelper.showLoadingDialog(screenContext,
-                      message: 'Submitting bug report...');
-
-                  try {
-                    // Get current user information
-                    final authController = Provider.of<AuthController>(
-                        screenContext,
-                        listen: false);
-                    final userId =
-                        authController.currentUser?.id ?? 'anonymous';
-                    final userEmail = authController.currentUser?.email ??
-                        'unknown@email.com';
-                    final userName =
-                        authController.currentUser?.name ?? 'Unknown User';
-
-                    // Get device information
-                    final deviceInfo = EmailService.getDeviceInfo();
-
-                    // Submit bug report with email notification
-                    final success = await HelpSupportService.submitBugReport(
-                      userId: userId,
-                      description: bugController.text.trim(),
-                      deviceInfo: deviceInfo,
-                      steps: stepsController.text.trim().isNotEmpty
-                          ? stepsController.text.trim()
-                          : null,
-                      userEmail: userEmail,
-                      userName: userName,
-                    );
-
-                    // Hide loading dialog
-                    LoadingDialogHelper.hideLoadingDialog();
-
-                    // Wait a moment for the loading dialog to fully disappear
-                    await Future.delayed(const Duration(milliseconds: 300));
-
-                    // Show success or error dialog using screen context
-                    if (success) {
-                      LoadingDialogHelper.showSuccessDialog(
-                        screenContext,
-                        title: 'Bug Report Sent!',
-                        message:
-                            'Thank you for reporting this issue!\n\nYour bug report has been successfully sent to our admin team. We will investigate and work on fixing it as soon as possible.',
-                      );
-                    } else {
-                      ScaffoldMessenger.of(screenContext).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                              'Failed to submit bug report. Please try again.'),
-                          backgroundColor: Colors.red,
-                          duration: Duration(seconds: 4),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Header with gradient background
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(24),
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFFDC2626), Color(0xFFEF4444)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                      );
-                    }
-                  } catch (e) {
-                    // Hide loading dialog on error
-                    LoadingDialogHelper.hideLoadingDialog();
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(24),
+                          topRight: Radius.circular(24),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(50),
+                            ),
+                            child: const Icon(
+                              Icons.bug_report,
+                              color: Colors.white,
+                              size: 32,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Report a Bug',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Help us improve by reporting issues',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white.withOpacity(0.9),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
 
-                    // Show error dialog using screen context
-                    showDialog(
-                      context: screenContext,
-                      builder: (BuildContext errorDialogContext) {
-                        return AlertDialog(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          title: Row(
-                            children: [
-                              Icon(Icons.error, color: Colors.red[600]),
-                              const SizedBox(width: 10),
-                              const Text('Error'),
-                            ],
-                          ),
-                          content: Text(
-                              'Failed to send bug report: ${e.toString()}'),
-                          actions: [
-                            TextButton(
-                              onPressed: () =>
-                                  Navigator.of(errorDialogContext).pop(),
-                              child: const Text('OK'),
+                    // Content
+                    Flexible(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  //flex: 1,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Priority Level',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          border: Border.all(
+                                              color: Colors.grey.shade300),
+                                        ),
+                                        child: DropdownButtonFormField<String>(
+                                          value: selectedPriority,
+                                          decoration: const InputDecoration(
+                                            border: InputBorder.none,
+                                            contentPadding:
+                                                EdgeInsets.symmetric(
+                                              horizontal: 16,
+                                              vertical: 12,
+                                            ),
+                                          ),
+                                          items: priorities.map((priority) {
+                                            return DropdownMenuItem(
+                                              value: priority,
+                                              child: Row(
+                                                children: [
+                                                  Container(
+                                                    width: 12,
+                                                    height: 12,
+                                                    decoration: BoxDecoration(
+                                                      color: _getPriorityColor(
+                                                          priority),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              6),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Text(priority),
+                                                ],
+                                              ),
+                                            );
+                                          }).toList(),
+                                          onChanged: (value) {
+                                            setState(() {
+                                              selectedPriority = value!;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                // const Expanded(
+                                //   child: Column(
+                                //     children: [
+                                //       SizedBox(height: 8),
+                                //       // Container(
+                                //       //   padding: const EdgeInsets.all(16),
+                                //       //   decoration: BoxDecoration(
+                                //       //     color: Colors.blue.shade50,
+                                //       //     borderRadius: BorderRadius.circular(12),
+                                //       //     border: Border.all(color: Colors.blue.shade200),
+                                //       //   ),
+                                //       //   child: Column(
+                                //       //     children: [
+                                //       //       Icon(
+                                //       //         Icons.info_outline,
+                                //       //         color: Colors.blue.shade600,
+                                //       //         size: 24,
+                                //       //       ),
+                                //       //       const SizedBox(height: 4),
+                                //       //       Text(
+                                //       //         'Detailed reports help us fix issues faster',
+                                //       //         style: TextStyle(
+                                //       //           fontSize: 12,
+                                //       //           color: Colors.blue.shade700,
+                                //       //         ),
+                                //       //         textAlign: TextAlign.center,
+                                //       //       ),
+                                //       //     ],
+                                //       //   ),
+                                //       // ),
+                                //     ],
+                                //   ),
+                                // ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            const Text(
+                              'Bug Description *',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.grey.shade300),
+                              ),
+                              child: TextField(
+                                controller: bugController,
+                                maxLines: 4,
+                                decoration: const InputDecoration(
+                                  hintText:
+                                      'Describe the bug or issue you encountered...\n\nExample: The app crashes when I try to save my profile picture.',
+                                  hintStyle: TextStyle(color: Colors.grey),
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.all(16),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            const Text(
+                              'Steps to Reproduce (Optional)',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.grey.shade300),
+                              ),
+                              child: TextField(
+                                controller: stepsController,
+                                maxLines: 4,
+                                decoration: const InputDecoration(
+                                  hintText:
+                                      'Help us reproduce the issue:\n\n1. Go to Profile screen\n2. Tap on profile picture\n3. Select new image\n4. Tap Save\n5. App crashes',
+                                  hintStyle: TextStyle(color: Colors.grey),
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.all(16),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+
+                            // Action Buttons
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextButton(
+                                    onPressed: () =>
+                                        Navigator.of(dialogContext).pop(),
+                                    style: TextButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 16),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      'Cancel',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  flex: 2,
+                                  child: ElevatedButton(
+                                    onPressed: () async {
+                                      if (bugController.text
+                                          .trim()
+                                          .isNotEmpty) {
+                                        // Close the dialog first
+                                        Navigator.of(dialogContext).pop();
+
+                                        // Show loading dialog using screen context
+                                        LoadingDialogHelper.showLoadingDialog(
+                                            screenContext,
+                                            message:
+                                                'Submitting bug report...');
+
+                                        try {
+                                          // Get current user information
+                                          final authController =
+                                              Provider.of<AuthController>(
+                                                  screenContext,
+                                                  listen: false);
+                                          final userId =
+                                              authController.currentUser?.id ??
+                                                  'anonymous';
+                                          final userEmail = authController
+                                                  .currentUser?.email ??
+                                              'unknown@email.com';
+                                          final userName = authController
+                                                  .currentUser?.name ??
+                                              'Unknown User';
+
+                                          // Get device information
+                                          final deviceInfo =
+                                              EmailService.getDeviceInfo();
+
+                                          // Submit bug report with email notification
+                                          final success =
+                                              await HelpSupportService
+                                                  .submitBugReport(
+                                            userId: userId,
+                                            description:
+                                                bugController.text.trim(),
+                                            deviceInfo: deviceInfo,
+                                            steps: stepsController.text
+                                                    .trim()
+                                                    .isNotEmpty
+                                                ? stepsController.text.trim()
+                                                : null,
+                                            userEmail: userEmail,
+                                            userName: userName,
+                                          );
+
+                                          // Hide loading dialog
+                                          LoadingDialogHelper
+                                              .hideLoadingDialog();
+
+                                          // Wait a moment for the loading dialog to fully disappear
+                                          await Future.delayed(const Duration(
+                                              milliseconds: 300));
+
+                                          // Show success or error dialog using screen context
+                                          if (success) {
+                                            LoadingDialogHelper
+                                                .showSuccessDialog(
+                                              screenContext,
+                                              title: 'Bug Report Sent!',
+                                              message:
+                                                  'Thank you for reporting this issue!\n\nYour bug report has been successfully sent to our admin team. We will investigate and work on fixing it as soon as possible.',
+                                            );
+                                          } else {
+                                            ScaffoldMessenger.of(screenContext)
+                                                .showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                    'Failed to submit bug report. Please try again.'),
+                                                backgroundColor: Colors.red,
+                                                duration: Duration(seconds: 4),
+                                              ),
+                                            );
+                                          }
+                                        } catch (e) {
+                                          // Hide loading dialog on error
+                                          LoadingDialogHelper
+                                              .hideLoadingDialog();
+
+                                          // Show error dialog using screen context
+                                          showDialog(
+                                            context: screenContext,
+                                            builder: (BuildContext
+                                                errorDialogContext) {
+                                              return AlertDialog(
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(15),
+                                                ),
+                                                title: Row(
+                                                  children: [
+                                                    Icon(Icons.error,
+                                                        color: Colors.red[600]),
+                                                    const SizedBox(width: 10),
+                                                    const Text('Error'),
+                                                  ],
+                                                ),
+                                                content: Text(
+                                                    'Failed to send bug report: ${e.toString()}'),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () => Navigator.of(
+                                                            errorDialogContext)
+                                                        .pop(),
+                                                    child: const Text('OK'),
+                                                  ),
+                                                ],
+                                              );
+                                            },
+                                          );
+                                        }
+                                      }
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFFDC2626),
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 16),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      elevation: 2,
+                                    ),
+                                    child: const Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.send, size: 18),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          'Submit Report',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
-                        );
-                      },
-                    );
-                  }
-                }
-              },
-              child: const Text('Submit'),
-            ),
-          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );
+  }
+
+  // Helper method to get category icons
+  IconData _getCategoryIcon(String category) {
+    switch (category) {
+      case 'General':
+        return Icons.chat;
+      case 'Bug Report':
+        return Icons.bug_report;
+      case 'Feature Request':
+        return Icons.lightbulb;
+      case 'UI/UX':
+        return Icons.design_services;
+      case 'Performance':
+        return Icons.speed;
+      default:
+        return Icons.help;
+    }
+  }
+
+  // Helper method to get priority colors
+  Color _getPriorityColor(String priority) {
+    switch (priority) {
+      case 'Low':
+        return Colors.green;
+      case 'Medium':
+        return Colors.orange;
+      case 'High':
+        return Colors.red;
+      case 'Critical':
+        return Colors.purple;
+      default:
+        return Colors.grey;
+    }
   }
 
   Future<void> _makePhoneCall(String phoneNumber) async {
