@@ -4,12 +4,14 @@ import '../models/device.dart';
 class DeviceTile extends StatelessWidget {
   final Device device;
   final VoidCallback onTap;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const DeviceTile({
     super.key,
     required this.device,
     required this.onTap,
+    required this.onEdit,
     required this.onDelete,
   });
 
@@ -88,11 +90,23 @@ class DeviceTile extends StatelessWidget {
                   // Actions
                   PopupMenuButton<String>(
                     onSelected: (value) {
-                      if (value == 'delete') {
+                      if (value == 'edit') {
+                        onEdit();
+                      } else if (value == 'delete') {
                         onDelete();
                       }
                     },
                     itemBuilder: (BuildContext context) => [
+                      const PopupMenuItem<String>(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit, color: Color(0xFF1E3A8A), size: 18),
+                            SizedBox(width: 8),
+                            Text('Edit', style: TextStyle(color: Color(0xFF1E3A8A))),
+                          ],
+                        ),
+                      ),
                       const PopupMenuItem<String>(
                         value: 'delete',
                         child: Row(
