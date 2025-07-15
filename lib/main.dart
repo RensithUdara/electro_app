@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'controllers/auth_controller.dart';
 import 'controllers/device_controller.dart';
@@ -42,10 +43,23 @@ class MyApp extends StatelessWidget {
             brightness: Brightness.light,
           ),
           useMaterial3: true,
-          fontFamily: 'System',
-          appBarTheme: const AppBarTheme(
+          textTheme: GoogleFonts.robotoTextTheme(),
+          appBarTheme: AppBarTheme(
             elevation: 0,
             centerTitle: true,
+            titleTextStyle: GoogleFonts.poppins(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              textStyle: GoogleFonts.roboto(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ),
         ),
         home: const SplashScreen(),
