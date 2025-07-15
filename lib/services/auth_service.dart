@@ -1,82 +1,154 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../models/user.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import '../models/user.dart' as models;
 
 class AuthService {
-  static const String baseUrl = 'https://api.example.com'; // Replace with your API URL
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final DatabaseReference _database = FirebaseDatabase.instance.ref();
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
   
-  Future<User?> login(String email, String password) async {
+  // Convert Firebase User to our User model
+  models.User? _userFromFirebaseUser(User? user) {
+    if (user == null) return null;
+    
+    return models.User(
+      id: user.uid,
+      name: user.displayName ?? 'Unknown User',
+      email: user.email ?? '',
+      phoneNumber: user.phoneNumber ?? '',
+    );
+  }
+  
+  // Stream of auth changes
+  Stream<models.User?> get authStateChanges {
+    return _auth.authStateChanges().map(_userFromFirebaseUser);
+  }
+  
+  // Get current user
+  models.User? get currentUser {
+    return _userFromFirebaseUser(_auth.currentUser);
+  }
+  
+  Future<models.User?> login(String email, String password) async {
     try {
-      // Simulate API call - replace with actual API call
-      await Future.delayed(const Duration(seconds: 2));
-      
-      // Mock validation
-      if (email.isNotEmpty && password.length >= 6) {
-        return User(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          name: 'John Doe',
-          email: email,
-          phoneNumber: '+1234567890',
-        );
-      }
-      return null;
-      
-      // Actual API call would look like this:
-      /*
-      final response = await http.post(
-        Uri.parse('$baseUrl/auth/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email,
-          'password': password,
-        }),
+      UserCredential result = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
       );
-      
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return User.fromJson(data['user']);
-      }
-      return null;
-      */
+      return _userFromFirebaseUser(result.user);
+    } on FirebaseAuthException catch (e) {
+      throw Exception(_getErrorMessage(e.code));
     } catch (e) {
       throw Exception('Login failed: $e');
     }
   }
 
-  Future<User?> signup(String name, String email, String phoneNumber, String password) async {
+  Future<models.User?> signup(String name, String email, String phoneNumber, String password) async {
     try {
-      // Simulate API call - replace with actual API call
-      await Future.delayed(const Duration(seconds: 2));
-      
-      // Mock user creation
-      return User(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        name: name,
+      // Create user with email and password
+      UserCredential result = await _auth.createUserWithEmailAndPassword(
         email: email,
-        phoneNumber: phoneNumber,
+        password: password,
       );
       
-      // Actual API call would look like this:
-      /*
-      final response = await http.post(
-        Uri.parse('$baseUrl/auth/signup'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
+      // Update user profile with name
+      await result.user?.updateDisplayName(name);
+      
+      // Save additional user data to Realtime Database
+      if (result.user != null) {
+        await _database.child('users').child(result.user!.uid).set({
           'name': name,
           'email': email,
           'phoneNumber': phoneNumber,
-          'password': password,
-        }),
-      );
-      
-      if (response.statusCode == 201) {
-        final data = jsonDecode(response.body);
-        return User.fromJson(data['user']);
+          'createdAt': DateTime.now().millisecondsSinceEpoch,
+        });
       }
-      return null;
-      */
+      
+      return _userFromFirebaseUser(result.user);
+    } on FirebaseAuthException catch (e) {
+      throw Exception(_getErrorMessage(e.code));
     } catch (e) {
       throw Exception('Signup failed: $e');
+    }
+  }
+
+  Future<models.User?> signInWithGoogle() async {
+    try {
+      // Trigger the authentication flow
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      
+      if (googleUser == null) {
+        return null; // User cancelled the sign-in
+      }
+
+      // Obtain the auth details from the request
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+      // Create a new credential
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // Sign in to Firebase with the Google credential
+      UserCredential result = await _auth.signInWithCredential(credential);
+      
+      // Save user data to database if it's a new user
+      if (result.additionalUserInfo?.isNewUser == true && result.user != null) {
+        await _database.child('users').child(result.user!.uid).set({
+          'name': result.user!.displayName ?? 'Unknown User',
+          'email': result.user!.email ?? '',
+          'phoneNumber': result.user!.phoneNumber ?? '',
+          'createdAt': DateTime.now().millisecondsSinceEpoch,
+        });
+      }
+      
+      return _userFromFirebaseUser(result.user);
+    } catch (e) {
+      throw Exception('Google sign-in failed: $e');
+    }
+  }
+
+  Future<void> signOut() async {
+    try {
+      await _googleSignIn.signOut();
+      await _auth.signOut();
+    } catch (e) {
+      throw Exception('Sign out failed: $e');
+    }
+  }
+
+  Future<void> resetPassword(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      throw Exception(_getErrorMessage(e.code));
+    } catch (e) {
+      throw Exception('Password reset failed: $e');
+    }
+  }
+
+  String _getErrorMessage(String errorCode) {
+    switch (errorCode) {
+      case 'user-not-found':
+        return 'No user found with this email address.';
+      case 'wrong-password':
+        return 'Wrong password provided.';
+      case 'email-already-in-use':
+        return 'An account already exists with this email address.';
+      case 'weak-password':
+        return 'The password provided is too weak.';
+      case 'invalid-email':
+        return 'The email address is not valid.';
+      case 'user-disabled':
+        return 'This user account has been disabled.';
+      case 'too-many-requests':
+        return 'Too many requests. Try again later.';
+      case 'operation-not-allowed':
+        return 'This operation is not allowed.';
+      default:
+        return 'An unknown error occurred.';
     }
   }
 }
