@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../controllers/device_controller.dart';
 import '../controllers/device_data_controller.dart';
 import '../controllers/realtime_data_controller.dart';
 import '../models/device.dart';
@@ -23,7 +24,8 @@ class DeviceDetailScreen extends StatefulWidget {
 
 class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
   int _selectedTabIndex = 0;
-  List<String> _parameterOrder = []; // Store the order of parameters for drag & drop
+  List<String> _parameterOrder =
+      []; // Store the order of parameters for drag & drop
 
   @override
   void initState() {
@@ -36,11 +38,13 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
       // Connect to real-time data
       Provider.of<RealtimeDataController>(context, listen: false)
           .connectToDevice(widget.device);
-      
+
       // Load saved parameter order after a short delay to ensure data is loaded
       Future.delayed(const Duration(milliseconds: 500), () {
-        final realtimeController = Provider.of<RealtimeDataController>(context, listen: false);
-        if (realtimeController.filteredData != null && realtimeController.filteredData!.isNotEmpty) {
+        final realtimeController =
+            Provider.of<RealtimeDataController>(context, listen: false);
+        if (realtimeController.filteredData != null &&
+            realtimeController.filteredData!.isNotEmpty) {
           _loadParameterOrder(realtimeController.filteredData!);
         }
       });
@@ -72,13 +76,32 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.edit),
-            onPressed: () {
-              showDialog(
+            onPressed: () async {
+              final result = await showDialog<bool>(
                 context: context,
                 builder: (BuildContext context) {
                   return EditDeviceDialog(device: widget.device);
                 },
               );
+
+              // If device was updated, refresh with new configuration
+              if (result == true) {
+                final deviceController =
+                    Provider.of<DeviceController>(context, listen: false);
+                final updatedDevice = deviceController.devices.firstWhere(
+                  (device) => device.id == widget.device.id,
+                  orElse: () => widget.device,
+                );
+
+                // Reconnect to real-time data with updated device configuration
+                Provider.of<RealtimeDataController>(context, listen: false)
+                    .connectToDevice(updatedDevice);
+
+                // Clear parameter order to force refresh with new parameters
+                setState(() {
+                  _parameterOrder.clear();
+                });
+              }
             },
           ),
           IconButton(
@@ -832,13 +855,13 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
 
   Widget _buildRealtimeDataSection(RealtimeDataController realtimeController) {
     final filteredData = realtimeController.filteredData!;
-    
+
     // Initialize parameter order if empty or if data structure changed
-    if (_parameterOrder.isEmpty || 
+    if (_parameterOrder.isEmpty ||
         _parameterOrder.length != filteredData.keys.length ||
         !_parameterOrder.every((param) => filteredData.containsKey(param))) {
       _parameterOrder = filteredData.keys.toList();
-      
+
       // Load saved order asynchronously
       _loadParameterOrder(filteredData);
     }
@@ -872,7 +895,7 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                 setState(() {
                   _parameterOrder = filteredData.keys.toList();
                 });
-                
+
                 // Clear saved order
                 try {
                   final prefs = await SharedPreferences.getInstance();
@@ -880,7 +903,7 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                 } catch (e) {
                   // Handle error silently
                 }
-                
+
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Card order reset to default'),
@@ -922,19 +945,21 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
     );
   }
 
-  Widget _buildDraggableGrid(Map<String, dynamic> filteredData, RealtimeDataController realtimeController) {
+  Widget _buildDraggableGrid(Map<String, dynamic> filteredData,
+      RealtimeDataController realtimeController) {
     return LayoutBuilder(
       builder: (context, constraints) {
         // Calculate card width for 2 columns with spacing
         final cardWidth = (constraints.maxWidth - 12) / 2;
-        
+
         return Wrap(
           spacing: 12,
           runSpacing: 12,
           children: _parameterOrder.map((parameter) {
             final value = filteredData[parameter];
-            final parameterInfo = realtimeController.getParameterInfo(parameter);
-            
+            final parameterInfo =
+                realtimeController.getParameterInfo(parameter);
+
             return SizedBox(
               width: cardWidth,
               child: LongPressDraggable<String>(
@@ -950,7 +975,7 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                 feedback: Material(
                   elevation: 8,
                   borderRadius: BorderRadius.circular(12),
-                  child: Container(
+                  child: SizedBox(
                     width: cardWidth,
                     child: _buildRealtimeDataCard(
                       parameter,
@@ -961,7 +986,7 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                     ),
                   ),
                 ),
-                childWhenDragging: Container(
+                childWhenDragging: SizedBox(
                   width: cardWidth,
                   child: _buildRealtimeDataCard(
                     parameter,
@@ -972,16 +997,17 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                   ),
                 ),
                 child: DragTarget<String>(
-                  onAccept: (draggedParameter) {
+                  onAcceptWithDetails: (draggedParameter) {
                     if (draggedParameter != parameter) {
                       setState(() {
-                        final draggedIndex = _parameterOrder.indexOf(draggedParameter);
+                        final draggedIndex =
+                            _parameterOrder.indexOf(draggedParameter);
                         final targetIndex = _parameterOrder.indexOf(parameter);
-                        
+
                         _parameterOrder.removeAt(draggedIndex);
                         _parameterOrder.insert(targetIndex, draggedParameter);
                       });
-                      
+
                       // Save the new order
                       _saveParameterOrder();
                     }
@@ -990,7 +1016,9 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                     final isHovered = candidateData.isNotEmpty;
                     return AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
-                      transform: isHovered ? (Matrix4.identity()..scale(1.05)) : Matrix4.identity(),
+                      transform: isHovered
+                          ? (Matrix4.identity()..scale(1.05))
+                          : Matrix4.identity(),
                       child: _buildRealtimeDataCard(
                         parameter,
                         value,
@@ -1010,20 +1038,17 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
   }
 
   Widget _buildRealtimeDataCard(
-      String parameter, 
-      dynamic value, 
-      String unit, 
-      String description,
-      {bool isDragging = false, 
-       bool isPlaceholder = false, 
-       bool isHovered = false}) {
+      String parameter, dynamic value, String unit, String description,
+      {bool isDragging = false,
+      bool isPlaceholder = false,
+      bool isHovered = false}) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isPlaceholder 
-            ? Colors.grey[200] 
-            : isHovered 
-                ? Colors.blue[50] 
+        color: isPlaceholder
+            ? Colors.grey[200]
+            : isHovered
+                ? Colors.blue[50]
                 : Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: isDragging
@@ -1041,10 +1066,13 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                   offset: const Offset(0, 2),
                 ),
               ],
-        border: isHovered 
+        border: isHovered
             ? Border.all(color: Colors.blue[300]!, width: 2)
-            : isPlaceholder 
-                ? Border.all(color: Colors.grey[400]!, width: 2, style: BorderStyle.solid)
+            : isPlaceholder
+                ? Border.all(
+                    color: Colors.grey[400]!,
+                    width: 2,
+                    style: BorderStyle.solid)
                 : null,
       ),
       child: Column(
@@ -1059,7 +1087,9 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: isPlaceholder ? Colors.grey[500] : const Color(0xFF1E3A8A),
+                    color: isPlaceholder
+                        ? Colors.grey[500]
+                        : const Color(0xFF1E3A8A),
                   ),
                 ),
               ),
@@ -1491,7 +1521,8 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
   Future<void> _saveParameterOrder() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList('parameter_order_${widget.device.id}', _parameterOrder);
+      await prefs.setStringList(
+          'parameter_order_${widget.device.id}', _parameterOrder);
     } catch (e) {
       // Handle error silently
     }
@@ -1501,15 +1532,20 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
   Future<void> _loadParameterOrder(Map<String, dynamic> filteredData) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final savedOrder = prefs.getStringList('parameter_order_${widget.device.id}');
-      
+      final savedOrder =
+          prefs.getStringList('parameter_order_${widget.device.id}');
+
       if (savedOrder != null && savedOrder.isNotEmpty) {
         // Verify that all saved parameters still exist in current data
-        final validOrder = savedOrder.where((param) => filteredData.containsKey(param)).toList();
-        
+        final validOrder = savedOrder
+            .where((param) => filteredData.containsKey(param))
+            .toList();
+
         // Add any new parameters that weren't in the saved order
-        final newParameters = filteredData.keys.where((param) => !validOrder.contains(param)).toList();
-        
+        final newParameters = filteredData.keys
+            .where((param) => !validOrder.contains(param))
+            .toList();
+
         setState(() {
           _parameterOrder = [...validOrder, ...newParameters];
         });
@@ -1571,7 +1607,8 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
     );
   }
 
-  Widget _buildInstructionStep(IconData icon, String title, String description) {
+  Widget _buildInstructionStep(
+      IconData icon, String title, String description) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
