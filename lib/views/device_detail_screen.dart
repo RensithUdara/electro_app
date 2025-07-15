@@ -306,8 +306,12 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
               realtimeController.filteredData!.isNotEmpty)
             _buildRealtimeDataSection(realtimeController),
 
-          // Historical Summary (if available)
-          if (dataController.deviceDataSummary != null) ...[
+          // Historical Summary (only show if device is connected and has real data)
+          if (dataController.deviceDataSummary != null && 
+              realtimeController.isConnected && 
+              realtimeController.filteredData != null &&
+              realtimeController.filteredData!.values.any((value) => 
+                  value != null && value != '--' && value != '')) ...[
             const SizedBox(height: 24),
             _buildHistoricalSummarySection(dataController),
           ],
