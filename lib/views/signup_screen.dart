@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:email_validator/email_validator.dart';
 import '../controllers/auth_controller.dart';
+import '../widgets/google_icon.dart';
 import 'home_screen.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -47,6 +48,18 @@ class _SignupScreenState extends State<SignupScreen> {
           MaterialPageRoute(builder: (context) => const HomeScreen()),
         );
       }
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    final authController = Provider.of<AuthController>(context, listen: false);
+    
+    final success = await authController.signInWithGoogle();
+    
+    if (success && mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
     }
   }
 
@@ -309,6 +322,77 @@ class _SignupScreenState extends State<SignupScreen> {
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
+                          ),
+                        );
+                      },
+                    ),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // OR Divider
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Divider(
+                            color: Colors.grey[400],
+                            thickness: 1,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Text(
+                            'OR',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Divider(
+                            color: Colors.grey[400],
+                            thickness: 1,
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Google Sign-In Button
+                    Consumer<AuthController>(
+                      builder: (context, authController, child) {
+                        return SizedBox(
+                          width: double.infinity,
+                          height: 48,
+                          child: OutlinedButton.icon(
+                            onPressed: authController.isLoading ? null : _signInWithGoogle,
+                            icon: authController.isLoading
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.grey),
+                                  ),
+                                )
+                              : const GoogleIcon(size: 20),
+                            label: Text(
+                              authController.isLoading ? 'Signing in...' : 'Continue with Google',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              side: BorderSide(color: Colors.grey[300]!),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 1,
+                            ),
                           ),
                         );
                       },
