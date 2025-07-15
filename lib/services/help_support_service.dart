@@ -82,7 +82,7 @@ class HelpSupportService {
     }
 
     // Return default FAQs if API fails
-    return _getDefaultFAQs();
+    return getDefaultFAQs();
   }
 
   // Create support ticket
@@ -141,7 +141,7 @@ class HelpSupportService {
   }
 
   // Default FAQs (fallback when API is not available)
-  static List<Map<String, String>> _getDefaultFAQs() {
+  static List<Map<String, String>> getDefaultFAQs() {
     return [
       {
         'question': 'How do I add a new device?',
