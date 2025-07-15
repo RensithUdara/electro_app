@@ -1,11 +1,11 @@
 {
-    "name": "electro_app",
-    "short_name": "electro_app",
+    "name": "Electro App",
+    "short_name": "Electro App",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#hexcode",
     "theme_color": "#hexcode",
-    "description": "A new Flutter project.",
+    "description": "Electrical Device Monitoring App",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
