@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../controllers/auth_controller.dart';
 import '../utils/logout_utils.dart';
 import 'change_password_screen.dart';
+import 'help_support_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -234,11 +235,9 @@ class ProfileScreen extends StatelessWidget {
                         title: 'Help & Support',
                         subtitle: 'Get help and contact support',
                         onTap: () {
-                          // TODO: Navigate to help screen
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Help & Support coming soon!'),
-                              backgroundColor: Colors.purple,
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const HelpSupportScreen(),
                             ),
                           );
                         },
