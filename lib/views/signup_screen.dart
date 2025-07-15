@@ -397,26 +397,18 @@ class _SignupScreenState extends State<SignupScreen> {
 
                     const SizedBox(height: 24),
 
-                    // Google Sign-In Button (Temporarily Disabled)
+                    // Google Sign-In Button
                     Consumer<AuthController>(
                       builder: (context, authController, child) {
                         return OutlinedButton.icon(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                    'Google Sign-In temporarily disabled - use email/password'),
-                                backgroundColor: Colors.orange,
-                              ),
-                            );
-                          },
+                          onPressed: authController.isLoading ? null : _googleSignIn,
                           icon: const GoogleIcon(size: 20),
                           label: const Text(
-                            'Continue with Google (Disabled)',
+                            'Continue with Google',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
-                              color: Colors.grey,
+                              color: Color(0xFF1E3A8A),
                             ),
                           ),
                           style: OutlinedButton.styleFrom(
@@ -424,7 +416,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            side: BorderSide(color: Colors.grey[300]!),
+                            side: const BorderSide(color: Color(0xFF1E3A8A)),
                           ),
                         );
                       },
