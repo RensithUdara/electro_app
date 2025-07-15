@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../controllers/auth_controller.dart';
 import 'login_screen.dart';
 import 'home_screen.dart';
@@ -12,97 +12,205 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen>
+    with TickerProviderStateMixin {
+  late AnimationController _fadeController;
+  late AnimationController _scaleController;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
+
   @override
   void initState() {
     super.initState();
-    _checkLoginState();
+    
+    // Initialize animations
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+    
+    _scaleController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeInOut,
+    ));
+
+    _scaleAnimation = Tween<double>(
+      begin: 0.5,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _scaleController,
+      curve: Curves.elasticOut,
+    ));
+
+    // Start animations
+    _fadeController.forward();
+    _scaleController.forward();
+
+    // Navigate after delay
+    _navigateToNextScreen();
   }
 
-  Future<void> _checkLoginState() async {
-    final authController = Provider.of<AuthController>(context, listen: false);
-    await authController.checkLoginState();
-    
-    // Wait for splash screen duration
+  Future<void> _navigateToNextScreen() async {
     await Future.delayed(const Duration(seconds: 3));
     
     if (mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => authController.isLoggedIn 
-            ? const HomeScreen() 
-            : const LoginScreen(),
-        ),
-      );
+      final authController = Provider.of<AuthController>(context, listen: false);
+      
+      if (authController.isLoggedIn) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      } else {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        );
+      }
     }
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    _scaleController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1E3A8A), // Deep blue
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
             colors: [
-              Color(0xFF1E3A8A), // Deep blue
-              Color(0xFF3B82F6), // Lighter blue
+              Color(0xFF1E3A8A),
+              Color(0xFF3B82F6),
+              Color(0xFF60A5FA),
             ],
           ),
         ),
-        child: const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // App Logo
-              Icon(
-                Icons.electrical_services,
-                size: 120,
-                color: Colors.white,
-              ),
-              SizedBox(height: 24),
-              
-              // App Name
-              Text(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Logo with animations
+            AnimatedBuilder(
+              animation: Listenable.merge([_fadeAnimation, _scaleAnimation]),
+              builder: (context, child) {
+                return Transform.scale(
+                  scale: _scaleAnimation.value,
+                  child: Opacity(
+                    opacity: _fadeAnimation.value,
+                    child: Container(
+                      width: 150,
+                      height: 150,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(25),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.3),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(25),
+                        child: Image.asset(
+                          'assets/images/logo.png',
+                          width: 150,
+                          height: 150,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            // Fallback if logo.png is not found
+                            return Container(
+                              width: 150,
+                              height: 150,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(25),
+                              ),
+                              child: const Icon(
+                                Icons.electrical_services,
+                                size: 80,
+                                color: Color(0xFF1E3A8A),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+            
+            const SizedBox(height: 30),
+            
+            // App Name with fade animation
+            FadeTransition(
+              opacity: _fadeAnimation,
+              child: const Text(
                 'ElectroApp',
                 style: TextStyle(
-                  fontSize: 32,
+                  fontSize: 36,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
-                  letterSpacing: 2,
+                  letterSpacing: 1.5,
                 ),
               ),
-              SizedBox(height: 8),
-              
-              // Subtitle
-              Text(
-                'Monitor Your Electrical Devices',
+            ),
+            
+            const SizedBox(height: 10),
+            
+            // Tagline with fade animation
+            FadeTransition(
+              opacity: _fadeAnimation,
+              child: Text(
+                'Electrical Device Monitoring',
                 style: TextStyle(
                   fontSize: 16,
-                  color: Colors.white70,
-                  letterSpacing: 1,
+                  color: Colors.white.withOpacity(0.9),
+                  fontWeight: FontWeight.w300,
                 ),
               ),
-              SizedBox(height: 60),
-              
-              // Loading Indicator
-              SpinKitFoldingCube(
+            ),
+            
+            const SizedBox(height: 60),
+            
+            // Loading indicator
+            FadeTransition(
+              opacity: _fadeAnimation,
+              child: const SpinKitWave(
                 color: Colors.white,
-                size: 50.0,
+                size: 30.0,
               ),
-              SizedBox(height: 24),
-              
-              Text(
+            ),
+            
+            const SizedBox(height: 20),
+            
+            // Loading text
+            FadeTransition(
+              opacity: _fadeAnimation,
+              child: Text(
                 'Loading...',
                 style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.white70,
+                  fontSize: 14,
+                  color: Colors.white.withOpacity(0.8),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
