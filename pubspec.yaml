@@ -31,6 +31,8 @@ dependencies:
   google_fonts: ^6.1.0
   # URL Launcher
   url_launcher: ^6.1.14
+  # Email sending
+  mailer: ^6.0.1
 
 dev_dependencies:
   flutter_test:
