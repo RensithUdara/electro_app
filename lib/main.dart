@@ -20,7 +20,11 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthController()),
+        ChangeNotifierProvider(create: (_) {
+          final authController = AuthController();
+          authController.initializeAuthListener();
+          return authController;
+        }),
         ChangeNotifierProvider(create: (_) => DeviceController()),
         ChangeNotifierProvider(create: (_) => DeviceDataController()),
       ],
