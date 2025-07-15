@@ -1,5 +1,7 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
+
 import '../models/device.dart';
 import '../services/realtime_data_service.dart';
 
@@ -35,6 +37,8 @@ class RealtimeDataController extends ChangeNotifier {
           await _realtimeDataService.deviceExists(device.deviceId);
 
       if (!deviceExists) {
+        // Even if device doesn't exist, show filtered data with placeholders
+        _filteredData = _realtimeDataService.getFilteredData(null, device);
         _errorMessage =
             'Device "${device.deviceId}" not found in real-time database';
         _isLoading = false;
@@ -51,12 +55,13 @@ class RealtimeDataController extends ChangeNotifier {
           _realtimeDataService.getDeviceRealtimeData(device.deviceId).listen(
         (data) {
           _currentData = data;
+          // Always generate filtered data, even if no real-time data exists
+          _filteredData = _realtimeDataService.getFilteredData(data, device);
+
           if (data != null) {
-            _filteredData = _realtimeDataService.getFilteredData(data, device);
             _isConnected = true;
             _errorMessage = null;
           } else {
-            _filteredData = null;
             _isConnected = false;
             _errorMessage = 'No data available for device "${device.deviceId}"';
           }
@@ -64,6 +69,8 @@ class RealtimeDataController extends ChangeNotifier {
           notifyListeners();
         },
         onError: (error) {
+          // Even on error, generate filtered data with placeholders
+          _filteredData = _realtimeDataService.getFilteredData(null, device);
           _errorMessage = 'Connection error: $error';
           _isLoading = false;
           _isConnected = false;
