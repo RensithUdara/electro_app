@@ -29,6 +29,8 @@ dependencies:
   google_sign_in: ^6.1.4
   # Google Fonts
   google_fonts: ^6.1.0
+  # URL Launcher
+  url_launcher: ^6.1.14
 
 dev_dependencies:
   flutter_test:
