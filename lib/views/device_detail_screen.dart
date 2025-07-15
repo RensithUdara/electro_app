@@ -331,6 +331,40 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
             ),
             const SizedBox(height: 16),
             Text(
+              'No parameters selected',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey[600],
+              ),
+            ),
+            Text(
+              'Enable parameters in device settings',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[500],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Check if there's actual data (not just placeholders)
+    final hasRealData = realtimeController.filteredData!.values
+        .any((value) => value != null && value != '--' && value != '');
+
+    if (!hasRealData) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.insert_chart_outlined,
+              size: 64,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 16),
+            Text(
               'No real-time data available',
               style: TextStyle(
                 fontSize: 16,
@@ -393,14 +427,14 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'No real-time data available',
+              'No parameters selected',
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey[600],
               ),
             ),
             Text(
-              'Please check device connection',
+              'Enable parameters in device settings',
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey[500],
@@ -488,6 +522,8 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                   final value = filteredData[parameter];
                   final parameterInfo =
                       realtimeController.getParameterInfo(parameter);
+                  final isPlaceholder =
+                      value == null || value == '--' || value == '';
 
                   return DataRow(
                     cells: [
@@ -496,30 +532,37 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1E3A8A).withOpacity(0.1),
+                            color: isPlaceholder
+                                ? Colors.grey[200]
+                                : const Color(0xFF1E3A8A).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
                             parameter,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF1E3A8A),
+                              color: isPlaceholder
+                                  ? Colors.grey[600]
+                                  : const Color(0xFF1E3A8A),
                             ),
                           ),
                         ),
                       ),
                       DataCell(
                         Text(
-                          value.toString(),
-                          style: const TextStyle(
+                          isPlaceholder ? '--' : value.toString(),
+                          style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
+                            color: isPlaceholder
+                                ? Colors.grey[400]
+                                : Colors.black87,
                           ),
                         ),
                       ),
                       DataCell(
                         Text(
-                          parameterInfo['unit']!.isEmpty
+                          (parameterInfo['unit']!.isEmpty || isPlaceholder)
                               ? '-'
                               : parameterInfo['unit']!,
                           style: TextStyle(
@@ -533,7 +576,10 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                           width: 200,
                           child: Text(
                             parameterInfo['description']!,
-                            style: TextStyle(color: Colors.grey[600]),
+                            style: TextStyle(
+                                color: isPlaceholder
+                                    ? Colors.grey[400]
+                                    : Colors.grey[600]),
                             softWrap: true,
                           ),
                         ),
@@ -543,9 +589,14 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: Colors.green[50],
+                            color: isPlaceholder
+                                ? Colors.grey[100]
+                                : Colors.green[50],
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.green[200]!),
+                            border: Border.all(
+                                color: isPlaceholder
+                                    ? Colors.grey[300]!
+                                    : Colors.green[200]!),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -553,14 +604,18 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                               Icon(
                                 Icons.circle,
                                 size: 8,
-                                color: Colors.green[600],
+                                color: isPlaceholder
+                                    ? Colors.grey[400]
+                                    : Colors.green[600],
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                'Live',
+                                isPlaceholder ? 'No Data' : 'Live',
                                 style: TextStyle(
                                   fontSize: 10,
-                                  color: Colors.green[600],
+                                  color: isPlaceholder
+                                      ? Colors.grey[400]
+                                      : Colors.green[600],
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -960,6 +1015,9 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
             final parameterInfo =
                 realtimeController.getParameterInfo(parameter);
 
+            // Check if the value is a placeholder (null, empty, or "--")
+            final isPlaceholder = value == null || value == '--' || value == '';
+
             return SizedBox(
               width: cardWidth,
               child: LongPressDraggable<String>(
@@ -983,6 +1041,7 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                       parameterInfo['unit']!,
                       parameterInfo['description']!,
                       isDragging: true,
+                      isPlaceholder: isPlaceholder,
                     ),
                   ),
                 ),
@@ -997,7 +1056,8 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                   ),
                 ),
                 child: DragTarget<String>(
-                  onAcceptWithDetails: (draggedParameter) {
+                  onAcceptWithDetails: (draggedParameterDetails) {
+                    final draggedParameter = draggedParameterDetails.data;
                     if (draggedParameter != parameter) {
                       setState(() {
                         final draggedIndex =
@@ -1025,6 +1085,7 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                         parameterInfo['unit']!,
                         parameterInfo['description']!,
                         isHovered: isHovered,
+                        isPlaceholder: isPlaceholder,
                       ),
                     );
                   },
@@ -1116,7 +1177,7 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
             children: [
               Expanded(
                 child: Text(
-                  isPlaceholder ? '---' : value.toString(),
+                  isPlaceholder ? '--' : value.toString(),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -1326,7 +1387,95 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
   Widget _buildRealtimeChart(String parameter, dynamic value,
       RealtimeDataController realtimeController) {
     final parameterInfo = realtimeController.getParameterInfo(parameter);
-    final numericValue = value is num ? value.toDouble() : 0.0;
+    final isPlaceholder = value == null || value == '--' || value == '';
+    final numericValue =
+        (value is num && !isPlaceholder) ? value.toDouble() : 0.0;
+
+    // Don't show chart for placeholder values
+    if (isPlaceholder) {
+      return Container(
+        height: 200,
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 5,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[400],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '$parameter (${parameterInfo['unit']})',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '--',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.insert_chart_outlined,
+                      size: 48,
+                      color: Colors.grey[400],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'No data available',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[500],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     // Generate sample data points for demonstration (in real app, you'd use historical data)
     final chartData = List.generate(10, (index) {
