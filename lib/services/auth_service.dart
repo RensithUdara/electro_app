@@ -1,13 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
-
-// import 'package:google_sign_in/google_sign_in.dart';  // Temporarily disabled
+import 'package:google_sign_in/google_sign_in.dart';
 import '../models/user.dart' as models;
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final DatabaseReference _database = FirebaseDatabase.instance.ref();
-  // final GoogleSignIn _googleSignIn = GoogleSignIn();  // Temporarily disabled
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   // Convert Firebase User to our User model
   models.User? _userFromFirebaseUser(User? user) {
@@ -75,8 +74,6 @@ class AuthService {
     }
   }
 
-  // Temporarily disabled Google Sign-In to resolve build issues
-  /*
   Future<models.User?> signInWithGoogle() async {
     try {
       // Trigger the authentication flow
@@ -109,20 +106,26 @@ class AuthService {
       }
       
       return _userFromFirebaseUser(result.user);
+    } on FirebaseAuthException catch (e) {
+      throw Exception(_getGoogleSignInErrorMessage(e.code));
     } catch (e) {
-      throw Exception('Google sign-in failed: $e');
+      // Handle platform-specific errors
+      if (e.toString().contains('PlatformException')) {
+        if (e.toString().contains('sign_in_failed')) {
+          throw Exception('Google Sign-In configuration error. Please check Firebase setup.');
+        } else if (e.toString().contains('network_error')) {
+          throw Exception('Network error. Please check your internet connection.');
+        } else if (e.toString().contains('sign_in_canceled')) {
+          throw Exception('Google Sign-In was cancelled.');
+        }
+      }
+      throw Exception('Google sign-in failed: ${e.toString()}');
     }
-  }
-  */
-
-  Future<models.User?> signInWithGoogle() async {
-    throw Exception(
-        'Google Sign-In temporarily disabled - use email/password authentication');
   }
 
   Future<void> signOut() async {
     try {
-      // await _googleSignIn.signOut();  // Temporarily disabled
+      await _googleSignIn.signOut();
       await _auth.signOut();
     } catch (e) {
       throw Exception('Sign out failed: $e');
@@ -159,6 +162,29 @@ class AuthService {
         return 'This operation is not allowed.';
       default:
         return 'An unknown error occurred.';
+    }
+  }
+
+  String _getGoogleSignInErrorMessage(String errorCode) {
+    switch (errorCode) {
+      case 'account-exists-with-different-credential':
+        return 'An account already exists with the same email but different sign-in credentials.';
+      case 'invalid-credential':
+        return 'The credential received is malformed or has expired.';
+      case 'operation-not-allowed':
+        return 'Google Sign-In is not enabled for this project.';
+      case 'user-disabled':
+        return 'The user account has been disabled by an administrator.';
+      case 'user-not-found':
+        return 'No user found with this Google account.';
+      case 'wrong-password':
+        return 'Wrong password provided for this Google account.';
+      case 'invalid-verification-code':
+        return 'The verification code is invalid.';
+      case 'invalid-verification-id':
+        return 'The verification ID is invalid.';
+      default:
+        return 'Google Sign-In failed. Please try again.';
     }
   }
 }
