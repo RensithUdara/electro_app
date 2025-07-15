@@ -565,30 +565,58 @@ class HelpSupportScreen extends StatelessWidget {
                         // Hide loading dialog
                         LoadingDialogHelper.hideLoadingDialog();
 
-                        // Show result
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(success
-                                  ? 'Thank you for your feedback! Admin has been notified via email.'
-                                  : 'Failed to submit feedback. Please try again.'),
-                              backgroundColor: success ? Colors.green : Colors.red,
-                              duration: const Duration(seconds: 4),
-                            ),
-                          );
+                        // Wait a moment for the loading dialog to fully disappear
+                        await Future.delayed(const Duration(milliseconds: 300));
+
+                        // Show success or error dialog
+                        if (success) {
+                          if (context.mounted) {
+                            LoadingDialogHelper.showSuccessDialog(
+                              context,
+                              title: 'Feedback Sent!',
+                              message: 'Thank you for your feedback!\n\nYour message has been successfully sent to our admin team. We appreciate your input and will review it carefully.',
+                            );
+                          }
+                        } else {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Failed to submit feedback. Please try again.'),
+                                backgroundColor: Colors.red,
+                                duration: Duration(seconds: 4),
+                              ),
+                            );
+                          }
                         }
                       } catch (e) {
                         // Hide loading dialog on error
                         LoadingDialogHelper.hideLoadingDialog();
                         
-                        // Show error message
+                        // Show error dialog
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Error: ${e.toString()}'),
-                              backgroundColor: Colors.red,
-                              duration: const Duration(seconds: 4),
-                            ),
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext dialogContext) {
+                              return AlertDialog(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                title: Row(
+                                  children: [
+                                    Icon(Icons.error, color: Colors.red[600]),
+                                    const SizedBox(width: 10),
+                                    const Text('Error'),
+                                  ],
+                                ),
+                                content: Text('Failed to send feedback: ${e.toString()}'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.of(dialogContext).pop(),
+                                    child: const Text('OK'),
+                                  ),
+                                ],
+                              );
+                            },
                           );
                         }
                       }
@@ -694,30 +722,53 @@ class HelpSupportScreen extends StatelessWidget {
                     // Hide loading dialog
                     LoadingDialogHelper.hideLoadingDialog();
 
-                    // Show result
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(success
-                              ? 'Bug report submitted! Admin has been notified via email.'
-                              : 'Failed to submit bug report. Please try again.'),
-                          backgroundColor: success ? Colors.green : Colors.red,
-                          duration: const Duration(seconds: 4),
-                        ),
+                    // Show success or error dialog
+                    if (success) {
+                      LoadingDialogHelper.showSuccessDialog(
+                        context,
+                        title: 'Bug Report Sent!',
+                        message: 'Thank you for reporting this issue!\n\nYour bug report has been successfully sent to our admin team. We will investigate and work on fixing it as soon as possible.',
                       );
+                    } else {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Failed to submit bug report. Please try again.'),
+                            backgroundColor: Colors.red,
+                            duration: Duration(seconds: 4),
+                          ),
+                        );
+                      }
                     }
                   } catch (e) {
                     // Hide loading dialog on error
                     LoadingDialogHelper.hideLoadingDialog();
                     
-                    // Show error message
+                    // Show error dialog
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Error: ${e.toString()}'),
-                          backgroundColor: Colors.red,
-                          duration: const Duration(seconds: 4),
-                        ),
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext dialogContext) {
+                          return AlertDialog(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            title: Row(
+                              children: [
+                                Icon(Icons.error, color: Colors.red[600]),
+                                const SizedBox(width: 10),
+                                const Text('Error'),
+                              ],
+                            ),
+                            content: Text('Failed to send bug report: ${e.toString()}'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(dialogContext).pop(),
+                                child: const Text('OK'),
+                              ),
+                            ],
+                          );
+                        },
                       );
                     }
                   }
