@@ -443,53 +443,119 @@ class HelpSupportScreen extends StatelessWidget {
 
   void _showFeedbackDialog(BuildContext context) {
     final TextEditingController feedbackController = TextEditingController();
+    String selectedCategory = 'General';
+    final categories = ['General', 'Bug Report', 'Feature Request', 'UI/UX', 'Performance'];
     
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Row(
-            children: [
-              Icon(Icons.rate_review, color: Color(0xFF1E3A8A)),
-              SizedBox(width: 8),
-              Text('Send Feedback'),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('We\'d love to hear your thoughts!'),
-              const SizedBox(height: 16),
-              TextField(
-                controller: feedbackController,
-                maxLines: 4,
-                decoration: const InputDecoration(
-                  hintText: 'Share your feedback here...',
-                  border: OutlineInputBorder(),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: const Row(
+                children: [
+                  Icon(Icons.rate_review, color: Color(0xFF1E3A8A)),
+                  SizedBox(width: 8),
+                  Text('Send Feedback'),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('We\'d love to hear your thoughts!'),
+                    const SizedBox(height: 16),
+                    const Text('Category:'),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      value: selectedCategory,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                      ),
+                      items: categories.map((category) {
+                        return DropdownMenuItem(
+                          value: category,
+                          child: Text(category),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          selectedCategory = value!;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    const Text('Feedback:'),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: feedbackController,
+                      maxLines: 4,
+                      decoration: const InputDecoration(
+                        hintText: 'Share your feedback here...',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                // Here you would typically send the feedback to your backend
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Thank you for your feedback!'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-              },
-              child: const Text('Send'),
-            ),
-          ],
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (feedbackController.text.trim().isNotEmpty) {
+                      Navigator.of(context).pop();
+                      
+                      // Show loading dialog
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (context) => const AlertDialog(
+                          content: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircularProgressIndicator(),
+                              SizedBox(height: 16),
+                              Text('Submitting feedback...'),
+                            ],
+                          ),
+                        ),
+                      );
+
+                      // Get current user ID
+                      final authController = Provider.of<AuthController>(context, listen: false);
+                      final userId = authController.currentUser?.id ?? 'anonymous';
+
+                      // Submit feedback
+                      final success = await HelpSupportService.submitFeedback(
+                        userId: userId,
+                        feedback: feedbackController.text.trim(),
+                        category: selectedCategory,
+                      );
+
+                      // Close loading dialog
+                      Navigator.of(context).pop();
+
+                      // Show result
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(success 
+                            ? 'Thank you for your feedback!' 
+                            : 'Failed to submit feedback. Please try again.'),
+                          backgroundColor: success ? Colors.green : Colors.red,
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text('Send'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -497,6 +563,7 @@ class HelpSupportScreen extends StatelessWidget {
 
   void _showBugReportDialog(BuildContext context) {
     final TextEditingController bugController = TextEditingController();
+    final TextEditingController stepsController = TextEditingController();
     
     showDialog(
       context: context,
@@ -510,20 +577,36 @@ class HelpSupportScreen extends StatelessWidget {
               Text('Report a Bug'),
             ],
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Please describe the issue you encountered:'),
-              const SizedBox(height: 16),
-              TextField(
-                controller: bugController,
-                maxLines: 4,
-                decoration: const InputDecoration(
-                  hintText: 'Describe the bug or issue...',
-                  border: OutlineInputBorder(),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Please describe the issue you encountered:'),
+                const SizedBox(height: 16),
+                const Text('Bug Description:'),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: bugController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    hintText: 'Describe the bug or issue...',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+                const Text('Steps to Reproduce (optional):'),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: stepsController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    hintText: '1. Go to...\n2. Click on...\n3. See error...',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -531,15 +614,51 @@ class HelpSupportScreen extends StatelessWidget {
               child: const Text('Cancel'),
             ),
             ElevatedButton(
-              onPressed: () {
-                // Here you would typically send the bug report to your backend
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Bug report submitted. Thank you!'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
+              onPressed: () async {
+                if (bugController.text.trim().isNotEmpty) {
+                  Navigator.of(context).pop();
+                  
+                  // Show loading dialog
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (context) => const AlertDialog(
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 16),
+                          Text('Submitting bug report...'),
+                        ],
+                      ),
+                    ),
+                  );
+
+                  // Get current user ID
+                  final authController = Provider.of<AuthController>(context, listen: false);
+                  final userId = authController.currentUser?.id ?? 'anonymous';
+
+                  // Submit bug report
+                  final success = await HelpSupportService.submitBugReport(
+                    userId: userId,
+                    description: bugController.text.trim(),
+                    deviceInfo: 'Flutter App', // You could add more device info here
+                    steps: stepsController.text.trim().isNotEmpty ? stepsController.text.trim() : null,
+                  );
+
+                  // Close loading dialog
+                  Navigator.of(context).pop();
+
+                  // Show result
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(success 
+                        ? 'Bug report submitted. Thank you!' 
+                        : 'Failed to submit bug report. Please try again.'),
+                      backgroundColor: success ? Colors.green : Colors.red,
+                    ),
+                  );
+                }
               },
               child: const Text('Submit'),
             ),
@@ -557,12 +676,12 @@ class HelpSupportScreen extends StatelessWidget {
       } else {
         // Copy to clipboard as fallback
         await Clipboard.setData(ClipboardData(text: phoneNumber));
-        print('Phone number copied to clipboard: $phoneNumber');
+        _showInfoSnackBar('Phone number copied to clipboard');
       }
     } catch (e) {
       // Copy to clipboard as fallback
       await Clipboard.setData(ClipboardData(text: phoneNumber));
-      print('Could not launch phone call, copied to clipboard: $phoneNumber');
+      _showInfoSnackBar('Phone number copied to clipboard');
     }
   }
 
@@ -578,12 +697,12 @@ class HelpSupportScreen extends StatelessWidget {
       } else {
         // Copy to clipboard as fallback
         await Clipboard.setData(const ClipboardData(text: 'support@electroapp.com'));
-        print('Email address copied to clipboard');
+        _showInfoSnackBar('Email address copied to clipboard');
       }
     } catch (e) {
       // Copy to clipboard as fallback
       await Clipboard.setData(const ClipboardData(text: 'support@electroapp.com'));
-      print('Could not launch email, copied to clipboard');
+      _showInfoSnackBar('Email address copied to clipboard');
     }
   }
 
@@ -595,12 +714,18 @@ class HelpSupportScreen extends StatelessWidget {
       } else {
         // Copy to clipboard as fallback
         await Clipboard.setData(ClipboardData(text: url));
-        print('Website URL copied to clipboard: $url');
+        _showInfoSnackBar('Website URL copied to clipboard');
       }
     } catch (e) {
       // Copy to clipboard as fallback
       await Clipboard.setData(ClipboardData(text: url));
-      print('Could not launch website, copied to clipboard: $url');
+      _showInfoSnackBar('Website URL copied to clipboard');
     }
+  }
+
+  void _showInfoSnackBar(String message) {
+    // Note: This method needs context, so it should be called from a method that has access to BuildContext
+    // For now, we'll just print the message
+    print(message);
   }
 }
