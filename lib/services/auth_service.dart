@@ -149,18 +149,17 @@ class AuthService {
   // Change password for current user
   Future<void> changePassword(
       String currentPassword, String newPassword) async {
-    try {
-      final user = _auth.currentUser;
-      if (user == null) {
-        throw Exception('No user is currently signed in');
-      }
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('No user is currently signed in');
+    }
 
+    try {
       // Re-authenticate user with current password
       final credential = EmailAuthProvider.credential(
         email: user.email!,
         password: currentPassword,
       );
-
       await user.reauthenticateWithCredential(credential);
 
       // Update password
@@ -169,6 +168,29 @@ class AuthService {
       throw Exception(_getErrorMessage(e.code));
     } catch (e) {
       throw Exception('Password change failed: $e');
+    }
+  }
+
+  Future<void> updateProfile(String name, String phoneNumber) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('No user is currently signed in');
+    }
+
+    try {
+      // Update display name in Firebase Auth
+      await user.updateDisplayName(name);
+
+      // Update user data in Realtime Database
+      await _database.child('users').child(user.uid).update({
+        'name': name,
+        'phoneNumber': phoneNumber,
+        'updatedAt': DateTime.now().millisecondsSinceEpoch,
+      });
+    } on FirebaseAuthException catch (e) {
+      throw Exception(_getErrorMessage(e.code));
+    } catch (e) {
+      throw Exception('Profile update failed: $e');
     }
   }
 
