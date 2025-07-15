@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../controllers/auth_controller.dart';
 import '../utils/logout_utils.dart';
 import 'change_password_screen.dart';
+import 'edit_profile_screen.dart';
 import 'help_support_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -186,12 +187,9 @@ class ProfileScreen extends StatelessWidget {
                         title: 'Edit Profile',
                         subtitle: 'Update your personal information',
                         onTap: () {
-                          // TODO: Navigate to edit profile screen
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content:
-                                  Text('Edit Profile feature coming soon!'),
-                              backgroundColor: Colors.blue,
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const EditProfileScreen(),
                             ),
                           );
                         },
