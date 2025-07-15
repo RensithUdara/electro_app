@@ -122,15 +122,15 @@ class DeviceTile extends StatelessWidget {
               const SizedBox(height: 16),
               
               // Status Indicators
-              Row(
-                children: [
-                  _buildStatusIndicator('Test 1', device.test1),
-                  const SizedBox(width: 12),
-                  _buildStatusIndicator('Test 2', device.test2),
-                  const SizedBox(width: 12),
-                  _buildStatusIndicator('Test 3', device.test3),
-                ],
-              ),
+              // Row(
+              //   children: [
+              //     _buildStatusIndicator('Test 1', device.test1),
+              //     const SizedBox(width: 12),
+              //     _buildStatusIndicator('Test 2', device.test2),
+              //     const SizedBox(width: 12),
+              //     _buildStatusIndicator('Test 3', device.test3),
+              //   ],
+              // ),
               const SizedBox(height: 12),
               
               // Creation Date
