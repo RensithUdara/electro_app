@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'controllers/auth_controller.dart';
 import 'controllers/device_controller.dart';
 import 'controllers/device_data_controller.dart';
+import 'controllers/realtime_data_controller.dart';
 import 'views/splash_screen.dart';
 
 void main() async {
@@ -27,6 +28,7 @@ class MyApp extends StatelessWidget {
         }),
         ChangeNotifierProvider(create: (_) => DeviceController()),
         ChangeNotifierProvider(create: (_) => DeviceDataController()),
+        ChangeNotifierProvider(create: (_) => RealtimeDataController()),
       ],
       child: MaterialApp(
         title: 'ElectroApp',
