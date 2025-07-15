@@ -1,12 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+// import 'package:google_sign_in/google_sign_in.dart';  // Temporarily disabled
 import '../models/user.dart' as models;
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final DatabaseReference _database = FirebaseDatabase.instance.ref();
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  // final GoogleSignIn _googleSignIn = GoogleSignIn();  // Temporarily disabled
   
   // Convert Firebase User to our User model
   models.User? _userFromFirebaseUser(User? user) {
@@ -73,6 +73,8 @@ class AuthService {
     }
   }
 
+  // Temporarily disabled Google Sign-In to resolve build issues
+  /*
   Future<models.User?> signInWithGoogle() async {
     try {
       // Trigger the authentication flow
@@ -109,10 +111,15 @@ class AuthService {
       throw Exception('Google sign-in failed: $e');
     }
   }
+  */
+
+  Future<models.User?> signInWithGoogle() async {
+    throw Exception('Google Sign-In temporarily disabled - use email/password authentication');
+  }
 
   Future<void> signOut() async {
     try {
-      await _googleSignIn.signOut();
+      // await _googleSignIn.signOut();  // Temporarily disabled
       await _auth.signOut();
     } catch (e) {
       throw Exception('Sign out failed: $e');
