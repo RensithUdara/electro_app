@@ -83,7 +83,8 @@ class _LoginScreenState extends State<LoginScreen> {
           MaterialPageRoute(builder: (context) => const HomeScreen()),
         );
       } else if (mounted) {
-        final errorMessage = authController.errorMessage ?? 'Google Sign-In failed';
+        final errorMessage =
+            authController.errorMessage ?? 'Google Sign-In failed';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
@@ -344,7 +345,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Google Sign-In temporarily disabled - use email/password'),
+                            content: Text(
+                                'Google Sign-In temporarily disabled - use email/password'),
                             backgroundColor: Colors.orange,
                           ),
                         );

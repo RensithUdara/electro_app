@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+
 // import 'package:google_sign_in/google_sign_in.dart';  // Temporarily disabled
 import '../models/user.dart' as models;
 
@@ -7,11 +8,11 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final DatabaseReference _database = FirebaseDatabase.instance.ref();
   // final GoogleSignIn _googleSignIn = GoogleSignIn();  // Temporarily disabled
-  
+
   // Convert Firebase User to our User model
   models.User? _userFromFirebaseUser(User? user) {
     if (user == null) return null;
-    
+
     return models.User(
       id: user.uid,
       name: user.displayName ?? 'Unknown User',
@@ -19,17 +20,17 @@ class AuthService {
       phoneNumber: user.phoneNumber ?? '',
     );
   }
-  
+
   // Stream of auth changes
   Stream<models.User?> get authStateChanges {
     return _auth.authStateChanges().map(_userFromFirebaseUser);
   }
-  
+
   // Get current user
   models.User? get currentUser {
     return _userFromFirebaseUser(_auth.currentUser);
   }
-  
+
   Future<models.User?> login(String email, String password) async {
     try {
       UserCredential result = await _auth.signInWithEmailAndPassword(
@@ -44,17 +45,18 @@ class AuthService {
     }
   }
 
-  Future<models.User?> signup(String name, String email, String phoneNumber, String password) async {
+  Future<models.User?> signup(
+      String name, String email, String phoneNumber, String password) async {
     try {
       // Create user with email and password
       UserCredential result = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-      
+
       // Update user profile with name
       await result.user?.updateDisplayName(name);
-      
+
       // Save additional user data to Realtime Database
       if (result.user != null) {
         await _database.child('users').child(result.user!.uid).set({
@@ -64,7 +66,7 @@ class AuthService {
           'createdAt': DateTime.now().millisecondsSinceEpoch,
         });
       }
-      
+
       return _userFromFirebaseUser(result.user);
     } on FirebaseAuthException catch (e) {
       throw Exception(_getErrorMessage(e.code));
@@ -114,7 +116,8 @@ class AuthService {
   */
 
   Future<models.User?> signInWithGoogle() async {
-    throw Exception('Google Sign-In temporarily disabled - use email/password authentication');
+    throw Exception(
+        'Google Sign-In temporarily disabled - use email/password authentication');
   }
 
   Future<void> signOut() async {

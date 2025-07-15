@@ -107,7 +107,7 @@ class AuthController extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    
+
     // Fallback to local storage check for backward compatibility
     final prefs = await SharedPreferences.getInstance();
     final isRemembered = prefs.getBool('remember_me') ?? false;

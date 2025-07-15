@@ -404,7 +404,8 @@ class _SignupScreenState extends State<SignupScreen> {
                           onPressed: () {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Google Sign-In temporarily disabled - use email/password'),
+                                content: Text(
+                                    'Google Sign-In temporarily disabled - use email/password'),
                                 backgroundColor: Colors.orange,
                               ),
                             );
