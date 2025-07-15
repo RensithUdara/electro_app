@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:provider/provider.dart';
+
 import '../controllers/auth_controller.dart';
-import 'login_screen.dart';
 import 'home_screen.dart';
+import 'login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -22,13 +23,13 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize animations
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
-    
+
     _scaleController = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
@@ -60,11 +61,21 @@ class _SplashScreenState extends State<SplashScreen>
 
   Future<void> _navigateToNextScreen() async {
     await Future.delayed(const Duration(seconds: 3));
-    
+
     if (mounted) {
-      final authController = Provider.of<AuthController>(context, listen: false);
-      
-      if (authController.isLoggedIn) {
+      final authController =
+          Provider.of<AuthController>(context, listen: false);
+
+      // Check login state (including persistent sessions and saved credentials)
+      await authController.checkLoginState();
+
+      // Try auto-login if user has valid session
+      bool autoLoginSuccess = false;
+      if (!authController.isLoggedIn) {
+        autoLoginSuccess = await authController.tryAutoLogin();
+      }
+
+      if (authController.isLoggedIn || autoLoginSuccess) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const HomeScreen()),
         );
@@ -140,9 +151,9 @@ class _SplashScreenState extends State<SplashScreen>
                 );
               },
             ),
-            
+
             const SizedBox(height: 30),
-            
+
             // App Name with fade animation
             FadeTransition(
               opacity: _fadeAnimation,
@@ -156,9 +167,9 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 10),
-            
+
             // Tagline with fade animation
             FadeTransition(
               opacity: _fadeAnimation,
@@ -171,9 +182,9 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 60),
-            
+
             // Loading indicator
             FadeTransition(
               opacity: _fadeAnimation,
@@ -182,9 +193,9 @@ class _SplashScreenState extends State<SplashScreen>
                 size: 30.0,
               ),
             ),
-            
+
             const SizedBox(height: 20),
-            
+
             // Loading text
             FadeTransition(
               opacity: _fadeAnimation,
