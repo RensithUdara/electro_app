@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../controllers/auth_controller.dart';
+import '../widgets/google_icon.dart';
 import 'home_screen.dart';
 import 'signup_screen.dart';
 
@@ -58,6 +59,43 @@ class _LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _googleSignIn() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final authController =
+          Provider.of<AuthController>(context, listen: false);
+      final success = await authController.signInWithGoogle();
+
+      if (success && mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      } else if (mounted) {
+        final errorMessage = authController.errorMessage ?? 'Google Sign-In failed';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Google Sign-In error: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -301,40 +339,23 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     const SizedBox(height: 24),
 
-                    // Google Sign-In Button
+                    // Google Sign-In Button (Temporarily Disabled)
                     OutlinedButton.icon(
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Google Sign-In coming soon!'),
+                            content: Text('Google Sign-In temporarily disabled - use email/password'),
                             backgroundColor: Colors.orange,
                           ),
                         );
                       },
-                      icon: Container(
-                        width: 20,
-                        height: 20,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            'G',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF4285F4),
-                            ),
-                          ),
-                        ),
-                      ),
+                      icon: const GoogleIcon(size: 20),
                       label: const Text(
-                        'Continue with Google',
+                        'Continue with Google (Disabled)',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
-                          color: Colors.black87,
+                          color: Colors.grey,
                         ),
                       ),
                       style: OutlinedButton.styleFrom(
