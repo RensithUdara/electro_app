@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 import '../controllers/auth_controller.dart';
 import '../widgets/particle_animation.dart';
@@ -22,7 +22,7 @@ class _SplashScreenState extends State<SplashScreen>
   late AnimationController _slideController;
   late AnimationController _rotateController;
   late AnimationController _textAnimationController;
-  
+
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
   late Animation<Offset> _slideAnimation;
@@ -118,16 +118,16 @@ class _SplashScreenState extends State<SplashScreen>
 
   void _startAnimations() async {
     _fadeController.forward();
-    
+
     await Future.delayed(const Duration(milliseconds: 300));
     _scaleController.forward();
-    
+
     await Future.delayed(const Duration(milliseconds: 200));
     _slideController.forward();
-    
+
     await Future.delayed(const Duration(milliseconds: 400));
     _textAnimationController.forward();
-    
+
     await Future.delayed(const Duration(milliseconds: 100));
     _rotateController.forward();
   }
@@ -192,7 +192,7 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
               ),
             ),
-            
+
             // Main content
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -224,7 +224,8 @@ class _SplashScreenState extends State<SplashScreen>
                                   width: 170,
                                   height: 170,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF1E3A8A).withOpacity(0.1),
+                                    color: const Color(0xFF1E3A8A)
+                                        .withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(35),
                                     border: Border.all(
                                       color: const Color(0xFF1E3A8A),
@@ -266,9 +267,9 @@ class _SplashScreenState extends State<SplashScreen>
                               letterSpacing: 2.0,
                             ),
                           ),
-                          
+
                           const SizedBox(height: 8),
-                          
+
                           // Animated underline
                           AnimatedBuilder(
                             animation: _textAnimationController,
@@ -372,7 +373,8 @@ class _SplashScreenState extends State<SplashScreen>
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: List.generate(3, (index) {
                           final delay = index * 0.3;
-                          final animationValue = (_rotateController.value + delay) % 1.0;
+                          final animationValue =
+                              (_rotateController.value + delay) % 1.0;
                           return Container(
                             margin: const EdgeInsets.symmetric(horizontal: 4),
                             width: 8,

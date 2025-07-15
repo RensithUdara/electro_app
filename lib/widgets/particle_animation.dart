@@ -1,4 +1,5 @@
 import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 class ParticleAnimation extends StatefulWidget {
@@ -106,11 +107,11 @@ class ParticlePainter extends CustomPainter {
     for (final particle in particles) {
       final position = particle.getPosition(animation);
       paint.color = particle.color.withOpacity(particle.opacity * 0.6);
-      
+
       // Add a glow effect
       paint.maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
       canvas.drawCircle(position, particle.radius * 1.5, paint);
-      
+
       // Draw the main particle
       paint.maskFilter = null;
       paint.color = particle.color.withOpacity(particle.opacity);
