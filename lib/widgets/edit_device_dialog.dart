@@ -150,7 +150,7 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
       );
 
       if (success && mounted) {
-        Navigator.of(context).pop();
+        Navigator.of(context).pop(true); // Return true to indicate success
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content:
