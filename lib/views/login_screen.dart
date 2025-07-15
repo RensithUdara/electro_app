@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../controllers/auth_controller.dart';
 import '../widgets/google_icon.dart';
+import 'forgot_password_screen.dart';
 import 'home_screen.dart';
 import 'signup_screen.dart';
 
@@ -146,39 +147,11 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _forgotPassword() async {
-    if (_emailController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter your email address first'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
-
-    try {
-      final authController =
-          Provider.of<AuthController>(context, listen: false);
-      await authController.resetPassword(_emailController.text.trim());
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Password reset email sent! Check your inbox.'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const ForgotPasswordScreen(),
+      ),
+    );
   }
 
   @override
