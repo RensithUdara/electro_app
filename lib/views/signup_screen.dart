@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../controllers/auth_controller.dart';
 import '../widgets/google_icon.dart';
+import 'forgot_password_screen.dart';
 import 'home_screen.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -471,6 +472,26 @@ class _SignupScreenState extends State<SignupScreen> {
                           ),
                         ),
                       ],
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    // Forgot Password Link
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const ForgotPasswordScreen(),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        'Forgot Password?',
+                        style: TextStyle(
+                          color: Color(0xFF1E3A8A),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ),
                   ],
                 ),
