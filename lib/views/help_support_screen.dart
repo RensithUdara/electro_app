@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-import '../services/help_support_service.dart';
 import '../controllers/auth_controller.dart';
+import '../services/help_support_service.dart';
 
 class HelpSupportScreen extends StatelessWidget {
   const HelpSupportScreen({super.key});
@@ -283,10 +283,12 @@ class HelpSupportScreen extends StatelessWidget {
         final faqs = snapshot.data ?? HelpSupportService.getDefaultFAQs();
 
         return Column(
-          children: faqs.map((faq) => _buildFAQItem(
-            question: faq['question']!,
-            answer: faq['answer']!,
-          )).toList(),
+          children: faqs
+              .map((faq) => _buildFAQItem(
+                    question: faq['question']!,
+                    answer: faq['answer']!,
+                  ))
+              .toList(),
         );
       },
     );
@@ -315,6 +317,11 @@ class HelpSupportScreen extends StatelessWidget {
             color: Colors.black87,
           ),
         ),
+        iconColor: const Color(0xFF1E3A8A),
+        collapsedIconColor: Colors.grey,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -328,11 +335,6 @@ class HelpSupportScreen extends StatelessWidget {
             ),
           ),
         ],
-        iconColor: const Color(0xFF1E3A8A),
-        collapsedIconColor: Colors.grey,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
       ),
     );
   }
@@ -419,7 +421,8 @@ class HelpSupportScreen extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Row(
             children: [
               Icon(Icons.live_help, color: Color(0xFF1E3A8A)),
@@ -444,15 +447,22 @@ class HelpSupportScreen extends StatelessWidget {
   void _showFeedbackDialog(BuildContext context) {
     final TextEditingController feedbackController = TextEditingController();
     String selectedCategory = 'General';
-    final categories = ['General', 'Bug Report', 'Feature Request', 'UI/UX', 'Performance'];
-    
+    final categories = [
+      'General',
+      'Bug Report',
+      'Feature Request',
+      'UI/UX',
+      'Performance'
+    ];
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
               title: const Row(
                 children: [
                   Icon(Icons.rate_review, color: Color(0xFF1E3A8A)),
@@ -509,7 +519,7 @@ class HelpSupportScreen extends StatelessWidget {
                   onPressed: () async {
                     if (feedbackController.text.trim().isNotEmpty) {
                       Navigator.of(context).pop();
-                      
+
                       // Show loading dialog
                       showDialog(
                         context: context,
@@ -527,8 +537,10 @@ class HelpSupportScreen extends StatelessWidget {
                       );
 
                       // Get current user ID
-                      final authController = Provider.of<AuthController>(context, listen: false);
-                      final userId = authController.currentUser?.id ?? 'anonymous';
+                      final authController =
+                          Provider.of<AuthController>(context, listen: false);
+                      final userId =
+                          authController.currentUser?.id ?? 'anonymous';
 
                       // Submit feedback
                       final success = await HelpSupportService.submitFeedback(
@@ -543,9 +555,9 @@ class HelpSupportScreen extends StatelessWidget {
                       // Show result
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text(success 
-                            ? 'Thank you for your feedback!' 
-                            : 'Failed to submit feedback. Please try again.'),
+                          content: Text(success
+                              ? 'Thank you for your feedback!'
+                              : 'Failed to submit feedback. Please try again.'),
                           backgroundColor: success ? Colors.green : Colors.red,
                         ),
                       );
@@ -564,12 +576,13 @@ class HelpSupportScreen extends StatelessWidget {
   void _showBugReportDialog(BuildContext context) {
     final TextEditingController bugController = TextEditingController();
     final TextEditingController stepsController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Row(
             children: [
               Icon(Icons.bug_report, color: Colors.red),
@@ -617,7 +630,7 @@ class HelpSupportScreen extends StatelessWidget {
               onPressed: () async {
                 if (bugController.text.trim().isNotEmpty) {
                   Navigator.of(context).pop();
-                  
+
                   // Show loading dialog
                   showDialog(
                     context: context,
@@ -635,15 +648,19 @@ class HelpSupportScreen extends StatelessWidget {
                   );
 
                   // Get current user ID
-                  final authController = Provider.of<AuthController>(context, listen: false);
+                  final authController =
+                      Provider.of<AuthController>(context, listen: false);
                   final userId = authController.currentUser?.id ?? 'anonymous';
 
                   // Submit bug report
                   final success = await HelpSupportService.submitBugReport(
                     userId: userId,
                     description: bugController.text.trim(),
-                    deviceInfo: 'Flutter App', // You could add more device info here
-                    steps: stepsController.text.trim().isNotEmpty ? stepsController.text.trim() : null,
+                    deviceInfo:
+                        'Flutter App', // You could add more device info here
+                    steps: stepsController.text.trim().isNotEmpty
+                        ? stepsController.text.trim()
+                        : null,
                   );
 
                   // Close loading dialog
@@ -652,9 +669,9 @@ class HelpSupportScreen extends StatelessWidget {
                   // Show result
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(success 
-                        ? 'Bug report submitted. Thank you!' 
-                        : 'Failed to submit bug report. Please try again.'),
+                      content: Text(success
+                          ? 'Bug report submitted. Thank you!'
+                          : 'Failed to submit bug report. Please try again.'),
                       backgroundColor: success ? Colors.green : Colors.red,
                     ),
                   );
@@ -696,12 +713,14 @@ class HelpSupportScreen extends StatelessWidget {
         await launchUrl(emailUri);
       } else {
         // Copy to clipboard as fallback
-        await Clipboard.setData(const ClipboardData(text: 'support@electroapp.com'));
+        await Clipboard.setData(
+            const ClipboardData(text: 'support@electroapp.com'));
         _showInfoSnackBar('Email address copied to clipboard');
       }
     } catch (e) {
       // Copy to clipboard as fallback
-      await Clipboard.setData(const ClipboardData(text: 'support@electroapp.com'));
+      await Clipboard.setData(
+          const ClipboardData(text: 'support@electroapp.com'));
       _showInfoSnackBar('Email address copied to clipboard');
     }
   }
