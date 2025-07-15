@@ -4,10 +4,9 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../controllers/auth_controller.dart';
-import '../services/help_support_service.dart';
 import '../services/email_service.dart';
+import '../services/help_support_service.dart';
 import '../utils/loading_dialog_helper.dart';
-import 'email_configuration_screen.dart';
 
 class HelpSupportScreen extends StatelessWidget {
   const HelpSupportScreen({super.key});
@@ -200,21 +199,6 @@ class HelpSupportScreen extends StatelessWidget {
                     description: 'Let us know about any problems',
                     color: Colors.red,
                     onTap: () => _showBugReportDialog(context),
-                  ),
-                  const SizedBox(height: 16),
-
-                  _buildContactCard(
-                    icon: Icons.settings,
-                    title: 'Email Configuration',
-                    subtitle: 'Setup email notifications',
-                    description: 'Configure admin email for feedback & bug reports',
-                    color: Colors.indigo,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const EmailConfigurationScreen(),
-                      ),
-                    ),
                   ),
 
                   const SizedBox(height: 40),
@@ -543,18 +527,19 @@ class HelpSupportScreen extends StatelessWidget {
                       Navigator.of(dialogContext).pop();
 
                       // Show loading dialog using screen context
-                      LoadingDialogHelper.showLoadingDialog(screenContext, 
+                      LoadingDialogHelper.showLoadingDialog(screenContext,
                           message: 'Submitting feedback...');
 
                       try {
                         // Get current user information
-                        final authController =
-                            Provider.of<AuthController>(screenContext, listen: false);
+                        final authController = Provider.of<AuthController>(
+                            screenContext,
+                            listen: false);
                         final userId =
                             authController.currentUser?.id ?? 'anonymous';
-                        final userEmail = 
-                            authController.currentUser?.email ?? 'unknown@email.com';
-                        final userName = 
+                        final userEmail = authController.currentUser?.email ??
+                            'unknown@email.com';
+                        final userName =
                             authController.currentUser?.name ?? 'Unknown User';
 
                         // Submit feedback with email notification
@@ -577,12 +562,14 @@ class HelpSupportScreen extends StatelessWidget {
                           LoadingDialogHelper.showSuccessDialog(
                             screenContext,
                             title: 'Feedback Sent!',
-                            message: 'Thank you for your feedback!\n\nYour message has been successfully sent to our admin team. We appreciate your input and will review it carefully.',
+                            message:
+                                'Thank you for your feedback!\n\nYour message has been successfully sent to our admin team. We appreciate your input and will review it carefully.',
                           );
                         } else {
                           ScaffoldMessenger.of(screenContext).showSnackBar(
                             const SnackBar(
-                              content: Text('Failed to submit feedback. Please try again.'),
+                              content: Text(
+                                  'Failed to submit feedback. Please try again.'),
                               backgroundColor: Colors.red,
                               duration: Duration(seconds: 4),
                             ),
@@ -591,7 +578,7 @@ class HelpSupportScreen extends StatelessWidget {
                       } catch (e) {
                         // Hide loading dialog on error
                         LoadingDialogHelper.hideLoadingDialog();
-                        
+
                         // Show error dialog using screen context
                         showDialog(
                           context: screenContext,
@@ -607,10 +594,12 @@ class HelpSupportScreen extends StatelessWidget {
                                   const Text('Error'),
                                 ],
                               ),
-                              content: Text('Failed to send feedback: ${e.toString()}'),
+                              content: Text(
+                                  'Failed to send feedback: ${e.toString()}'),
                               actions: [
                                 TextButton(
-                                  onPressed: () => Navigator.of(errorDialogContext).pop(),
+                                  onPressed: () =>
+                                      Navigator.of(errorDialogContext).pop(),
                                   child: const Text('OK'),
                                 ),
                               ],
@@ -693,17 +682,19 @@ class HelpSupportScreen extends StatelessWidget {
                   Navigator.of(dialogContext).pop();
 
                   // Show loading dialog using screen context
-                  LoadingDialogHelper.showLoadingDialog(screenContext, 
+                  LoadingDialogHelper.showLoadingDialog(screenContext,
                       message: 'Submitting bug report...');
 
                   try {
                     // Get current user information
-                    final authController =
-                        Provider.of<AuthController>(screenContext, listen: false);
-                    final userId = authController.currentUser?.id ?? 'anonymous';
-                    final userEmail = 
-                        authController.currentUser?.email ?? 'unknown@email.com';
-                    final userName = 
+                    final authController = Provider.of<AuthController>(
+                        screenContext,
+                        listen: false);
+                    final userId =
+                        authController.currentUser?.id ?? 'anonymous';
+                    final userEmail = authController.currentUser?.email ??
+                        'unknown@email.com';
+                    final userName =
                         authController.currentUser?.name ?? 'Unknown User';
 
                     // Get device information
@@ -732,12 +723,14 @@ class HelpSupportScreen extends StatelessWidget {
                       LoadingDialogHelper.showSuccessDialog(
                         screenContext,
                         title: 'Bug Report Sent!',
-                        message: 'Thank you for reporting this issue!\n\nYour bug report has been successfully sent to our admin team. We will investigate and work on fixing it as soon as possible.',
+                        message:
+                            'Thank you for reporting this issue!\n\nYour bug report has been successfully sent to our admin team. We will investigate and work on fixing it as soon as possible.',
                       );
                     } else {
                       ScaffoldMessenger.of(screenContext).showSnackBar(
                         const SnackBar(
-                          content: Text('Failed to submit bug report. Please try again.'),
+                          content: Text(
+                              'Failed to submit bug report. Please try again.'),
                           backgroundColor: Colors.red,
                           duration: Duration(seconds: 4),
                         ),
@@ -746,7 +739,7 @@ class HelpSupportScreen extends StatelessWidget {
                   } catch (e) {
                     // Hide loading dialog on error
                     LoadingDialogHelper.hideLoadingDialog();
-                    
+
                     // Show error dialog using screen context
                     showDialog(
                       context: screenContext,
@@ -762,10 +755,12 @@ class HelpSupportScreen extends StatelessWidget {
                               const Text('Error'),
                             ],
                           ),
-                          content: Text('Failed to send bug report: ${e.toString()}'),
+                          content: Text(
+                              'Failed to send bug report: ${e.toString()}'),
                           actions: [
                             TextButton(
-                              onPressed: () => Navigator.of(errorDialogContext).pop(),
+                              onPressed: () =>
+                                  Navigator.of(errorDialogContext).pop(),
                               child: const Text('OK'),
                             ),
                           ],
