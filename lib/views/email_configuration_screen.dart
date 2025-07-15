@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/email_service.dart';
+import '../utils/loading_dialog_helper.dart';
 
 class EmailConfigurationScreen extends StatefulWidget {
   const EmailConfigurationScreen({super.key});
@@ -29,6 +30,9 @@ class _EmailConfigurationScreenState extends State<EmailConfigurationScreen> {
       _isLoading = true;
     });
 
+    // Show loading dialog
+    LoadingDialogHelper.showLoadingDialog(context, message: 'Sending test email...');
+
     try {
       final success = await EmailService.sendFeedbackEmail(
         userEmail: 'test@example.com',
@@ -38,18 +42,30 @@ class _EmailConfigurationScreenState extends State<EmailConfigurationScreen> {
         userId: 'test-user-123',
       );
 
+      // Hide loading dialog
+      LoadingDialogHelper.hideLoadingDialog();
+
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(success
-                ? 'Test email sent successfully! Check admin inbox.'
-                : 'Failed to send test email. Please check configuration.'),
-            backgroundColor: success ? Colors.green : Colors.red,
-            duration: const Duration(seconds: 4),
-          ),
-        );
+        if (success) {
+          LoadingDialogHelper.showSuccessDialog(
+            context,
+            title: 'Test Email Sent!',
+            message: 'The test email was sent successfully!\n\nPlease check the admin inbox to confirm receipt.',
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to send test email. Please check configuration.'),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 4),
+            ),
+          );
+        }
       }
     } catch (e) {
+      // Hide loading dialog
+      LoadingDialogHelper.hideLoadingDialog();
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
