@@ -1,146 +1,71 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'email_service.dart';
 
 class HelpSupportService {
-  static const String _baseUrl = 'https://api.electroapp.com'; // Replace with actual API URL
-  
-  // Submit feedback to backend
+  // Submit feedback via email to admin
   static Future<bool> submitFeedback({
     required String userId,
     required String feedback,
     required String category,
+    String? userEmail,
+    String? userName,
   }) async {
     try {
-      final response = await http.post(
-        Uri.parse('$_baseUrl/support/feedback'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'userId': userId,
-          'feedback': feedback,
-          'category': category,
-          'timestamp': DateTime.now().toIso8601String(),
-        }),
-      );
-
-      return response.statusCode == 200;
+      // Send email to admin
+      if (EmailService.isConfigured() && userEmail != null && userName != null) {
+        return await EmailService.sendFeedbackEmail(
+          userEmail: userEmail,
+          userName: userName,
+          feedback: feedback,
+          category: category,
+          userId: userId,
+        );
+      } else {
+        print('Email service not configured or user information missing');
+        return false;
+      }
     } catch (e) {
       print('Error submitting feedback: $e');
       return false;
     }
   }
 
-  // Submit bug report to backend
+  // Submit bug report via email to admin
   static Future<bool> submitBugReport({
     required String userId,
     required String description,
     required String deviceInfo,
     String? steps,
+    String? userEmail,
+    String? userName,
   }) async {
     try {
-      final response = await http.post(
-        Uri.parse('$_baseUrl/support/bug-report'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'userId': userId,
-          'description': description,
-          'deviceInfo': deviceInfo,
-          'steps': steps,
-          'timestamp': DateTime.now().toIso8601String(),
-        }),
-      );
-
-      return response.statusCode == 200;
+      // Send email to admin
+      if (EmailService.isConfigured() && userEmail != null && userName != null) {
+        return await EmailService.sendBugReportEmail(
+          userEmail: userEmail,
+          userName: userName,
+          bugDescription: description,
+          stepsToReproduce: steps ?? 'No steps provided',
+          deviceInfo: deviceInfo,
+          userId: userId,
+        );
+      } else {
+        print('Email service not configured or user information missing');
+        return false;
+      }
     } catch (e) {
       print('Error submitting bug report: $e');
       return false;
     }
   }
 
-  // Get FAQ data from backend
+  // Get FAQ data (static list since no backend API)
   static Future<List<Map<String, String>>> getFAQs() async {
-    try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/support/faqs'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
-        return data.map((item) => {
-          'question': item['question'].toString(),
-          'answer': item['answer'].toString(),
-        }).toList();
-      }
-    } catch (e) {
-      print('Error fetching FAQs: $e');
-    }
-
-    // Return default FAQs if API fails
+    // Return default FAQs since no API is available
     return getDefaultFAQs();
   }
 
-  // Create support ticket
-  static Future<String?> createSupportTicket({
-    required String userId,
-    required String subject,
-    required String description,
-    required String priority,
-  }) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$_baseUrl/support/tickets'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'userId': userId,
-          'subject': subject,
-          'description': description,
-          'priority': priority,
-          'status': 'open',
-          'timestamp': DateTime.now().toIso8601String(),
-        }),
-      );
-
-      if (response.statusCode == 201) {
-        final data = jsonDecode(response.body);
-        return data['ticketId'];
-      }
-    } catch (e) {
-      print('Error creating support ticket: $e');
-    }
-
-    return null;
-  }
-
-  // Get support ticket history for user
-  static Future<List<Map<String, dynamic>>> getSupportTickets(String userId) async {
-    try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/support/tickets/$userId'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
-        return data.cast<Map<String, dynamic>>();
-      }
-    } catch (e) {
-      print('Error fetching support tickets: $e');
-    }
-
-    return [];
-  }
-
-  // Default FAQs (fallback when API is not available)
+  // Default FAQs (static content)
   static List<Map<String, String>> getDefaultFAQs() {
     return [
       {
