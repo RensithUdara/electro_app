@@ -1,4 +1,5 @@
 import 'package:firebase_database/firebase_database.dart';
+
 import '../models/device.dart';
 
 class RealtimeDataService {
@@ -32,117 +33,184 @@ class RealtimeDataService {
 
   // Get filtered data based on device configuration
   Map<String, dynamic> getFilteredData(
-      Map<String, dynamic> realtimeData, Device device) {
+      Map<String, dynamic>? realtimeData, Device device) {
     Map<String, dynamic> filteredData = {};
 
-    // Check each measurement parameter and include only if enabled
-    if (device.averagePF && realtimeData.containsKey('Average_PF')) {
-      filteredData['Average_PF'] = realtimeData['Average_PF'];
+    // Check each measurement parameter and include if enabled
+    // Use actual data if available, otherwise use "--" placeholder
+    if (device.averagePF) {
+      filteredData['Average_PF'] =
+          realtimeData?.containsKey('Average_PF') == true
+              ? realtimeData!['Average_PF']
+              : '--';
     }
-    if (device.avgI && realtimeData.containsKey('Avg_I')) {
-      filteredData['Avg_I'] = realtimeData['Avg_I'];
+    if (device.avgI) {
+      filteredData['Avg_I'] = realtimeData?.containsKey('Avg_I') == true
+          ? realtimeData!['Avg_I']
+          : '--';
     }
-    if (device.avgVLL && realtimeData.containsKey('Avg_V_LL')) {
-      filteredData['Avg_V_LL'] = realtimeData['Avg_V_LL'];
+    if (device.avgVLL) {
+      filteredData['Avg_V_LL'] = realtimeData?.containsKey('Avg_V_LL') == true
+          ? realtimeData!['Avg_V_LL']
+          : '--';
     }
-    if (device.avgVLN && realtimeData.containsKey('Avg_V_LN')) {
-      filteredData['Avg_V_LN'] = realtimeData['Avg_V_LN'];
+    if (device.avgVLN) {
+      filteredData['Avg_V_LN'] = realtimeData?.containsKey('Avg_V_LN') == true
+          ? realtimeData!['Avg_V_LN']
+          : '--';
     }
-    if (device.frequency && realtimeData.containsKey('Frequency')) {
-      filteredData['Frequency'] = realtimeData['Frequency'];
+    if (device.frequency) {
+      filteredData['Frequency'] = realtimeData?.containsKey('Frequency') == true
+          ? realtimeData!['Frequency']
+          : '--';
     }
 
     // Current measurements
-    if (device.i1 && realtimeData.containsKey('I1')) {
-      filteredData['I1'] = realtimeData['I1'];
+    if (device.i1) {
+      filteredData['I1'] =
+          realtimeData?.containsKey('I1') == true ? realtimeData!['I1'] : '--';
     }
-    if (device.i2 && realtimeData.containsKey('I2')) {
-      filteredData['I2'] = realtimeData['I2'];
+    if (device.i2) {
+      filteredData['I2'] =
+          realtimeData?.containsKey('I2') == true ? realtimeData!['I2'] : '--';
     }
-    if (device.i3 && realtimeData.containsKey('I3')) {
-      filteredData['I3'] = realtimeData['I3'];
+    if (device.i3) {
+      filteredData['I3'] =
+          realtimeData?.containsKey('I3') == true ? realtimeData!['I3'] : '--';
     }
 
     // Power Factor per phase
-    if (device.pf1 && realtimeData.containsKey('PF1')) {
-      filteredData['PF1'] = realtimeData['PF1'];
+    if (device.pf1) {
+      filteredData['PF1'] = realtimeData?.containsKey('PF1') == true
+          ? realtimeData!['PF1']
+          : '--';
     }
-    if (device.pf2 && realtimeData.containsKey('PF2')) {
-      filteredData['PF2'] = realtimeData['PF2'];
+    if (device.pf2) {
+      filteredData['PF2'] = realtimeData?.containsKey('PF2') == true
+          ? realtimeData!['PF2']
+          : '--';
     }
-    if (device.pf3 && realtimeData.containsKey('PF3')) {
-      filteredData['PF3'] = realtimeData['PF3'];
+    if (device.pf3) {
+      filteredData['PF3'] = realtimeData?.containsKey('PF3') == true
+          ? realtimeData!['PF3']
+          : '--';
     }
 
     // Total Power measurements
-    if (device.totalKVA && realtimeData.containsKey('Total_kVA')) {
-      filteredData['Total_kVA'] = realtimeData['Total_kVA'];
+    if (device.totalKVA) {
+      filteredData['Total_kVA'] = realtimeData?.containsKey('Total_kVA') == true
+          ? realtimeData!['Total_kVA']
+          : '--';
     }
-    if (device.totalKVAR && realtimeData.containsKey('Total_kVAR')) {
-      filteredData['Total_kVAR'] = realtimeData['Total_kVAR'];
+    if (device.totalKVAR) {
+      filteredData['Total_kVAR'] =
+          realtimeData?.containsKey('Total_kVAR') == true
+              ? realtimeData!['Total_kVAR']
+              : '--';
     }
-    if (device.totalKW && realtimeData.containsKey('Total_kW')) {
-      filteredData['Total_kW'] = realtimeData['Total_kW'];
+    if (device.totalKW) {
+      filteredData['Total_kW'] = realtimeData?.containsKey('Total_kW') == true
+          ? realtimeData!['Total_kW']
+          : '--';
     }
 
     // Energy measurements
-    if (device.totalNetKVAh && realtimeData.containsKey('Total_net_kVAh')) {
-      filteredData['Total_net_kVAh'] = realtimeData['Total_net_kVAh'];
+    if (device.totalNetKVAh) {
+      filteredData['Total_net_kVAh'] =
+          realtimeData?.containsKey('Total_net_kVAh') == true
+              ? realtimeData!['Total_net_kVAh']
+              : '--';
     }
-    if (device.totalNetKVArh && realtimeData.containsKey('Total_net_kVArh')) {
-      filteredData['Total_net_kVArh'] = realtimeData['Total_net_kVArh'];
+    if (device.totalNetKVArh) {
+      filteredData['Total_net_kVArh'] =
+          realtimeData?.containsKey('Total_net_kVArh') == true
+              ? realtimeData!['Total_net_kVArh']
+              : '--';
     }
-    if (device.totalNetKWh && realtimeData.containsKey('Total_net_kWh')) {
-      filteredData['Total_net_kWh'] = realtimeData['Total_net_kWh'];
+    if (device.totalNetKWh) {
+      filteredData['Total_net_kWh'] =
+          realtimeData?.containsKey('Total_net_kWh') == true
+              ? realtimeData!['Total_net_kWh']
+              : '--';
     }
 
     // Voltage measurements
-    if (device.v12 && realtimeData.containsKey('V12')) {
-      filteredData['V12'] = realtimeData['V12'];
+    if (device.v12) {
+      filteredData['V12'] = realtimeData?.containsKey('V12') == true
+          ? realtimeData!['V12']
+          : '--';
     }
-    if (device.v1N && realtimeData.containsKey('V1N')) {
-      filteredData['V1N'] = realtimeData['V1N'];
+    if (device.v1N) {
+      filteredData['V1N'] = realtimeData?.containsKey('V1N') == true
+          ? realtimeData!['V1N']
+          : '--';
     }
-    if (device.v23 && realtimeData.containsKey('V23')) {
-      filteredData['V23'] = realtimeData['V23'];
+    if (device.v23) {
+      filteredData['V23'] = realtimeData?.containsKey('V23') == true
+          ? realtimeData!['V23']
+          : '--';
     }
-    if (device.v2N && realtimeData.containsKey('V2N')) {
-      filteredData['V2N'] = realtimeData['V2N'];
+    if (device.v2N) {
+      filteredData['V2N'] = realtimeData?.containsKey('V2N') == true
+          ? realtimeData!['V2N']
+          : '--';
     }
-    if (device.v31 && realtimeData.containsKey('V31')) {
-      filteredData['V31'] = realtimeData['V31'];
+    if (device.v31) {
+      filteredData['V31'] = realtimeData?.containsKey('V31') == true
+          ? realtimeData!['V31']
+          : '--';
     }
-    if (device.v3N && realtimeData.containsKey('V3N')) {
-      filteredData['V3N'] = realtimeData['V3N'];
+    if (device.v3N) {
+      filteredData['V3N'] = realtimeData?.containsKey('V3N') == true
+          ? realtimeData!['V3N']
+          : '--';
     }
 
     // Per-phase power measurements
-    if (device.kvarL1 && realtimeData.containsKey('kVAR_L1')) {
-      filteredData['kVAR_L1'] = realtimeData['kVAR_L1'];
+    if (device.kvarL1) {
+      filteredData['kVAR_L1'] = realtimeData?.containsKey('kVAR_L1') == true
+          ? realtimeData!['kVAR_L1']
+          : '--';
     }
-    if (device.kvarL2 && realtimeData.containsKey('kVAR_L2')) {
-      filteredData['kVAR_L2'] = realtimeData['kVAR_L2'];
+    if (device.kvarL2) {
+      filteredData['kVAR_L2'] = realtimeData?.containsKey('kVAR_L2') == true
+          ? realtimeData!['kVAR_L2']
+          : '--';
     }
-    if (device.kvarL3 && realtimeData.containsKey('kVAR_L3')) {
-      filteredData['kVAR_L3'] = realtimeData['kVAR_L3'];
+    if (device.kvarL3) {
+      filteredData['kVAR_L3'] = realtimeData?.containsKey('kVAR_L3') == true
+          ? realtimeData!['kVAR_L3']
+          : '--';
     }
-    if (device.kvaL1 && realtimeData.containsKey('kVA_L1')) {
-      filteredData['kVA_L1'] = realtimeData['kVA_L1'];
+    if (device.kvaL1) {
+      filteredData['kVA_L1'] = realtimeData?.containsKey('kVA_L1') == true
+          ? realtimeData!['kVA_L1']
+          : '--';
     }
-    if (device.kvaL2 && realtimeData.containsKey('kVA_L2')) {
-      filteredData['kVA_L2'] = realtimeData['kVA_L2'];
+    if (device.kvaL2) {
+      filteredData['kVA_L2'] = realtimeData?.containsKey('kVA_L2') == true
+          ? realtimeData!['kVA_L2']
+          : '--';
     }
-    if (device.kvaL3 && realtimeData.containsKey('kVA_L3')) {
-      filteredData['kVA_L3'] = realtimeData['kVA_L3'];
+    if (device.kvaL3) {
+      filteredData['kVA_L3'] = realtimeData?.containsKey('kVA_L3') == true
+          ? realtimeData!['kVA_L3']
+          : '--';
     }
-    if (device.kwL1 && realtimeData.containsKey('kW_L1')) {
-      filteredData['kW_L1'] = realtimeData['kW_L1'];
+    if (device.kwL1) {
+      filteredData['kW_L1'] = realtimeData?.containsKey('kW_L1') == true
+          ? realtimeData!['kW_L1']
+          : '--';
     }
-    if (device.kwL2 && realtimeData.containsKey('kW_L2')) {
-      filteredData['kW_L2'] = realtimeData['kW_L2'];
+    if (device.kwL2) {
+      filteredData['kW_L2'] = realtimeData?.containsKey('kW_L2') == true
+          ? realtimeData!['kW_L2']
+          : '--';
     }
-    if (device.kwL3 && realtimeData.containsKey('kW_L3')) {
-      filteredData['kW_L3'] = realtimeData['kW_L3'];
+    if (device.kwL3) {
+      filteredData['kW_L3'] = realtimeData?.containsKey('kW_L3') == true
+          ? realtimeData!['kW_L3']
+          : '--';
     }
 
     return filteredData;
