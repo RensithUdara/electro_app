@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+
 import '../models/user.dart' as models;
 
 class AuthService {
@@ -78,13 +79,14 @@ class AuthService {
     try {
       // Trigger the authentication flow
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      
+
       if (googleUser == null) {
         return null; // User cancelled the sign-in
       }
 
       // Obtain the auth details from the request
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
 
       // Create a new credential
       final credential = GoogleAuthProvider.credential(
@@ -94,7 +96,7 @@ class AuthService {
 
       // Sign in to Firebase with the Google credential
       UserCredential result = await _auth.signInWithCredential(credential);
-      
+
       // Save user data to database if it's a new user
       if (result.additionalUserInfo?.isNewUser == true && result.user != null) {
         await _database.child('users').child(result.user!.uid).set({
@@ -104,7 +106,7 @@ class AuthService {
           'createdAt': DateTime.now().millisecondsSinceEpoch,
         });
       }
-      
+
       return _userFromFirebaseUser(result.user);
     } on FirebaseAuthException catch (e) {
       throw Exception(_getGoogleSignInErrorMessage(e.code));
@@ -112,9 +114,11 @@ class AuthService {
       // Handle platform-specific errors
       if (e.toString().contains('PlatformException')) {
         if (e.toString().contains('sign_in_failed')) {
-          throw Exception('Google Sign-In configuration error. Please check Firebase setup.');
+          throw Exception(
+              'Google Sign-In configuration error. Please check Firebase setup.');
         } else if (e.toString().contains('network_error')) {
-          throw Exception('Network error. Please check your internet connection.');
+          throw Exception(
+              'Network error. Please check your internet connection.');
         } else if (e.toString().contains('sign_in_canceled')) {
           throw Exception('Google Sign-In was cancelled.');
         }
@@ -142,16 +146,42 @@ class AuthService {
     }
   }
 
+  // Change password for current user
+  Future<void> changePassword(
+      String currentPassword, String newPassword) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        throw Exception('No user is currently signed in');
+      }
+
+      // Re-authenticate user with current password
+      final credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: currentPassword,
+      );
+
+      await user.reauthenticateWithCredential(credential);
+
+      // Update password
+      await user.updatePassword(newPassword);
+    } on FirebaseAuthException catch (e) {
+      throw Exception(_getErrorMessage(e.code));
+    } catch (e) {
+      throw Exception('Password change failed: $e');
+    }
+  }
+
   String _getErrorMessage(String errorCode) {
     switch (errorCode) {
       case 'user-not-found':
         return 'No user found with this email address.';
       case 'wrong-password':
-        return 'Wrong password provided.';
+        return 'Current password is incorrect.';
       case 'email-already-in-use':
         return 'An account already exists with this email address.';
       case 'weak-password':
-        return 'The password provided is too weak.';
+        return 'The password is too weak. Please use at least 6 characters.';
       case 'invalid-email':
         return 'The email address is not valid.';
       case 'user-disabled':
@@ -160,6 +190,8 @@ class AuthService {
         return 'Too many requests. Try again later.';
       case 'operation-not-allowed':
         return 'This operation is not allowed.';
+      case 'requires-recent-login':
+        return 'Please log out and log in again before changing your password.';
       default:
         return 'An unknown error occurred.';
     }
