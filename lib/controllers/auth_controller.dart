@@ -330,4 +330,41 @@ class AuthController extends ChangeNotifier {
       return false;
     }
   }
+
+  Future<bool> updateProfile(String name, String phoneNumber) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _authService.updateProfile(name, phoneNumber);
+      
+      // Update the current user object
+      if (_currentUser != null) {
+        _currentUser = User(
+          id: _currentUser!.id,
+          name: name,
+          email: _currentUser!.email,
+          phoneNumber: phoneNumber,
+        );
+
+        // Update local database session
+        await _localDb.saveUserSession(
+          userId: _currentUser!.id,
+          email: _currentUser!.email,
+          name: _currentUser!.name,
+          phoneNumber: _currentUser!.phoneNumber,
+        );
+      }
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      notifyListeners();
+      return false;
+    }
+  }
 }
