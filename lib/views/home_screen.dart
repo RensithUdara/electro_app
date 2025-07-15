@@ -5,6 +5,7 @@ import '../controllers/device_controller.dart';
 import '../models/device.dart';
 import 'device_detail_screen.dart';
 import 'login_screen.dart';
+import 'profile_screen.dart';
 import '../widgets/add_device_dialog.dart';
 import '../widgets/device_tile.dart';
 
@@ -64,7 +65,11 @@ class _HomeScreenState extends State<HomeScreen> {
               return PopupMenuButton<String>(
                 icon: const Icon(Icons.account_circle, color: Colors.white),
                 onSelected: (value) {
-                  if (value == 'logout') {
+                  if (value == 'profile') {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                    );
+                  } else if (value == 'logout') {
                     _logout();
                   }
                 },
@@ -75,7 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         const Icon(Icons.person, size: 18),
                         const SizedBox(width: 8),
-                        Text(authController.currentUser?.name ?? 'User'),
+                        Text(authController.currentUser?.name ?? 'Profile'),
                       ],
                     ),
                   ),
