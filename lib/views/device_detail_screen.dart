@@ -115,15 +115,15 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                Row(
-                  children: [
-                    _buildStatusChip('Test 1', widget.device.test1),
-                    const SizedBox(width: 8),
-                    _buildStatusChip('Test 2', widget.device.test2),
-                    const SizedBox(width: 8),
-                    _buildStatusChip('Test 3', widget.device.test3),
-                  ],
-                ),
+                // Row(
+                //   children: [
+                //     _buildStatusChip('Test 1', widget.device.test1),
+                //     const SizedBox(width: 8),
+                //     _buildStatusChip('Test 2', widget.device.test2),
+                //     const SizedBox(width: 8),
+                //     _buildStatusChip('Test 3', widget.device.test3),
+                //   ],
+                // ),
               ],
             ),
           ),
