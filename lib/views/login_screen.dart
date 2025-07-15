@@ -23,6 +23,38 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
 
   @override
+  void initState() {
+    super.initState();
+    _loadSavedCredentials();
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    final authController = Provider.of<AuthController>(context, listen: false);
+    await authController.loadSavedCredentials();
+
+    setState(() {
+      _emailController.text = authController.savedEmail;
+      _rememberMe = authController.rememberMe;
+
+      // Show a subtle notification if credentials were loaded
+      if (authController.savedEmail.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                    'Welcome back! Email loaded: ${authController.savedEmail}'),
+                backgroundColor: Colors.green.shade600,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          }
+        });
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
@@ -37,9 +69,14 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final authController =
           Provider.of<AuthController>(context, listen: false);
+
+      // Set remember me preference in controller
+      authController.setRememberMe(_rememberMe);
+
       final success = await authController.login(
         _emailController.text.trim(),
         _passwordController.text,
+        rememberMe: _rememberMe,
       );
 
       if (success && mounted) {
@@ -104,6 +141,42 @@ class _LoginScreenState extends State<LoginScreen> {
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _forgotPassword() async {
+    if (_emailController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter your email address first'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    try {
+      final authController =
+          Provider.of<AuthController>(context, listen: false);
+      await authController.resetPassword(_emailController.text.trim());
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Password reset email sent! Check your inbox.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
@@ -259,24 +332,25 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         Checkbox(
                           value: _rememberMe,
-                          onChanged: (value) {
+                          onChanged: (value) async {
                             setState(() {
                               _rememberMe = value ?? false;
                             });
+
+                            // If unchecked, clear saved credentials
+                            if (!_rememberMe) {
+                              final authController =
+                                  Provider.of<AuthController>(context,
+                                      listen: false);
+                              await authController.clearSavedCredentials();
+                            }
                           },
                           activeColor: const Color(0xFF1E3A8A),
                         ),
                         const Text('Remember me'),
                         const Spacer(),
                         TextButton(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                    'Forgot password feature coming soon!'),
-                              ),
-                            );
-                          },
+                          onPressed: _forgotPassword,
                           child: const Text(
                             'Forgot Password?',
                             style: TextStyle(color: Color(0xFF1E3A8A)),
@@ -344,7 +418,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     Consumer<AuthController>(
                       builder: (context, authController, child) {
                         return OutlinedButton.icon(
-                          onPressed: authController.isLoading ? null : _googleSignIn,
+                          onPressed:
+                              authController.isLoading ? null : _googleSignIn,
                           icon: const GoogleIcon(size: 20),
                           label: const Text(
                             'Continue with Google',
