@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../controllers/auth_controller.dart';
 import '../utils/logout_utils.dart';
+import 'change_password_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -201,12 +202,10 @@ class ProfileScreen extends StatelessWidget {
                         title: 'Change Password',
                         subtitle: 'Update your account password',
                         onTap: () {
-                          // TODO: Navigate to change password screen
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content:
-                                  Text('Change Password feature coming soon!'),
-                              backgroundColor: Colors.orange,
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const ChangePasswordScreen(),
                             ),
                           );
                         },
