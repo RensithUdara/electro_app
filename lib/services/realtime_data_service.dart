@@ -11,11 +11,7 @@ class RealtimeDataService {
 
   // Get real-time data stream for a specific device
   Stream<Map<String, dynamic>?> getDeviceRealtimeData(String deviceId) {
-    return _database
-        .child(deviceId)
-        .child('instant')
-        .onValue
-        .map((event) {
+    return _database.child(deviceId).child('instant').onValue.map((event) {
       if (event.snapshot.exists && event.snapshot.value != null) {
         return Map<String, dynamic>.from(event.snapshot.value as Map);
       }
@@ -35,7 +31,8 @@ class RealtimeDataService {
   }
 
   // Get filtered data based on device configuration
-  Map<String, dynamic> getFilteredData(Map<String, dynamic> realtimeData, Device device) {
+  Map<String, dynamic> getFilteredData(
+      Map<String, dynamic> realtimeData, Device device) {
     Map<String, dynamic> filteredData = {};
 
     // Check each measurement parameter and include only if enabled
@@ -54,7 +51,7 @@ class RealtimeDataService {
     if (device.frequency && realtimeData.containsKey('Frequency')) {
       filteredData['Frequency'] = realtimeData['Frequency'];
     }
-    
+
     // Current measurements
     if (device.i1 && realtimeData.containsKey('I1')) {
       filteredData['I1'] = realtimeData['I1'];
@@ -65,7 +62,7 @@ class RealtimeDataService {
     if (device.i3 && realtimeData.containsKey('I3')) {
       filteredData['I3'] = realtimeData['I3'];
     }
-    
+
     // Power Factor per phase
     if (device.pf1 && realtimeData.containsKey('PF1')) {
       filteredData['PF1'] = realtimeData['PF1'];
@@ -76,7 +73,7 @@ class RealtimeDataService {
     if (device.pf3 && realtimeData.containsKey('PF3')) {
       filteredData['PF3'] = realtimeData['PF3'];
     }
-    
+
     // Total Power measurements
     if (device.totalKVA && realtimeData.containsKey('Total_kVA')) {
       filteredData['Total_kVA'] = realtimeData['Total_kVA'];
@@ -87,7 +84,7 @@ class RealtimeDataService {
     if (device.totalKW && realtimeData.containsKey('Total_kW')) {
       filteredData['Total_kW'] = realtimeData['Total_kW'];
     }
-    
+
     // Energy measurements
     if (device.totalNetKVAh && realtimeData.containsKey('Total_net_kVAh')) {
       filteredData['Total_net_kVAh'] = realtimeData['Total_net_kVAh'];
@@ -98,7 +95,7 @@ class RealtimeDataService {
     if (device.totalNetKWh && realtimeData.containsKey('Total_net_kWh')) {
       filteredData['Total_net_kWh'] = realtimeData['Total_net_kWh'];
     }
-    
+
     // Voltage measurements
     if (device.v12 && realtimeData.containsKey('V12')) {
       filteredData['V12'] = realtimeData['V12'];
@@ -118,7 +115,7 @@ class RealtimeDataService {
     if (device.v3N && realtimeData.containsKey('V3N')) {
       filteredData['V3N'] = realtimeData['V3N'];
     }
-    
+
     // Per-phase power measurements
     if (device.kvarL1 && realtimeData.containsKey('kVAR_L1')) {
       filteredData['kVAR_L1'] = realtimeData['kVAR_L1'];
@@ -157,7 +154,10 @@ class RealtimeDataService {
       'Average_PF': {'unit': '', 'description': 'Average Power Factor'},
       'Avg_I': {'unit': 'A', 'description': 'Average Current'},
       'Avg_V_LL': {'unit': 'V', 'description': 'Average Voltage Line-to-Line'},
-      'Avg_V_LN': {'unit': 'V', 'description': 'Average Voltage Line-to-Neutral'},
+      'Avg_V_LN': {
+        'unit': 'V',
+        'description': 'Average Voltage Line-to-Neutral'
+      },
       'Frequency': {'unit': 'Hz', 'description': 'System Frequency'},
       'I1': {'unit': 'A', 'description': 'Current Phase 1'},
       'I2': {'unit': 'A', 'description': 'Current Phase 2'},
@@ -168,9 +168,18 @@ class RealtimeDataService {
       'Total_kVA': {'unit': 'kVA', 'description': 'Total Apparent Power'},
       'Total_kVAR': {'unit': 'kVAR', 'description': 'Total Reactive Power'},
       'Total_kW': {'unit': 'kW', 'description': 'Total Active Power'},
-      'Total_net_kVAh': {'unit': 'kVAh', 'description': 'Total Net Apparent Energy'},
-      'Total_net_kVArh': {'unit': 'kVArh', 'description': 'Total Net Reactive Energy'},
-      'Total_net_kWh': {'unit': 'kWh', 'description': 'Total Net Active Energy'},
+      'Total_net_kVAh': {
+        'unit': 'kVAh',
+        'description': 'Total Net Apparent Energy'
+      },
+      'Total_net_kVArh': {
+        'unit': 'kVArh',
+        'description': 'Total Net Reactive Energy'
+      },
+      'Total_net_kWh': {
+        'unit': 'kWh',
+        'description': 'Total Net Active Energy'
+      },
       'V12': {'unit': 'V', 'description': 'Voltage Phase 1-2'},
       'V1N': {'unit': 'V', 'description': 'Voltage Phase 1-Neutral'},
       'V23': {'unit': 'V', 'description': 'Voltage Phase 2-3'},

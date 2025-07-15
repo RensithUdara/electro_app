@@ -5,7 +5,7 @@ import '../services/realtime_data_service.dart';
 
 class RealtimeDataController extends ChangeNotifier {
   final RealtimeDataService _realtimeDataService = RealtimeDataService();
-  
+
   Map<String, dynamic>? _currentData;
   Map<String, dynamic>? _filteredData;
   bool _isLoading = false;
@@ -31,10 +31,12 @@ class RealtimeDataController extends ChangeNotifier {
 
     try {
       // Check if device exists in the database
-      final deviceExists = await _realtimeDataService.deviceExists(device.deviceId);
-      
+      final deviceExists =
+          await _realtimeDataService.deviceExists(device.deviceId);
+
       if (!deviceExists) {
-        _errorMessage = 'Device "${device.deviceId}" not found in real-time database';
+        _errorMessage =
+            'Device "${device.deviceId}" not found in real-time database';
         _isLoading = false;
         _isConnected = false;
         notifyListeners();
@@ -45,9 +47,8 @@ class RealtimeDataController extends ChangeNotifier {
       await _dataSubscription?.cancel();
 
       // Start listening to real-time data
-      _dataSubscription = _realtimeDataService
-          .getDeviceRealtimeData(device.deviceId)
-          .listen(
+      _dataSubscription =
+          _realtimeDataService.getDeviceRealtimeData(device.deviceId).listen(
         (data) {
           _currentData = data;
           if (data != null) {

@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../controllers/auth_controller.dart';
 import '../controllers/device_controller.dart';
 import '../models/device.dart';
+import '../widgets/add_device_dialog.dart';
+import '../widgets/device_tile.dart';
+import '../widgets/edit_device_dialog.dart';
 import 'device_detail_screen.dart';
 import 'login_screen.dart';
 import 'profile_screen.dart';
-import '../widgets/add_device_dialog.dart';
-import '../widgets/edit_device_dialog.dart';
-import '../widgets/device_tile.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -47,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _logout() async {
     final authController = Provider.of<AuthController>(context, listen: false);
     await authController.logout();
-    
+
     if (mounted) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -77,7 +78,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 onSelected: (value) {
                   if (value == 'profile') {
                     Navigator.of(context).push(
-                      MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                      MaterialPageRoute(
+                          builder: (context) => const ProfileScreen()),
                     );
                   } else if (value == 'logout') {
                     _logout();
@@ -149,7 +151,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          
+
           // Device List Section
           Expanded(
             child: Consumer<DeviceController>(
@@ -159,7 +161,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: CircularProgressIndicator(),
                   );
                 }
-                
+
                 if (deviceController.errorMessage != null) {
                   return Center(
                     child: Column(
@@ -190,7 +192,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   );
                 }
-                
+
                 if (deviceController.devices.isEmpty) {
                   return Center(
                     child: Column(
@@ -240,7 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   );
                 }
-                
+
                 return RefreshIndicator(
                   onRefresh: () async {
                     await deviceController.loadDevices();
@@ -255,7 +257,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (context) => DeviceDetailScreen(device: device),
+                              builder: (context) =>
+                                  DeviceDetailScreen(device: device),
                             ),
                           );
                         },
@@ -268,14 +271,17 @@ class _HomeScreenState extends State<HomeScreen> {
                             builder: (BuildContext context) {
                               return AlertDialog(
                                 title: const Text('Delete Device'),
-                                content: Text('Are you sure you want to delete ${device.name}?'),
+                                content: Text(
+                                    'Are you sure you want to delete ${device.name}?'),
                                 actions: [
                                   TextButton(
-                                    onPressed: () => Navigator.of(context).pop(false),
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(false),
                                     child: const Text('Cancel'),
                                   ),
                                   TextButton(
-                                    onPressed: () => Navigator.of(context).pop(true),
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(true),
                                     style: TextButton.styleFrom(
                                       foregroundColor: Colors.red,
                                     ),
@@ -285,7 +291,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               );
                             },
                           );
-                          
+
                           if (confirmed == true) {
                             await deviceController.removeDevice(device.id);
                           }

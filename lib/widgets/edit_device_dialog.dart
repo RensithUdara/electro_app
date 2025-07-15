@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../controllers/device_controller.dart';
 import '../models/device.dart';
 
@@ -17,7 +18,7 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
   late final TextEditingController _nameController;
   late final TextEditingController _deviceIdController;
   late final TextEditingController _meterIdController;
-  
+
   // Electrical measurement parameters - initialize with device values
   late bool _averagePF;
   late bool _avgI;
@@ -55,12 +56,12 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize text controllers with current device values
     _nameController = TextEditingController(text: widget.device.name);
     _deviceIdController = TextEditingController(text: widget.device.deviceId);
     _meterIdController = TextEditingController(text: widget.device.meterId);
-    
+
     // Initialize boolean values with current device configuration
     _averagePF = widget.device.averagePF;
     _avgI = widget.device.avgI;
@@ -106,8 +107,9 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
 
   Future<void> _updateDevice() async {
     if (_formKey.currentState!.validate()) {
-      final deviceController = Provider.of<DeviceController>(context, listen: false);
-      
+      final deviceController =
+          Provider.of<DeviceController>(context, listen: false);
+
       final success = await deviceController.updateDevice(
         deviceId: widget.device.id,
         name: _nameController.text.trim(),
@@ -146,12 +148,13 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
         kwL2: _kwL2,
         kwL3: _kwL3,
       );
-      
+
       if (success && mounted) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Device "${_nameController.text}" updated successfully!'),
+            content:
+                Text('Device "${_nameController.text}" updated successfully!'),
             backgroundColor: Colors.green,
           ),
         );
@@ -206,7 +209,7 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
               ],
             ),
             const SizedBox(height: 24),
-            
+
             // Scrollable content
             Expanded(
               child: SingleChildScrollView(
@@ -230,7 +233,8 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFF1E3A8A)),
+                            borderSide:
+                                const BorderSide(color: Color(0xFF1E3A8A)),
                           ),
                         ),
                         validator: (value) {
@@ -241,7 +245,7 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      
+
                       // Device ID
                       TextFormField(
                         controller: _deviceIdController,
@@ -258,7 +262,8 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFF1E3A8A)),
+                            borderSide:
+                                const BorderSide(color: Color(0xFF1E3A8A)),
                           ),
                         ),
                         validator: (value) {
@@ -269,7 +274,7 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      
+
                       // Meter ID
                       TextFormField(
                         controller: _meterIdController,
@@ -286,7 +291,8 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFF1E3A8A)),
+                            borderSide:
+                                const BorderSide(color: Color(0xFF1E3A8A)),
                           ),
                         ),
                         validator: (value) {
@@ -297,7 +303,7 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
                         },
                       ),
                       const SizedBox(height: 20),
-                      
+
                       // Electrical Measurements Configuration
                       Container(
                         padding: const EdgeInsets.all(16),
@@ -318,59 +324,143 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
                               ),
                             ),
                             const SizedBox(height: 12),
-                            
+
                             // Power Factor and Average Values
-                            _buildSectionHeader('Power Factor & Average Values'),
-                            _buildCheckbox('Average_PF', 'Average Power Factor', _averagePF, (value) => setState(() => _averagePF = value)),
-                            _buildCheckbox('Avg_I', 'Average Current', _avgI, (value) => setState(() => _avgI = value)),
-                            _buildCheckbox('Avg_V_LL', 'Average Voltage Line-to-Line', _avgVLL, (value) => setState(() => _avgVLL = value)),
-                            _buildCheckbox('Avg_V_LN', 'Average Voltage Line-to-Neutral', _avgVLN, (value) => setState(() => _avgVLN = value)),
-                            _buildCheckbox('Frequency', 'System Frequency', _frequency, (value) => setState(() => _frequency = value)),
-                            
+                            _buildSectionHeader(
+                                'Power Factor & Average Values'),
+                            _buildCheckbox(
+                                'Average_PF',
+                                'Average Power Factor',
+                                _averagePF,
+                                (value) => setState(() => _averagePF = value)),
+                            _buildCheckbox('Avg_I', 'Average Current', _avgI,
+                                (value) => setState(() => _avgI = value)),
+                            _buildCheckbox(
+                                'Avg_V_LL',
+                                'Average Voltage Line-to-Line',
+                                _avgVLL,
+                                (value) => setState(() => _avgVLL = value)),
+                            _buildCheckbox(
+                                'Avg_V_LN',
+                                'Average Voltage Line-to-Neutral',
+                                _avgVLN,
+                                (value) => setState(() => _avgVLN = value)),
+                            _buildCheckbox(
+                                'Frequency',
+                                'System Frequency',
+                                _frequency,
+                                (value) => setState(() => _frequency = value)),
+
                             // Current Measurements
                             _buildSectionHeader('Current Measurements'),
-                            _buildCheckbox('I1', 'Current Phase 1', _i1, (value) => setState(() => _i1 = value)),
-                            _buildCheckbox('I2', 'Current Phase 2', _i2, (value) => setState(() => _i2 = value)),
-                            _buildCheckbox('I3', 'Current Phase 3', _i3, (value) => setState(() => _i3 = value)),
-                            
+                            _buildCheckbox('I1', 'Current Phase 1', _i1,
+                                (value) => setState(() => _i1 = value)),
+                            _buildCheckbox('I2', 'Current Phase 2', _i2,
+                                (value) => setState(() => _i2 = value)),
+                            _buildCheckbox('I3', 'Current Phase 3', _i3,
+                                (value) => setState(() => _i3 = value)),
+
                             // Power Factor per Phase
                             _buildSectionHeader('Power Factor per Phase'),
-                            _buildCheckbox('PF1', 'Power Factor Phase 1', _pf1, (value) => setState(() => _pf1 = value)),
-                            _buildCheckbox('PF2', 'Power Factor Phase 2', _pf2, (value) => setState(() => _pf2 = value)),
-                            _buildCheckbox('PF3', 'Power Factor Phase 3', _pf3, (value) => setState(() => _pf3 = value)),
-                            
+                            _buildCheckbox('PF1', 'Power Factor Phase 1', _pf1,
+                                (value) => setState(() => _pf1 = value)),
+                            _buildCheckbox('PF2', 'Power Factor Phase 2', _pf2,
+                                (value) => setState(() => _pf2 = value)),
+                            _buildCheckbox('PF3', 'Power Factor Phase 3', _pf3,
+                                (value) => setState(() => _pf3 = value)),
+
                             // Total Power Measurements
                             _buildSectionHeader('Total Power Measurements'),
-                            _buildCheckbox('Total_kVA', 'Total Apparent Power', _totalKVA, (value) => setState(() => _totalKVA = value)),
-                            _buildCheckbox('Total_kVAR', 'Total Reactive Power', _totalKVAR, (value) => setState(() => _totalKVAR = value)),
-                            _buildCheckbox('Total_kW', 'Total Active Power', _totalKW, (value) => setState(() => _totalKW = value)),
-                            
+                            _buildCheckbox(
+                                'Total_kVA',
+                                'Total Apparent Power',
+                                _totalKVA,
+                                (value) => setState(() => _totalKVA = value)),
+                            _buildCheckbox(
+                                'Total_kVAR',
+                                'Total Reactive Power',
+                                _totalKVAR,
+                                (value) => setState(() => _totalKVAR = value)),
+                            _buildCheckbox(
+                                'Total_kW',
+                                'Total Active Power',
+                                _totalKW,
+                                (value) => setState(() => _totalKW = value)),
+
                             // Energy Measurements
                             _buildSectionHeader('Energy Measurements'),
-                            _buildCheckbox('Total_net_kVAh', 'Total Net Apparent Energy', _totalNetKVAh, (value) => setState(() => _totalNetKVAh = value)),
-                            _buildCheckbox('Total_net_kVArh', 'Total Net Reactive Energy', _totalNetKVArh, (value) => setState(() => _totalNetKVArh = value)),
-                            _buildCheckbox('Total_net_kWh', 'Total Net Active Energy', _totalNetKWh, (value) => setState(() => _totalNetKWh = value)),
-                            
+                            _buildCheckbox(
+                                'Total_net_kVAh',
+                                'Total Net Apparent Energy',
+                                _totalNetKVAh,
+                                (value) =>
+                                    setState(() => _totalNetKVAh = value)),
+                            _buildCheckbox(
+                                'Total_net_kVArh',
+                                'Total Net Reactive Energy',
+                                _totalNetKVArh,
+                                (value) =>
+                                    setState(() => _totalNetKVArh = value)),
+                            _buildCheckbox(
+                                'Total_net_kWh',
+                                'Total Net Active Energy',
+                                _totalNetKWh,
+                                (value) =>
+                                    setState(() => _totalNetKWh = value)),
+
                             // Voltage Measurements
                             _buildSectionHeader('Voltage Measurements'),
-                            _buildCheckbox('V12', 'Voltage Phase 1-2', _v12, (value) => setState(() => _v12 = value)),
-                            _buildCheckbox('V1N', 'Voltage Phase 1-Neutral', _v1N, (value) => setState(() => _v1N = value)),
-                            _buildCheckbox('V23', 'Voltage Phase 2-3', _v23, (value) => setState(() => _v23 = value)),
-                            _buildCheckbox('V2N', 'Voltage Phase 2-Neutral', _v2N, (value) => setState(() => _v2N = value)),
-                            _buildCheckbox('V31', 'Voltage Phase 3-1', _v31, (value) => setState(() => _v31 = value)),
-                            _buildCheckbox('V3N', 'Voltage Phase 3-Neutral', _v3N, (value) => setState(() => _v3N = value)),
-                            
+                            _buildCheckbox('V12', 'Voltage Phase 1-2', _v12,
+                                (value) => setState(() => _v12 = value)),
+                            _buildCheckbox('V1N', 'Voltage Phase 1-Neutral',
+                                _v1N, (value) => setState(() => _v1N = value)),
+                            _buildCheckbox('V23', 'Voltage Phase 2-3', _v23,
+                                (value) => setState(() => _v23 = value)),
+                            _buildCheckbox('V2N', 'Voltage Phase 2-Neutral',
+                                _v2N, (value) => setState(() => _v2N = value)),
+                            _buildCheckbox('V31', 'Voltage Phase 3-1', _v31,
+                                (value) => setState(() => _v31 = value)),
+                            _buildCheckbox('V3N', 'Voltage Phase 3-Neutral',
+                                _v3N, (value) => setState(() => _v3N = value)),
+
                             // Per-Phase Power Measurements
                             _buildSectionHeader('Per-Phase Power Measurements'),
-                            _buildCheckbox('kVAR_L1', 'Reactive Power L1', _kvarL1, (value) => setState(() => _kvarL1 = value)),
-                            _buildCheckbox('kVAR_L2', 'Reactive Power L2', _kvarL2, (value) => setState(() => _kvarL2 = value)),
-                            _buildCheckbox('kVAR_L3', 'Reactive Power L3', _kvarL3, (value) => setState(() => _kvarL3 = value)),
-                            _buildCheckbox('kVA_L1', 'Apparent Power L1', _kvaL1, (value) => setState(() => _kvaL1 = value)),
-                            _buildCheckbox('kVA_L2', 'Apparent Power L2', _kvaL2, (value) => setState(() => _kvaL2 = value)),
-                            _buildCheckbox('kVA_L3', 'Apparent Power L3', _kvaL3, (value) => setState(() => _kvaL3 = value)),
-                            _buildCheckbox('kW_L1', 'Active Power L1', _kwL1, (value) => setState(() => _kwL1 = value)),
-                            _buildCheckbox('kW_L2', 'Active Power L2', _kwL2, (value) => setState(() => _kwL2 = value)),
-                            _buildCheckbox('kW_L3', 'Active Power L3', _kwL3, (value) => setState(() => _kwL3 = value)),
+                            _buildCheckbox(
+                                'kVAR_L1',
+                                'Reactive Power L1',
+                                _kvarL1,
+                                (value) => setState(() => _kvarL1 = value)),
+                            _buildCheckbox(
+                                'kVAR_L2',
+                                'Reactive Power L2',
+                                _kvarL2,
+                                (value) => setState(() => _kvarL2 = value)),
+                            _buildCheckbox(
+                                'kVAR_L3',
+                                'Reactive Power L3',
+                                _kvarL3,
+                                (value) => setState(() => _kvarL3 = value)),
+                            _buildCheckbox(
+                                'kVA_L1',
+                                'Apparent Power L1',
+                                _kvaL1,
+                                (value) => setState(() => _kvaL1 = value)),
+                            _buildCheckbox(
+                                'kVA_L2',
+                                'Apparent Power L2',
+                                _kvaL2,
+                                (value) => setState(() => _kvaL2 = value)),
+                            _buildCheckbox(
+                                'kVA_L3',
+                                'Apparent Power L3',
+                                _kvaL3,
+                                (value) => setState(() => _kvaL3 = value)),
+                            _buildCheckbox('kW_L1', 'Active Power L1', _kwL1,
+                                (value) => setState(() => _kwL1 = value)),
+                            _buildCheckbox('kW_L2', 'Active Power L2', _kwL2,
+                                (value) => setState(() => _kwL2 = value)),
+                            _buildCheckbox('kW_L3', 'Active Power L3', _kwL3,
+                                (value) => setState(() => _kwL3 = value)),
                           ],
                         ),
                       ),
@@ -379,7 +469,7 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
                 ),
               ),
             ),
-            
+
             // Buttons section - fixed at bottom
             const SizedBox(height: 16),
             Row(
@@ -405,7 +495,8 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
                   child: Consumer<DeviceController>(
                     builder: (context, deviceController, child) {
                       return ElevatedButton(
-                        onPressed: deviceController.isLoading ? null : _updateDevice,
+                        onPressed:
+                            deviceController.isLoading ? null : _updateDevice,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF1E3A8A),
                           foregroundColor: Colors.white,
@@ -416,22 +507,23 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
                           elevation: 2,
                         ),
                         child: deviceController.isLoading
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                              ),
-                            )
-                          : const Text('Update Device'),
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white),
+                                ),
+                              )
+                            : const Text('Update Device'),
                       );
                     },
                   ),
                 ),
               ],
             ),
-            
+
             // Error message
             Consumer<DeviceController>(
               builder: (context, deviceController, child) {
@@ -446,7 +538,8 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.error_outline, color: Colors.red[600], size: 20),
+                        Icon(Icons.error_outline,
+                            color: Colors.red[600], size: 20),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -481,7 +574,8 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
     );
   }
 
-  Widget _buildCheckbox(String key, String label, bool value, ValueChanged<bool> onChanged) {
+  Widget _buildCheckbox(
+      String key, String label, bool value, ValueChanged<bool> onChanged) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(

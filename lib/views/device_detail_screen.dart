@@ -1,7 +1,9 @@
+import 'dart:math';
+
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:fl_chart/fl_chart.dart';
-import 'dart:math';
+
 import '../controllers/device_data_controller.dart';
 import '../controllers/realtime_data_controller.dart';
 import '../models/device.dart';
@@ -27,7 +29,7 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
       // Load device data for historical charts
       Provider.of<DeviceDataController>(context, listen: false)
           .loadDeviceData(widget.device.id);
-      
+
       // Connect to real-time data
       Provider.of<RealtimeDataController>(context, listen: false)
           .connectToDevice(widget.device);
@@ -155,7 +157,7 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
               ],
             ),
           ),
-          
+
           // Tab Bar
           Container(
             margin: const EdgeInsets.all(16),
@@ -184,20 +186,23 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
               ],
             ),
           ),
-          
+
           // Content
           Expanded(
             child: Consumer2<DeviceDataController, RealtimeDataController>(
               builder: (context, dataController, realtimeController, child) {
                 switch (_selectedTabIndex) {
                   case 0:
-                    return _buildOverviewTab(dataController, realtimeController);
+                    return _buildOverviewTab(
+                        dataController, realtimeController);
                   case 1:
                     return _buildChartsTab(dataController, realtimeController);
                   case 2:
-                    return _buildDataTableTab(dataController, realtimeController);
+                    return _buildDataTableTab(
+                        dataController, realtimeController);
                   default:
-                    return _buildOverviewTab(dataController, realtimeController);
+                    return _buildOverviewTab(
+                        dataController, realtimeController);
                 }
               },
             ),
@@ -252,7 +257,8 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
     );
   }
 
-  Widget _buildOverviewTab(DeviceDataController dataController, RealtimeDataController realtimeController) {
+  Widget _buildOverviewTab(DeviceDataController dataController,
+      RealtimeDataController realtimeController) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -260,11 +266,12 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
           // Real-time Connection Status
           _buildConnectionStatus(realtimeController),
           const SizedBox(height: 16),
-          
+
           // Real-time Data Cards
-          if (realtimeController.filteredData != null && realtimeController.filteredData!.isNotEmpty)
+          if (realtimeController.filteredData != null &&
+              realtimeController.filteredData!.isNotEmpty)
             _buildRealtimeDataSection(realtimeController),
-          
+
           // Historical Summary (if available)
           if (dataController.deviceDataSummary != null) ...[
             const SizedBox(height: 24),
@@ -275,8 +282,10 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
     );
   }
 
-  Widget _buildChartsTab(DeviceDataController dataController, RealtimeDataController realtimeController) {
-    if (realtimeController.filteredData == null || realtimeController.filteredData!.isEmpty) {
+  Widget _buildChartsTab(DeviceDataController dataController,
+      RealtimeDataController realtimeController) {
+    if (realtimeController.filteredData == null ||
+        realtimeController.filteredData!.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -320,7 +329,7 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          
+
           // Generate charts for each selected parameter
           ...realtimeController.filteredData!.entries.map((entry) {
             return Column(
@@ -329,14 +338,16 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                 const SizedBox(height: 20),
               ],
             );
-          }).toList(),
+          }),
         ],
       ),
     );
   }
 
-  Widget _buildDataTableTab(DeviceDataController dataController, RealtimeDataController realtimeController) {
-    if (realtimeController.filteredData == null || realtimeController.filteredData!.isEmpty) {
+  Widget _buildDataTableTab(DeviceDataController dataController,
+      RealtimeDataController realtimeController) {
+    if (realtimeController.filteredData == null ||
+        realtimeController.filteredData!.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -368,7 +379,7 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
 
     final filteredData = realtimeController.filteredData!;
     final parameterKeys = filteredData.keys.toList();
-    
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -389,7 +400,7 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          
+
           Container(
             decoration: BoxDecoration(
               color: Colors.white,
@@ -406,33 +417,33 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
               scrollDirection: Axis.horizontal,
               child: DataTable(
                 columnSpacing: 20,
-                headingRowColor: MaterialStateProperty.all(Colors.grey[50]),
-                columns: [
-                  const DataColumn(
+                headingRowColor: WidgetStateProperty.all(Colors.grey[50]),
+                columns: const [
+                  DataColumn(
                     label: Text(
                       'Parameter',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
-                  const DataColumn(
+                  DataColumn(
                     label: Text(
                       'Current Value',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
-                  const DataColumn(
+                  DataColumn(
                     label: Text(
                       'Unit',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
-                  const DataColumn(
+                  DataColumn(
                     label: Text(
                       'Description',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
-                  const DataColumn(
+                  DataColumn(
                     label: Text(
                       'Last Updated',
                       style: TextStyle(fontWeight: FontWeight.bold),
@@ -441,14 +452,15 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                 ],
                 rows: parameterKeys.map((parameter) {
                   final value = filteredData[parameter];
-                  final parameterInfo = realtimeController.getParameterInfo(parameter);
+                  final parameterInfo =
+                      realtimeController.getParameterInfo(parameter);
 
-                  
                   return DataRow(
                     cells: [
                       DataCell(
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: const Color(0xFF1E3A8A).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(4),
@@ -473,7 +485,9 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                       ),
                       DataCell(
                         Text(
-                          parameterInfo['unit']!.isEmpty ? '-' : parameterInfo['unit']!,
+                          parameterInfo['unit']!.isEmpty
+                              ? '-'
+                              : parameterInfo['unit']!,
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontStyle: FontStyle.italic,
@@ -492,7 +506,8 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                       ),
                       DataCell(
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             color: Colors.green[50],
                             borderRadius: BorderRadius.circular(12),
@@ -525,9 +540,9 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Summary statistics
           _buildDataTableSummary(filteredData, realtimeController),
         ],
@@ -535,7 +550,8 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
     );
   }
 
-  Widget _buildSummaryCard(String title, String value, IconData icon, Color color) {
+  Widget _buildSummaryCard(
+      String title, String value, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -744,17 +760,22 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: realtimeController.isConnected ? Colors.green[50] : Colors.red[50],
+        color:
+            realtimeController.isConnected ? Colors.green[50] : Colors.red[50],
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: realtimeController.isConnected ? Colors.green[200]! : Colors.red[200]!,
+          color: realtimeController.isConnected
+              ? Colors.green[200]!
+              : Colors.red[200]!,
         ),
       ),
       child: Row(
         children: [
           Icon(
             realtimeController.isConnected ? Icons.wifi : Icons.wifi_off,
-            color: realtimeController.isConnected ? Colors.green[600] : Colors.red[600],
+            color: realtimeController.isConnected
+                ? Colors.green[600]
+                : Colors.red[600],
             size: 20,
           ),
           const SizedBox(width: 12),
@@ -763,10 +784,14 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  realtimeController.isConnected ? 'Real-time Data Connected' : 'Real-time Data Disconnected',
+                  realtimeController.isConnected
+                      ? 'Real-time Data Connected'
+                      : 'Real-time Data Disconnected',
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
-                    color: realtimeController.isConnected ? Colors.green[800] : Colors.red[800],
+                    color: realtimeController.isConnected
+                        ? Colors.green[800]
+                        : Colors.red[800],
                   ),
                 ),
                 if (realtimeController.errorMessage != null)
@@ -796,7 +821,7 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
 
   Widget _buildRealtimeDataSection(RealtimeDataController realtimeController) {
     final filteredData = realtimeController.filteredData!;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -828,8 +853,9 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
           itemBuilder: (context, index) {
             final parameter = filteredData.keys.elementAt(index);
             final value = filteredData[parameter];
-            final parameterInfo = realtimeController.getParameterInfo(parameter);
-            
+            final parameterInfo =
+                realtimeController.getParameterInfo(parameter);
+
             return _buildRealtimeDataCard(
               parameter,
               value,
@@ -842,7 +868,8 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
     );
   }
 
-  Widget _buildRealtimeDataCard(String parameter, dynamic value, String unit, String description) {
+  Widget _buildRealtimeDataCard(
+      String parameter, dynamic value, String unit, String description) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -908,7 +935,7 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
 
   Widget _buildHistoricalSummarySection(DeviceDataController dataController) {
     final summary = dataController.deviceDataSummary!;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -974,11 +1001,13 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
     );
   }
 
-  Widget _buildDataTableSummary(Map<String, dynamic> filteredData, RealtimeDataController realtimeController) {
+  Widget _buildDataTableSummary(Map<String, dynamic> filteredData,
+      RealtimeDataController realtimeController) {
     final parameterCount = filteredData.length;
-    final numericValues = filteredData.values.where((value) => value is num).map((v) => v as num).toList();
+    final numericValues =
+        filteredData.values.whereType<num>().map((v) => v).toList();
     final hasNumericData = numericValues.isNotEmpty;
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1004,7 +1033,6 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          
           Wrap(
             spacing: 16,
             runSpacing: 8,
@@ -1018,7 +1046,8 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
               if (hasNumericData) ...[
                 _buildSummaryItem(
                   'Average Value',
-                  (numericValues.reduce((a, b) => a + b) / numericValues.length).toStringAsFixed(2),
+                  (numericValues.reduce((a, b) => a + b) / numericValues.length)
+                      .toStringAsFixed(2),
                   Icons.trending_up,
                   Colors.green,
                 ),
@@ -1048,7 +1077,8 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
     );
   }
 
-  Widget _buildSummaryItem(String label, String value, IconData icon, MaterialColor color) {
+  Widget _buildSummaryItem(
+      String label, String value, IconData icon, MaterialColor color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
@@ -1087,16 +1117,18 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
     );
   }
 
-  Widget _buildRealtimeChart(String parameter, dynamic value, RealtimeDataController realtimeController) {
+  Widget _buildRealtimeChart(String parameter, dynamic value,
+      RealtimeDataController realtimeController) {
     final parameterInfo = realtimeController.getParameterInfo(parameter);
     final numericValue = value is num ? value.toDouble() : 0.0;
-    
+
     // Generate sample data points for demonstration (in real app, you'd use historical data)
     final chartData = List.generate(10, (index) {
       final variation = Random().nextDouble() * 0.2 - 0.1; // ±10% variation
-      return FlSpot(index.toDouble(), numericValue + (numericValue * variation));
+      return FlSpot(
+          index.toDouble(), numericValue + (numericValue * variation));
     });
-    
+
     return Container(
       height: 200,
       margin: const EdgeInsets.only(bottom: 16),
@@ -1241,8 +1273,12 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                 ],
                 minX: 0,
                 maxX: 9,
-                minY: chartData.map((e) => e.y).reduce((a, b) => a < b ? a : b) * 0.95,
-                maxY: chartData.map((e) => e.y).reduce((a, b) => a > b ? a : b) * 1.05,
+                minY:
+                    chartData.map((e) => e.y).reduce((a, b) => a < b ? a : b) *
+                        0.95,
+                maxY:
+                    chartData.map((e) => e.y).reduce((a, b) => a > b ? a : b) *
+                        1.05,
               ),
             ),
           ),
@@ -1253,17 +1289,22 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
 
   Color _getParameterColor(String parameter) {
     // Assign colors based on parameter type
-    if (parameter.toLowerCase().contains('voltage') || parameter.toLowerCase().contains('v')) {
+    if (parameter.toLowerCase().contains('voltage') ||
+        parameter.toLowerCase().contains('v')) {
       return Colors.blue;
-    } else if (parameter.toLowerCase().contains('current') || parameter.toLowerCase().contains('i')) {
+    } else if (parameter.toLowerCase().contains('current') ||
+        parameter.toLowerCase().contains('i')) {
       return Colors.orange;
-    } else if (parameter.toLowerCase().contains('power') || parameter.toLowerCase().contains('kw')) {
+    } else if (parameter.toLowerCase().contains('power') ||
+        parameter.toLowerCase().contains('kw')) {
       return Colors.green;
     } else if (parameter.toLowerCase().contains('frequency')) {
       return Colors.purple;
-    } else if (parameter.toLowerCase().contains('pf') || parameter.toLowerCase().contains('factor')) {
+    } else if (parameter.toLowerCase().contains('pf') ||
+        parameter.toLowerCase().contains('factor')) {
       return Colors.red;
-    } else if (parameter.toLowerCase().contains('energy') || parameter.toLowerCase().contains('kwh')) {
+    } else if (parameter.toLowerCase().contains('energy') ||
+        parameter.toLowerCase().contains('kwh')) {
       return Colors.teal;
     } else {
       return Colors.indigo;

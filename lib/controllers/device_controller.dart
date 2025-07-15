@@ -4,7 +4,7 @@ import '../services/device_service.dart';
 
 class DeviceController extends ChangeNotifier {
   final DeviceService _deviceService = DeviceService();
-  
+
   List<Device> _devices = [];
   bool _isLoading = false;
   String? _errorMessage;
@@ -113,7 +113,7 @@ class DeviceController extends ChangeNotifier {
         kwL2: kwL2,
         kwL3: kwL3,
       );
-      
+
       if (device != null) {
         _devices.add(device);
         _isLoading = false;
@@ -224,11 +224,12 @@ class DeviceController extends ChangeNotifier {
         'kwL2': kwL2,
         'kwL3': kwL3,
       };
-      
+
       await _deviceService.updateDevice(deviceId, updates);
-      
+
       // Update local device list
-      final deviceIndex = _devices.indexWhere((device) => device.id == deviceId);
+      final deviceIndex =
+          _devices.indexWhere((device) => device.id == deviceId);
       if (deviceIndex != -1) {
         _devices[deviceIndex] = Device.fromJson({
           'id': deviceId,
@@ -236,7 +237,7 @@ class DeviceController extends ChangeNotifier {
           'createdAt': _devices[deviceIndex].createdAt.toIso8601String(),
         });
       }
-      
+
       _isLoading = false;
       notifyListeners();
       return true;

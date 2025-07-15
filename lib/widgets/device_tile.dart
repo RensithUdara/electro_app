@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/device.dart';
 
 class DeviceTile extends StatelessWidget {
@@ -54,7 +55,7 @@ class DeviceTile extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  
+
                   // Device Info
                   Expanded(
                     child: Column(
@@ -86,7 +87,7 @@ class DeviceTile extends StatelessWidget {
                       ],
                     ),
                   ),
-                  
+
                   // Actions
                   PopupMenuButton<String>(
                     onSelected: (value) {
@@ -101,9 +102,11 @@ class DeviceTile extends StatelessWidget {
                         value: 'edit',
                         child: Row(
                           children: [
-                            Icon(Icons.edit, color: Color(0xFF1E3A8A), size: 18),
+                            Icon(Icons.edit,
+                                color: Color(0xFF1E3A8A), size: 18),
                             SizedBox(width: 8),
-                            Text('Edit', style: TextStyle(color: Color(0xFF1E3A8A))),
+                            Text('Edit',
+                                style: TextStyle(color: Color(0xFF1E3A8A))),
                           ],
                         ),
                       ),
@@ -134,7 +137,7 @@ class DeviceTile extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 16),
-              
+
               // Status Indicators
               // Row(
               //   children: [
@@ -146,7 +149,7 @@ class DeviceTile extends StatelessWidget {
               //   ],
               // ),
               const SizedBox(height: 12),
-              
+
               // Creation Date
               Row(
                 children: [
@@ -165,7 +168,8 @@ class DeviceTile extends StatelessWidget {
                   ),
                   const Spacer(),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.green.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(6),
@@ -192,9 +196,9 @@ class DeviceTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: isActive 
-          ? Colors.green.withOpacity(0.1) 
-          : Colors.red.withOpacity(0.1),
+        color: isActive
+            ? Colors.green.withOpacity(0.1)
+            : Colors.red.withOpacity(0.1),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
@@ -224,8 +228,18 @@ class DeviceTile extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }

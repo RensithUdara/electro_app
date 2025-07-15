@@ -115,7 +115,8 @@ class Device {
       kwL1: json['kwL1'] ?? false,
       kwL2: json['kwL2'] ?? false,
       kwL3: json['kwL3'] ?? false,
-      createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
+      createdAt:
+          DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
     );
   }
 
