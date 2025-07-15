@@ -27,6 +27,8 @@ dependencies:
   firebase_database: ^10.2.4
   # Google Sign-In
   google_sign_in: ^6.1.4
+  # Google Fonts
+  google_fonts: ^6.1.0
 
 dev_dependencies:
   flutter_test:
