@@ -101,15 +101,7 @@ class _SplashScreenState extends State<SplashScreen>
         width: double.infinity,
         height: double.infinity,
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF1E3A8A),
-              Color(0xFF3B82F6),
-              Color(0xFF60A5FA),
-            ],
-          ),
+          color: Colors.white,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -135,8 +127,12 @@ class _SplashScreenState extends State<SplashScreen>
                             width: 150,
                             height: 150,
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: const Color(0xFF1E3A8A).withOpacity(0.1),
                               borderRadius: BorderRadius.circular(25),
+                              border: Border.all(
+                                color: const Color(0xFF1E3A8A),
+                                width: 2,
+                              ),
                             ),
                             child: const Icon(
                               Icons.electrical_services,
@@ -162,7 +158,7 @@ class _SplashScreenState extends State<SplashScreen>
                 style: TextStyle(
                   fontSize: 36,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: Color(0xFF1E3A8A),
                   letterSpacing: 1.5,
                 ),
               ),
@@ -177,8 +173,8 @@ class _SplashScreenState extends State<SplashScreen>
                 'Electrical Device Monitoring',
                 style: TextStyle(
                   fontSize: 16,
-                  color: Colors.white.withOpacity(0.9),
-                  fontWeight: FontWeight.w300,
+                  color: const Color(0xFF1E3A8A).withOpacity(0.7),
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ),
@@ -189,7 +185,7 @@ class _SplashScreenState extends State<SplashScreen>
             FadeTransition(
               opacity: _fadeAnimation,
               child: const SpinKitWave(
-                color: Colors.white,
+                color: Color(0xFF1E3A8A),
                 size: 30.0,
               ),
             ),
@@ -203,7 +199,7 @@ class _SplashScreenState extends State<SplashScreen>
                 'Loading...',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.white.withOpacity(0.8),
+                  color: const Color(0xFF1E3A8A).withOpacity(0.6),
                 ),
               ),
             ),
