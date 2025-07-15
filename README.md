@@ -1,53 +1,77 @@
-# ElectroApp - Electrical Device Monitoring
+# ElectroApp - Electrical Device Monitoring & Real-time Analytics
 
-A comprehensive Flutter application for monitoring and managing electrical devices with real-time data visualization.
+A comprehensive Flutter application for monitoring and managing electrical devices with real-time data visualization, Firebase integration, and advanced electrical parameter tracking.
 
-## Features
+## 🌟 Key Features
 
-### 🚀 Authentication System
-- **Splash Screen**: Beautiful animated loading screen with app branding
+### � Authentication System
+- **Firebase Authentication**: Secure email/password authentication
+- **Splash Screen**: Beautiful animated loading screen with app branding  
 - **Login**: Email/password authentication with remember me functionality
 - **Signup**: Complete user registration with name, email, phone, and password
+- **Auto-login**: Persistent authentication state management
 
-### 🏠 Home Dashboard
-- **Device Management**: View all registered electrical devices
-- **Add Device Dialog**: Easy device registration with:
-  - Device name and ID
-  - Meter ID
-  - Test configuration options (Test 1, 2, 3)
-- **Empty State**: Elegant "no devices" screen with call-to-action
-- **Device Actions**: Edit and delete device functionality
+### 🏠 Advanced Device Management
+- **Real-time Device List**: View all registered electrical devices with live status
+- **Comprehensive Device Configuration**: Support for 33 electrical measurement parameters:
+  - Power Factor & Average Values (5 parameters)
+  - Current Measurements (3 parameters)
+  - Power Factor per Phase (3 parameters)
+  - Total Power Measurements (3 parameters)
+  - Energy Measurements (3 parameters)
+  - Voltage Measurements (6 parameters)
+  - Per-Phase Power Measurements (9 parameters)
+- **Device Actions**: Create, edit, and delete device functionality
+- **Firebase Integration**: All device data stored in Firebase Realtime Database
 
-### 📊 Device Details & Analytics
-- **Real-time Monitoring**: Live device status and data
-- **Data Visualization**: 
-  - Interactive line charts for hourly/daily consumption
-  - Pie charts for power distribution
-  - Summary cards for key metrics
-- **Data Table**: Detailed tabular view of recent device readings
+### 📊 Real-time Data Visualization & Analytics
+- **Live Data Streaming**: Real-time data from Firebase Realtime Database
+- **Interactive Charts**: 
+  - Individual charts for each selected electrical parameter
+  - Real-time line charts with data visualization using FL Chart
+  - Color-coded parameter tracking (voltage, current, power, etc.)
+- **Data Tables**: 
+  - Live data tables with real-time parameter values
+  - Parameter descriptions, units, and connection status
+  - Data summary statistics (average, min/max values)
 - **Multi-tab Interface**: Overview, Charts, and Data Table views
+- **Connection Status**: Real-time Firebase connection monitoring
+
+### 🛠️ Device Configuration & Management
+- **Add Device Dialog**: Intuitive device registration with electrical parameter selection
+- **Edit Device Dialog**: Modify existing devices and their parameter configurations
+- **Parameter Filtering**: Only display data for user-selected measurements
+- **Device Detail Screen**: Comprehensive device monitoring with edit and refresh options
 
 ### 📱 Modern UI/UX
-- **Material Design 3**: Clean, modern interface
-- **Responsive Design**: Works on all screen sizes
-- **Loading States**: Smooth loading animations
-- **Error Handling**: User-friendly error messages
-- **Professional Color Scheme**: Deep blue theme with excellent contrast
+- **Material Design 3**: Clean, modern interface with professional styling
+- **Responsive Design**: Optimized for all screen sizes
+- **Loading States**: Smooth loading animations and progress indicators
+- **Error Handling**: Comprehensive error management with user-friendly messages
+- **Professional Color Scheme**: Deep blue theme (#1E3A8A) with excellent contrast
+- **Real-time Status Indicators**: Visual connection and data status feedback
 
-## Technical Architecture
+## 🏗️ Technical Architecture
 
-### 🏗️ MVC Pattern
-- **Models**: User, Device, DeviceData with JSON serialization
-- **Views**: Splash, Login, Signup, Home, Device Detail screens
-- **Controllers**: Auth, Device, and DeviceData controllers using Provider state management
+### 🔥 Firebase Integration
+- **Firebase Core 2.15.1**: Complete Firebase platform integration
+- **Firebase Authentication 4.7.2**: Secure user authentication
+- **Firebase Realtime Database 10.2.4**: Live data streaming and storage
+- **Database URL**: `https://panel-monitor-691c6-default-rtdb.firebaseio.com/`
+
+### 🎯 State Management (Provider Pattern)
+- **AuthController**: User authentication and session management
+- **DeviceController**: Device CRUD operations and state management
+- **DeviceDataController**: Historical device data management
+- **RealtimeDataController**: Live data streaming and connection management
 
 ### 📦 Key Dependencies
-- **provider**: State management
-- **fl_chart**: Beautiful charts and data visualization  
+- **provider ^6.0.5**: Advanced state management
+- **fl_chart ^0.68.0**: Professional charts and data visualization
+- **firebase_core ^2.15.1**: Firebase platform integration
+- **firebase_auth ^4.7.2**: Firebase authentication
+- **firebase_database ^10.2.4**: Firebase Realtime Database
 - **shared_preferences**: Local data persistence
-- **http**: API communication
-- **email_validator**: Form validation
-- **flutter_spinkit**: Loading animations
 
 ### 🎨 UI Components
 - **Custom Widgets**: Reusable DeviceTile and AddDeviceDialog
