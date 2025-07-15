@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
 import '../services/auth_service.dart';
+import '../services/google_signin_service.dart';
 
 class AuthController extends ChangeNotifier {
   final AuthService _authService = AuthService();
+  final GoogleSignInService _googleSignInService = GoogleSignInService();
   
   User? _currentUser;
   bool _isLoading = false;
@@ -86,6 +88,10 @@ class AuthController extends ChangeNotifier {
 
   Future<void> logout() async {
     _currentUser = null;
+    
+    // Sign out from Google as well
+    await _googleSignInService.signOut();
+    
     await _clearLoginState();
     notifyListeners();
   }
@@ -125,5 +131,37 @@ class AuthController extends ChangeNotifier {
     await prefs.remove('user_name');
     await prefs.remove('user_email');
     await prefs.remove('user_phone');
+  }
+
+  Future<bool> signInWithGoogle() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      // Use mock Google Sign-In for demo (replace with real implementation when Firebase is configured)
+      final user = await _googleSignInService.signInWithGoogleMock();
+      
+      if (user != null) {
+        _currentUser = user;
+        
+        // Save Google sign-in state
+        await _saveLoginState();
+        
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _errorMessage = 'Google Sign-In was cancelled';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _errorMessage = 'Google Sign-In failed: ${e.toString()}';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
   }
 }
