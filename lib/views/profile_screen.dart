@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../controllers/auth_controller.dart';
-import 'login_screen.dart';
+import '../utils/logout_utils.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -26,15 +27,7 @@ class ProfileScreen extends StatelessWidget {
             icon: const Icon(Icons.more_vert, color: Colors.white),
             onSelected: (value) async {
               if (value == 'logout') {
-                final authController = Provider.of<AuthController>(context, listen: false);
-                await authController.logout();
-                
-                if (context.mounted) {
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => const LoginScreen()),
-                    (route) => false,
-                  );
-                }
+                await LogoutUtils.showLogoutConfirmation(context);
               }
             },
             itemBuilder: (BuildContext context) => [
@@ -55,7 +48,7 @@ class ProfileScreen extends StatelessWidget {
       body: Consumer<AuthController>(
         builder: (context, authController, child) {
           final user = authController.currentUser;
-          
+
           if (user == null) {
             return const Center(
               child: Text('No user data available'),
@@ -79,7 +72,7 @@ class ProfileScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       const SizedBox(height: 20),
-                      
+
                       // Profile Avatar
                       Container(
                         width: 120,
@@ -99,7 +92,7 @@ class ProfileScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      
+
                       // User Name
                       Text(
                         user.name,
@@ -110,7 +103,7 @@ class ProfileScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      
+
                       // User Email
                       Text(
                         user.email,
@@ -122,9 +115,9 @@ class ProfileScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                
+
                 const SizedBox(height: 30),
-                
+
                 // Profile Details Section
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -140,7 +133,7 @@ class ProfileScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      
+
                       // Profile Info Cards
                       _buildInfoCard(
                         icon: Icons.person_outline,
@@ -149,7 +142,7 @@ class ProfileScreen extends StatelessWidget {
                         color: Colors.blue,
                       ),
                       const SizedBox(height: 16),
-                      
+
                       _buildInfoCard(
                         icon: Icons.email_outlined,
                         title: 'Email Address',
@@ -157,7 +150,7 @@ class ProfileScreen extends StatelessWidget {
                         color: Colors.green,
                       ),
                       const SizedBox(height: 16),
-                      
+
                       _buildInfoCard(
                         icon: Icons.phone_outlined,
                         title: 'Phone Number',
@@ -165,7 +158,7 @@ class ProfileScreen extends StatelessWidget {
                         color: Colors.orange,
                       ),
                       const SizedBox(height: 16),
-                      
+
                       _buildInfoCard(
                         icon: Icons.perm_identity,
                         title: 'User ID',
@@ -173,7 +166,7 @@ class ProfileScreen extends StatelessWidget {
                         color: Colors.purple,
                       ),
                       const SizedBox(height: 30),
-                      
+
                       // Account Settings Section
                       const Text(
                         'Account Settings',
@@ -184,7 +177,7 @@ class ProfileScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      
+
                       // Settings Options
                       _buildSettingsOption(
                         icon: Icons.edit_outlined,
@@ -194,14 +187,15 @@ class ProfileScreen extends StatelessWidget {
                           // TODO: Navigate to edit profile screen
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Edit Profile feature coming soon!'),
+                              content:
+                                  Text('Edit Profile feature coming soon!'),
                               backgroundColor: Colors.blue,
                             ),
                           );
                         },
                       ),
                       const SizedBox(height: 12),
-                      
+
                       _buildSettingsOption(
                         icon: Icons.security_outlined,
                         title: 'Change Password',
@@ -210,14 +204,15 @@ class ProfileScreen extends StatelessWidget {
                           // TODO: Navigate to change password screen
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Change Password feature coming soon!'),
+                              content:
+                                  Text('Change Password feature coming soon!'),
                               backgroundColor: Colors.orange,
                             ),
                           );
                         },
                       ),
                       const SizedBox(height: 12),
-                      
+
                       _buildSettingsOption(
                         icon: Icons.notifications_outlined,
                         title: 'Notifications',
@@ -226,14 +221,15 @@ class ProfileScreen extends StatelessWidget {
                           // TODO: Navigate to notifications settings
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Notification settings coming soon!'),
+                              content:
+                                  Text('Notification settings coming soon!'),
                               backgroundColor: Colors.green,
                             ),
                           );
                         },
                       ),
                       const SizedBox(height: 12),
-                      
+
                       _buildSettingsOption(
                         icon: Icons.help_outline,
                         title: 'Help & Support',
@@ -249,46 +245,14 @@ class ProfileScreen extends StatelessWidget {
                         },
                       ),
                       const SizedBox(height: 30),
-                      
+
                       // Logout Button
                       SizedBox(
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton.icon(
                           onPressed: () async {
-                            final confirmed = await showDialog<bool>(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return AlertDialog(
-                                  title: const Text('Logout'),
-                                  content: const Text('Are you sure you want to logout?'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.of(context).pop(false),
-                                      child: const Text('Cancel'),
-                                    ),
-                                    TextButton(
-                                      onPressed: () => Navigator.of(context).pop(true),
-                                      style: TextButton.styleFrom(
-                                        foregroundColor: Colors.red,
-                                      ),
-                                      child: const Text('Logout'),
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
-                            
-                            if (confirmed == true) {
-                              await authController.logout();
-                              
-                              if (context.mounted) {
-                                Navigator.of(context).pushAndRemoveUntil(
-                                  MaterialPageRoute(builder: (context) => const LoginScreen()),
-                                  (route) => false,
-                                );
-                              }
-                            }
+                            await LogoutUtils.showLogoutConfirmation(context);
                           },
                           icon: const Icon(Icons.logout),
                           label: const Text(
