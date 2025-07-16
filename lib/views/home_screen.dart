@@ -70,9 +70,10 @@ class _HomeScreenState extends State<HomeScreen> {
           Consumer<NotificationController>(
             builder: (context, notificationController, child) {
               return Stack(
+                clipBehavior: Clip.none,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.notifications, color: Colors.white),
+                    icon: const Icon(Icons.notifications, color: Colors.white, size: 24),
                     onPressed: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
@@ -83,26 +84,30 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   if (notificationController.unreadCount > 0)
                     Positioned(
-                      right: 8,
-                      top: 8,
+                      right: 6,
+                      top: 6,
                       child: Container(
-                        padding: const EdgeInsets.all(2),
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                         decoration: BoxDecoration(
                           color: Colors.red,
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white, width: 1),
                         ),
                         constraints: const BoxConstraints(
-                          minWidth: 16,
-                          minHeight: 16,
+                          minWidth: 18,
+                          minHeight: 18,
                         ),
-                        child: Text(
-                          '${notificationController.unreadCount > 99 ? '99+' : notificationController.unreadCount}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
+                        child: Center(
+                          child: Text(
+                            '${notificationController.unreadCount > 99 ? '99+' : notificationController.unreadCount}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              height: 1.0,
+                            ),
+                            textAlign: TextAlign.center,
                           ),
-                          textAlign: TextAlign.center,
                         ),
                       ),
                     ),
@@ -277,6 +282,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                         ),
+                        const SizedBox(height: 40),
                       ],
                     ),
                   );
