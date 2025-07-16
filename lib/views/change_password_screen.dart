@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../controllers/auth_controller.dart';
+import '../controllers/notification_controller.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -60,6 +61,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
     if (mounted) {
       if (success) {
+        // Create notification for password change
+        final notificationController =
+            Provider.of<NotificationController>(context, listen: false);
+        await notificationController.createPasswordChangeNotification();
+        
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Password changed successfully!'),
