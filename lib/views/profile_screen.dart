@@ -6,6 +6,7 @@ import '../utils/logout_utils.dart';
 import 'change_password_screen.dart';
 import 'edit_profile_screen.dart';
 import 'help_support_screen.dart';
+import 'notification_settings_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -216,12 +217,9 @@ class ProfileScreen extends StatelessWidget {
                         title: 'Notifications',
                         subtitle: 'Manage your notification preferences',
                         onTap: () {
-                          // TODO: Navigate to notifications settings
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content:
-                                  Text('Notification settings coming soon!'),
-                              backgroundColor: Colors.green,
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const NotificationSettingsScreen(),
                             ),
                           );
                         },
