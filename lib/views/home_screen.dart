@@ -3,12 +3,14 @@ import 'package:provider/provider.dart';
 
 import '../controllers/auth_controller.dart';
 import '../controllers/device_controller.dart';
+import '../controllers/notification_controller.dart';
 import '../models/device.dart';
 import '../utils/logout_utils.dart';
 import '../widgets/add_device_dialog.dart';
 import '../widgets/device_tile.dart';
 import '../widgets/edit_device_dialog.dart';
 import 'device_detail_screen.dart';
+import 'notifications_screen.dart';
 import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -64,6 +66,50 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: const Color(0xFF1E3A8A),
         elevation: 0,
         actions: [
+          // Notification Bell Icon
+          Consumer<NotificationController>(
+            builder: (context, notificationController, child) {
+              return Stack(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.notifications, color: Colors.white),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const NotificationsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  if (notificationController.unreadCount > 0)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          '${notificationController.unreadCount > 99 ? '99+' : notificationController.unreadCount}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
           Consumer<AuthController>(
             builder: (context, authController, child) {
               return PopupMenuButton<String>(
