@@ -1,7 +1,7 @@
 # ElectroApp v2.0 - Smart Device Monitoring & Real-time Analytics
 
 <div align="center">
-  <img src="assets/images/logo.png" alt="ElectroApp Logo" width="120" height="120">
+  <img src="assets/images/app_icon.png" alt="ElectroApp Logo" width="120" height="120">
   <br>
   <strong>Smart Device Monitoring</strong>
 </div>
