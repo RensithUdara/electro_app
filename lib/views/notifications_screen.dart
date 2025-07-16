@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../controllers/notification_controller.dart';
 import '../models/notification.dart';
 
@@ -142,41 +143,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
           return Column(
             children: [
-              // Summary Card
-              if (controller.unreadCount > 0)
-                Container(
-                  margin: const EdgeInsets.all(16),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E3A8A),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.notifications_active,
-                        color: Colors.white,
-                        size: 24,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'You have ${controller.unreadCount} unread notification${controller.unreadCount == 1 ? '' : 's'}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
               // Notifications List
               Expanded(
                 child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: EdgeInsets.fromLTRB(
+                    16, 
+                    controller.unreadCount == 0 ? 24 : 16, // Add extra padding when all read
+                    16, 
+                    16
+                  ),
                   itemCount: notifications.length,
                   itemBuilder: (context, index) {
                     final notification = notifications[index];
@@ -232,10 +207,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       decoration: BoxDecoration(
         color: notification.isRead ? Colors.white : Colors.blue[50],
         borderRadius: BorderRadius.circular(12),
-        border: notification.isRead ? null : Border.all(
-          color: Colors.blue[200]!,
-          width: 1,
-        ),
+        border: notification.isRead
+            ? null
+            : Border.all(
+                color: Colors.blue[200]!,
+                width: 1,
+              ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -291,7 +268,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             notification.title,
             style: TextStyle(
               fontSize: 16,
-              fontWeight: notification.isRead ? FontWeight.w500 : FontWeight.bold,
+              fontWeight:
+                  notification.isRead ? FontWeight.w500 : FontWeight.bold,
               color: Colors.black87,
             ),
           ),
