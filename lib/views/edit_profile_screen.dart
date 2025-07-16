@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../controllers/auth_controller.dart';
+import '../controllers/notification_controller.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -79,6 +80,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       );
 
       if (success && mounted) {
+        // Create notification for profile update
+        final notificationController =
+            Provider.of<NotificationController>(context, listen: false);
+        await notificationController.createProfileNotification('profile_update');
+        
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
