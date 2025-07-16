@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/device.dart';
 import '../services/device_service.dart';
+import '../services/notification_service.dart';
 
 class DeviceController extends ChangeNotifier {
   final DeviceService _deviceService = DeviceService();
+  final NotificationService _notificationService = NotificationService();
 
   List<Device> _devices = [];
   bool _isLoading = false;
@@ -118,6 +120,13 @@ class DeviceController extends ChangeNotifier {
         _devices.add(device);
         _isLoading = false;
         notifyListeners();
+        
+        // Create notification for device addition
+        await _notificationService.createDeviceNotification(
+          action: 'add',
+          deviceName: name,
+        );
+        
         return true;
       } else {
         _errorMessage = 'Failed to add device';
@@ -135,9 +144,19 @@ class DeviceController extends ChangeNotifier {
 
   Future<void> removeDevice(String deviceId) async {
     try {
+      // Find device name before removing
+      final device = _devices.firstWhere((d) => d.id == deviceId);
+      final deviceName = device.name;
+      
       await _deviceService.removeDevice(deviceId);
       _devices.removeWhere((device) => device.id == deviceId);
       notifyListeners();
+      
+      // Create notification for device removal
+      await _notificationService.createDeviceNotification(
+        action: 'delete',
+        deviceName: deviceName,
+      );
     } catch (e) {
       _errorMessage = 'Failed to remove device: ${e.toString()}';
       notifyListeners();
@@ -240,6 +259,13 @@ class DeviceController extends ChangeNotifier {
 
       _isLoading = false;
       notifyListeners();
+      
+      // Create notification for device update
+      await _notificationService.createDeviceNotification(
+        action: 'edit',
+        deviceName: name,
+      );
+      
       return true;
     } catch (e) {
       _errorMessage = 'Error updating device: ${e.toString()}';
