@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'controllers/auth_controller.dart';
 import 'controllers/device_controller.dart';
 import 'controllers/device_data_controller.dart';
+import 'controllers/notification_controller.dart';
 import 'controllers/realtime_data_controller.dart';
 import 'views/splash_screen.dart';
 
@@ -34,6 +35,14 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => DeviceController()),
         ChangeNotifierProvider(create: (_) => DeviceDataController()),
         ChangeNotifierProvider(create: (_) => RealtimeDataController()),
+        ChangeNotifierProvider(create: (_) {
+          final notificationController = NotificationController();
+          // Initialize notifications when app starts
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            notificationController.initialize();
+          });
+          return notificationController;
+        }),
       ],
       child: MaterialApp(
         title: 'ElectroApp',
