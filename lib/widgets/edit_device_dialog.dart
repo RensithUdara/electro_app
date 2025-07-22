@@ -15,9 +15,6 @@ class EditDeviceDialog extends StatefulWidget {
 
 class _EditDeviceDialogState extends State<EditDeviceDialog> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _nameController;
-  late final TextEditingController _deviceIdController;
-  late final TextEditingController _meterIdController;
 
   // Electrical measurement parameters - initialize with device values
   late bool _averagePF;
@@ -57,11 +54,6 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
   void initState() {
     super.initState();
 
-    // Initialize text controllers with current device values
-    _nameController = TextEditingController(text: widget.device.name);
-    _deviceIdController = TextEditingController(text: widget.device.deviceId);
-    _meterIdController = TextEditingController(text: widget.device.meterId);
-
     // Initialize boolean values with current device configuration
     _averagePF = widget.device.averagePF;
     _avgI = widget.device.avgI;
@@ -99,9 +91,6 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _deviceIdController.dispose();
-    _meterIdController.dispose();
     super.dispose();
   }
 
@@ -112,9 +101,10 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
 
       final success = await deviceController.updateDevice(
         deviceId: widget.device.id,
-        name: _nameController.text.trim(),
-        deviceName: _deviceIdController.text.trim(),
-        meterId: _meterIdController.text.trim(),
+        name: widget.device.name, // Keep original name (read-only)
+        deviceName:
+            widget.device.deviceId, // Keep original device ID (read-only)
+        meterId: widget.device.meterId, // Keep original meter ID (read-only)
         averagePF: _averagePF,
         avgI: _avgI,
         avgVLL: _avgVLL,
@@ -154,7 +144,7 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content:
-                Text('Device "${_nameController.text}" updated successfully!'),
+                Text('Device "${widget.device.name}" updated successfully!'),
             backgroundColor: Colors.green,
           ),
         );
@@ -208,7 +198,30 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
+
+            // Info notice
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue[50],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue[200]!),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, color: Colors.blue[600], size: 20),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Device name, ID, and meter address cannot be changed. You can only modify measurement parameters.',
+                      style: TextStyle(fontSize: 12, color: Colors.black87),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
 
             // Scrollable content
             Expanded(
@@ -217,90 +230,118 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
                   key: _formKey,
                   child: Column(
                     children: [
-                      // Device Name
-                      TextFormField(
-                        controller: _nameController,
-                        decoration: InputDecoration(
-                          labelText: 'Device Name',
-                          hintText: 'e.g., Living Room AC',
-                          prefixIcon: const Icon(Icons.devices),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide:
-                                const BorderSide(color: Color(0xFF1E3A8A)),
-                          ),
+                      // Device Name (Read-only)
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey[300]!),
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter device name';
-                          }
-                          return null;
-                        },
+                        child: Row(
+                          children: [
+                            const Icon(Icons.devices, color: Colors.grey),
+                            const SizedBox(width: 12),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Device Name',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                Text(
+                                  widget.device.name,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF1E3A8A),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 16),
 
-                      // Device ID
-                      TextFormField(
-                        controller: _deviceIdController,
-                        decoration: InputDecoration(
-                          labelText: 'Device ID',
-                          hintText: 'e.g., DEV001',
-                          prefixIcon: const Icon(Icons.perm_device_information),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide:
-                                const BorderSide(color: Color(0xFF1E3A8A)),
-                          ),
+                      // Device ID (Read-only)
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey[300]!),
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter device ID';
-                          }
-                          return null;
-                        },
+                        child: Row(
+                          children: [
+                            const Icon(Icons.perm_device_information,
+                                color: Colors.grey),
+                            const SizedBox(width: 12),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Device ID',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                Text(
+                                  widget.device.deviceId,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF1E3A8A),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 16),
 
-                      // Meter ID
-                      TextFormField(
-                        controller: _meterIdController,
-                        decoration: InputDecoration(
-                          labelText: 'Meter ID',
-                          hintText: 'e.g., MTR001',
-                          prefixIcon: const Icon(Icons.speed),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide:
-                                const BorderSide(color: Color(0xFF1E3A8A)),
-                          ),
+                      // Meter Address (Read-only)
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey[300]!),
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter meter ID';
-                          }
-                          return null;
-                        },
+                        child: Row(
+                          children: [
+                            const Icon(Icons.speed, color: Colors.grey),
+                            const SizedBox(width: 12),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Meter Address',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                Text(
+                                  widget.device.meterId,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF1E3A8A),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 20),
 
