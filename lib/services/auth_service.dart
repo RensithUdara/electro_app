@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../models/user.dart' as models;
@@ -7,7 +8,18 @@ import '../models/user.dart' as models;
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  
+  // Initialize GoogleSignIn only for non-web platforms
+  late final GoogleSignIn? _googleSignIn;
+
+  AuthService() {
+    // Only initialize Google Sign-In for non-web platforms to avoid configuration issues
+    if (!kIsWeb) {
+      _googleSignIn = GoogleSignIn();
+    } else {
+      _googleSignIn = null;
+    }
+  }
 
   // Convert Firebase User to our User model
   models.User? _userFromFirebaseUser(User? user) {
@@ -77,6 +89,11 @@ class AuthService {
 
   Future<models.User?> signInWithGoogle() async {
     try {
+      // Check if Google Sign-In is available (non-web platforms)
+      if (_googleSignIn == null) {
+        throw Exception('Google Sign-In is not available on this platform. Please use email/password login.');
+      }
+
       // Trigger the authentication flow
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
@@ -129,7 +146,10 @@ class AuthService {
 
   Future<void> signOut() async {
     try {
-      await _googleSignIn.signOut();
+      // Only call Google Sign-In signOut if it's available (non-web platforms)
+      if (_googleSignIn != null) {
+        await _googleSignIn.signOut();
+      }
       await _auth.signOut();
     } catch (e) {
       throw Exception('Sign out failed: $e');
