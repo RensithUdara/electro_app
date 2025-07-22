@@ -76,7 +76,8 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
   @override
   void dispose() {
     // Disconnect from real-time data when leaving the screen using stored reference
-    _realtimeController?.disconnect();
+    // Use disconnectSafely to avoid notifying listeners during disposal
+    _realtimeController?.disconnectSafely();
     super.dispose();
   }
 
