@@ -1,23 +1,24 @@
 import 'dart:math';
 
-import 'package:firebase_database/firebase_database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/device_data.dart';
 
 class DeviceDataService {
-  final DatabaseReference _database = FirebaseDatabase.instance.ref();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   Future<DeviceDataSummary?> getDeviceDataSummary(String deviceId) async {
     try {
-      // Try to get real data from Firebase first
-      DataSnapshot snapshot = await _database
-          .child('device_data')
-          .child(deviceId)
-          .orderByChild('timestamp')
-          .limitToLast(168) // Last 7 days (24 hours * 7)
+      // Try to get real data from Firestore first
+      QuerySnapshot snapshot = await _firestore
+          .collection('device_data')
+          .doc(deviceId)
+          .collection('readings')
+          .orderBy('timestamp', descending: true)
+          .limit(168) // Last 7 days (24 hours * 7)
           .get();
 
-      if (snapshot.exists && snapshot.value != null) {
+      if (snapshot.docs.isNotEmpty) {
         return _processFirebaseData(snapshot);
       } else {
         // Return null if no real data exists - don't show fake historical data
@@ -29,14 +30,14 @@ class DeviceDataService {
     }
   }
 
-  DeviceDataSummary? _processFirebaseData(DataSnapshot snapshot) {
-    final data = Map<String, dynamic>.from(snapshot.value as Map);
+  DeviceDataSummary? _processFirebaseData(QuerySnapshot snapshot) {
     final dataPoints = <DeviceData>[];
 
-    data.forEach((key, value) {
-      final point = DeviceData.fromJson(Map<String, dynamic>.from(value));
+    for (var doc in snapshot.docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      final point = DeviceData.fromJson(data);
       dataPoints.add(point);
-    });
+    }
 
     // Sort by timestamp
     dataPoints.sort((a, b) => a.timestamp.compareTo(b.timestamp));
@@ -164,25 +165,23 @@ class DeviceDataService {
   Future<List<DeviceData>> getRecentDeviceData(String deviceId,
       {int limit = 10}) async {
     try {
-      // Try to get real data from Firebase first
-      DataSnapshot snapshot = await _database
-          .child('device_data')
-          .child(deviceId)
-          .orderByChild('timestamp')
-          .limitToLast(limit)
+      // Try to get real data from Firestore first
+      QuerySnapshot snapshot = await _firestore
+          .collection('device_data')
+          .doc(deviceId)
+          .collection('readings')
+          .orderBy('timestamp', descending: true)
+          .limit(limit)
           .get();
 
-      if (snapshot.exists && snapshot.value != null) {
-        final data = Map<String, dynamic>.from(snapshot.value as Map);
+      if (snapshot.docs.isNotEmpty) {
         final dataPoints = <DeviceData>[];
 
-        data.forEach((key, value) {
-          final point = DeviceData.fromJson(Map<String, dynamic>.from(value));
+        for (var doc in snapshot.docs) {
+          final data = doc.data() as Map<String, dynamic>;
+          final point = DeviceData.fromJson(data);
           dataPoints.add(point);
-        });
-
-        // Sort by timestamp (newest first)
-        dataPoints.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+        }
 
         return dataPoints;
       } else {
@@ -213,14 +212,14 @@ class DeviceDataService {
     });
   }
 
-  // Method to add new device data to Firebase
+  // Method to add new device data to Firestore
   Future<void> addDeviceData(DeviceData deviceData) async {
     try {
-      await _database
-          .child('device_data')
-          .child(deviceData.deviceId)
-          .push()
-          .set(deviceData.toJson());
+      await _firestore
+          .collection('device_data')
+          .doc(deviceData.deviceId)
+          .collection('readings')
+          .add(deviceData.toJson());
     } catch (e) {
       throw Exception('Failed to add device data: $e');
     }
@@ -228,18 +227,17 @@ class DeviceDataService {
 
   // Method to listen to real-time device data updates
   Stream<DeviceData?> getDeviceDataStream(String deviceId) {
-    return _database
-        .child('device_data')
-        .child(deviceId)
-        .orderByChild('timestamp')
-        .limitToLast(1)
-        .onValue
-        .map((event) {
-      if (event.snapshot.exists && event.snapshot.value != null) {
-        final data = Map<String, dynamic>.from(event.snapshot.value as Map);
-        final latestKey = data.keys.last;
-        final latestData = Map<String, dynamic>.from(data[latestKey]);
-        return DeviceData.fromJson(latestData);
+    return _firestore
+        .collection('device_data')
+        .doc(deviceId)
+        .collection('readings')
+        .orderBy('timestamp', descending: true)
+        .limit(1)
+        .snapshots()
+        .map((snapshot) {
+      if (snapshot.docs.isNotEmpty) {
+        final data = snapshot.docs.first.data();
+        return DeviceData.fromJson(data);
       }
       return null;
     });
