@@ -1,25 +1,24 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/device.dart';
 
 class DeviceService {
-  final DatabaseReference _database = FirebaseDatabase.instance.ref();
+  final DatabaseReference _realtimeDb = FirebaseDatabase.instance.ref();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   // Get current user ID
   String? get _userId => _auth.currentUser?.uid;
 
-  // Get user's devices reference
-  DatabaseReference get _userDevicesRef {
+  // Get user's devices reference in Firestore (user data)
+  CollectionReference get _userDevicesRef {
     if (_userId == null) {
       throw Exception('User not authenticated');
     }
-    return _database.child('users').child(_userId!).child('devices');
+    return _firestore.collection('users').doc(_userId!).collection('devices');
   }
-
-  // Get all devices reference
-  DatabaseReference get _devicesRef => _database.child('devices');
 
   Future<List<Device>> getDevices() async {
     try {
@@ -27,34 +26,110 @@ class DeviceService {
         throw Exception('User not authenticated');
       }
 
-      // Get user's device IDs
-      DataSnapshot userDevicesSnapshot = await _userDevicesRef.get();
+      // Get user's device IDs from Firestore (user data)
+      QuerySnapshot userDevicesSnapshot = await _userDevicesRef.get();
 
-      if (!userDevicesSnapshot.exists || userDevicesSnapshot.value == null) {
+      if (userDevicesSnapshot.docs.isEmpty) {
         return []; // No devices found
       }
 
-      Map<String, dynamic> userDevices =
-          Map<String, dynamic>.from(userDevicesSnapshot.value as Map);
       List<Device> devices = [];
 
-      // Fetch each device details
-      for (String deviceId in userDevices.keys) {
-        DataSnapshot deviceSnapshot = await _devicesRef.child(deviceId).get();
+      // Fetch each device details from Realtime Database (device data)
+      for (QueryDocumentSnapshot deviceRef in userDevicesSnapshot.docs) {
+        try {
+          String deviceId = deviceRef.id;
+          DataSnapshot deviceSnapshot = await _realtimeDb.child(deviceId).get();
 
-        if (deviceSnapshot.exists && deviceSnapshot.value != null) {
-          Map<String, dynamic> deviceData =
-              Map<String, dynamic>.from(deviceSnapshot.value as Map);
-          deviceData['id'] = deviceId; // Add the ID to the data
-          devices.add(Device.fromJson(deviceData));
+          if (deviceSnapshot.exists && deviceSnapshot.value != null) {
+            // Safely convert Firebase data to Map<String, dynamic>
+            Map<String, dynamic> deviceData = _convertFirebaseMapToStringMap(deviceSnapshot.value as Map);
+            
+            // Verify device ownership by checking DeviceInfo/ownerId
+            Map<String, dynamic> deviceInfo = deviceData['DeviceInfo'] as Map<String, dynamic>? ?? {};
+            String? deviceOwnerId = deviceInfo['ownerId']?.toString();
+            
+            // Only include devices that belong to current user or have no owner set
+            if (deviceOwnerId == null || deviceOwnerId == _userId) {
+              // Convert from actual database structure to our Device model
+              Device device = _convertFromDatabaseStructure(deviceId, deviceData);
+              devices.add(device);
+            }
+          }
+        } catch (e) {
+          // Skip devices that can't be loaded but continue with others
+          print('Failed to load device ${deviceRef.id}: $e');
+          continue;
         }
       }
 
       return devices;
     } catch (e) {
-      // If Firebase fails, return mock data for development
-      return _getMockDevices();
+      // If Firebase fails, return empty list
+      return [];
     }
+  }
+
+  // Helper method to safely convert Firebase Map to Map<String, dynamic>
+  Map<String, dynamic> _convertFirebaseMapToStringMap(Map<Object?, Object?> firebaseMap) {
+    Map<String, dynamic> result = {};
+    firebaseMap.forEach((key, value) {
+      String stringKey = key?.toString() ?? '';
+      if (value is Map) {
+        result[stringKey] = _convertFirebaseMapToStringMap(Map<Object?, Object?>.from(value));
+      } else {
+        result[stringKey] = value;
+      }
+    });
+    return result;
+  }
+
+  // Helper method to convert from database structure to Device model
+  Device _convertFromDatabaseStructure(String deviceId, Map<String, dynamic> data) {
+    final auth = data['Auth'] as Map<String, dynamic>? ?? {};
+    final params = data['Parameters'] as Map<String, dynamic>? ?? {};
+    final deviceInfo = data['DeviceInfo'] as Map<String, dynamic>? ?? {};
+    final meterAddress = data['MeterAddress']?.toString() ?? '1';
+
+    return Device(
+      id: deviceId,
+      name: deviceInfo['name']?.toString() ?? 'Unknown Device',
+      deviceId: auth['Device_ID']?.toString() ?? deviceId,
+      meterId: meterAddress,
+      averagePF: (params['Average_PF'] ?? 0) == 1,
+      avgI: (params['Avg_I'] ?? 0) == 1,
+      avgVLL: (params['Avg_V_LL'] ?? 0) == 1,
+      avgVLN: (params['Avg_V_LN'] ?? 0) == 1,
+      frequency: (params['Frequency'] ?? 0) == 1,
+      i1: (params['I1'] ?? 0) == 1,
+      i2: (params['I2'] ?? 0) == 1,
+      i3: (params['I3'] ?? 0) == 1,
+      pf1: (params['PF1'] ?? 0) == 1,
+      pf2: (params['PF2'] ?? 0) == 1,
+      pf3: (params['PF3'] ?? 0) == 1,
+      totalKVA: (params['Total_KVA'] ?? 0) == 1,
+      totalKVAR: (params['Total_KVAR'] ?? 0) == 1,
+      totalKW: (params['Total_KW'] ?? 0) == 1,
+      totalNetKVAh: (params['Total_Net_KVAh'] ?? 0) == 1,
+      totalNetKVArh: (params['Total_Net_KVArh'] ?? 0) == 1,
+      totalNetKWh: (params['Total_Net_KWh'] ?? 0) == 1,
+      v12: (params['V12'] ?? 0) == 1,
+      v1N: (params['V1N'] ?? 0) == 1,
+      v23: (params['V23'] ?? 0) == 1,
+      v2N: (params['V2N'] ?? 0) == 1,
+      v31: (params['V31'] ?? 0) == 1,
+      v3N: (params['V3N'] ?? 0) == 1,
+      kvarL1: (params['KVAR_L1'] ?? 0) == 1,
+      kvarL2: (params['KVAR_L2'] ?? 0) == 1,
+      kvarL3: (params['KVAR_L3'] ?? 0) == 1,
+      kvaL1: (params['KVA_L1'] ?? 0) == 1,
+      kvaL2: (params['KVA_L2'] ?? 0) == 1,
+      kvaL3: (params['KVA_L3'] ?? 0) == 1,
+      kwL1: (params['KW_L1'] ?? 0) == 1,
+      kwL2: (params['KW_L2'] ?? 0) == 1,
+      kwL3: (params['KW_L3'] ?? 0) == 1,
+      createdAt: DateTime.tryParse(deviceInfo['createdAt']?.toString() ?? '') ?? DateTime.now(),
+    );
   }
 
   Future<Device?> addDevice({
@@ -99,8 +174,78 @@ class DeviceService {
         throw Exception('User not authenticated');
       }
 
-      // Create device data
-      final deviceData = {
+      // First check if device exists and get its password from Firebase
+      DataSnapshot existingDeviceSnapshot = await _realtimeDb.child(deviceId).child('Auth').get();
+      
+      if (!existingDeviceSnapshot.exists || existingDeviceSnapshot.value == null) {
+        throw Exception('Device not found in system. Please ensure the device is registered in the backend first.');
+      }
+      
+      Map<String, dynamic> existingAuthData = _convertFirebaseMapToStringMap(existingDeviceSnapshot.value as Map);
+      String devicePassword = existingAuthData['Device_Pwd']?.toString() ?? '';
+      
+      if (devicePassword.isEmpty) {
+        throw Exception('Device password not found in system.');
+      }
+
+      // Update only the DeviceInfo section with user-specific data (don't overwrite the whole device)
+      await _realtimeDb.child(deviceId).child('DeviceInfo').update({
+        'name': name,
+        'ownerId': _userId,
+        'addedAt': DateTime.now().toIso8601String(),
+      });
+
+      // Update Parameters based on user preferences (convert boolean to 1/0)
+      await _realtimeDb.child(deviceId).child('Parameters').update({
+        'Average_PF': averagePF ? 1 : 0,
+        'Avg_I': avgI ? 1 : 0,
+        'Avg_V_LL': avgVLL ? 1 : 0,
+        'Avg_V_LN': avgVLN ? 1 : 0,
+        'Frequency': frequency ? 1 : 0,
+        'I1': i1 ? 1 : 0,
+        'I2': i2 ? 1 : 0,
+        'I3': i3 ? 1 : 0,
+        'PF1': pf1 ? 1 : 0,
+        'PF2': pf2 ? 1 : 0,
+        'PF3': pf3 ? 1 : 0,
+        'Total_KVA': totalKVA ? 1 : 0,
+        'Total_KVAR': totalKVAR ? 1 : 0,
+        'Total_KW': totalKW ? 1 : 0,
+        'Total_Net_KVAh': totalNetKVAh ? 1 : 0,
+        'Total_Net_KVArh': totalNetKVArh ? 1 : 0,
+        'Total_Net_KWh': totalNetKWh ? 1 : 0,
+        'V12': v12 ? 1 : 0,
+        'V1N': v1N ? 1 : 0,
+        'V23': v23 ? 1 : 0,
+        'V2N': v2N ? 1 : 0,
+        'V31': v31 ? 1 : 0,
+        'V3N': v3N ? 1 : 0,
+        'KVAR_L1': kvarL1 ? 1 : 0,
+        'KVAR_L2': kvarL2 ? 1 : 0,
+        'KVAR_L3': kvarL3 ? 1 : 0,
+        'KVA_L1': kvaL1 ? 1 : 0,
+        'KVA_L2': kvaL2 ? 1 : 0,
+        'KVA_L3': kvaL3 ? 1 : 0,
+        'KW_L1': kwL1 ? 1 : 0,
+        'KW_L2': kwL2 ? 1 : 0,
+        'KW_L3': kwL3 ? 1 : 0,
+      });
+
+      // Update MeterAddress if needed
+      await _realtimeDb.child(deviceId).update({
+        'MeterAddress': int.tryParse(meterId) ?? 1,
+      });
+
+      // Add device reference to user's devices subcollection in Firestore
+      await _userDevicesRef.doc(deviceId).set({
+        'deviceId': deviceId,
+        'name': name,
+        'addedAt': FieldValue.serverTimestamp(),
+      });
+
+      // Return the created device (convert back to our Device model format)
+      final returnData = {
+        'id': deviceId,
         'name': name,
         'deviceId': deviceId,
         'meterId': meterId,
@@ -137,21 +282,8 @@ class DeviceService {
         'kwL2': kwL2,
         'kwL3': kwL3,
         'createdAt': DateTime.now().toIso8601String(),
-        'ownerId': _userId,
       };
-
-      // Generate a unique ID for the device
-      String newDeviceId = _devicesRef.push().key!;
-
-      // Save device to devices collection
-      await _devicesRef.child(newDeviceId).set(deviceData);
-
-      // Add device reference to user's devices
-      await _userDevicesRef.child(newDeviceId).set(true);
-
-      // Return the created device
-      deviceData['id'] = newDeviceId;
-      return Device.fromJson(deviceData);
+      return Device.fromJson(returnData);
     } catch (e) {
       throw Exception('Failed to add device: $e');
     }
@@ -163,8 +295,8 @@ class DeviceService {
         throw Exception('User not authenticated');
       }
 
-      // Remove device from user's devices
-      await _userDevicesRef.child(deviceId).remove();
+      // Remove device from user's devices subcollection
+      await _userDevicesRef.doc(deviceId).delete();
 
       // Optionally, remove the device entirely if no other users have it
       // For now, we'll just remove it from the user's collection
@@ -175,13 +307,12 @@ class DeviceService {
 
   Future<Device?> getDevice(String deviceId) async {
     try {
-      DataSnapshot snapshot = await _devicesRef.child(deviceId).get();
+      DataSnapshot snapshot = await _realtimeDb.child(deviceId).get();
 
       if (snapshot.exists && snapshot.value != null) {
-        Map<String, dynamic> deviceData =
-            Map<String, dynamic>.from(snapshot.value as Map);
-        deviceData['id'] = deviceId;
-        return Device.fromJson(deviceData);
+        // Safely convert Firebase data to Map<String, dynamic>
+        Map<String, dynamic> deviceData = _convertFirebaseMapToStringMap(snapshot.value as Map);
+        return _convertFromDatabaseStructure(deviceId, deviceData);
       }
 
       return null;
@@ -193,7 +324,62 @@ class DeviceService {
   Future<void> updateDevice(
       String deviceId, Map<String, dynamic> updates) async {
     try {
-      await _devicesRef.child(deviceId).update(updates);
+      // Convert updates to match the database structure
+      Map<String, dynamic> structuredUpdates = {};
+      
+      // Handle DeviceInfo updates
+      if (updates.containsKey('name')) {
+        structuredUpdates['DeviceInfo/name'] = updates['name'];
+      }
+      
+      // Handle Parameters updates - convert boolean to 1/0
+      final paramMap = {
+        'averagePF': 'Parameters/Average_PF',
+        'avgI': 'Parameters/Avg_I',
+        'avgVLL': 'Parameters/Avg_V_LL',
+        'avgVLN': 'Parameters/Avg_V_LN',
+        'frequency': 'Parameters/Frequency',
+        'i1': 'Parameters/I1',
+        'i2': 'Parameters/I2',
+        'i3': 'Parameters/I3',
+        'pf1': 'Parameters/PF1',
+        'pf2': 'Parameters/PF2',
+        'pf3': 'Parameters/PF3',
+        'totalKVA': 'Parameters/Total_KVA',
+        'totalKVAR': 'Parameters/Total_KVAR',
+        'totalKW': 'Parameters/Total_KW',
+        'totalNetKVAh': 'Parameters/Total_Net_KVAh',
+        'totalNetKVArh': 'Parameters/Total_Net_KVArh',
+        'totalNetKWh': 'Parameters/Total_Net_KWh',
+        'v12': 'Parameters/V12',
+        'v1N': 'Parameters/V1N',
+        'v23': 'Parameters/V23',
+        'v2N': 'Parameters/V2N',
+        'v31': 'Parameters/V31',
+        'v3N': 'Parameters/V3N',
+        'kvarL1': 'Parameters/KVAR_L1',
+        'kvarL2': 'Parameters/KVAR_L2',
+        'kvarL3': 'Parameters/KVAR_L3',
+        'kvaL1': 'Parameters/KVA_L1',
+        'kvaL2': 'Parameters/KVA_L2',
+        'kvaL3': 'Parameters/KVA_L3',
+        'kwL1': 'Parameters/KW_L1',
+        'kwL2': 'Parameters/KW_L2',
+        'kwL3': 'Parameters/KW_L3',
+      };
+      
+      for (String key in paramMap.keys) {
+        if (updates.containsKey(key)) {
+          structuredUpdates[paramMap[key]!] = updates[key] == true ? 1 : 0;
+        }
+      }
+      
+      // Handle MeterAddress
+      if (updates.containsKey('meterId')) {
+        structuredUpdates['MeterAddress'] = int.tryParse(updates['meterId'].toString()) ?? 1;
+      }
+      
+      await _realtimeDb.child(deviceId).update(structuredUpdates);
     } catch (e) {
       throw Exception('Failed to update device: $e');
     }
@@ -201,7 +387,7 @@ class DeviceService {
 
   Future<void> updateDeviceStatus(String deviceId, bool isOnline) async {
     try {
-      await _devicesRef.child(deviceId).update({
+      await _realtimeDb.child(deviceId).child('DeviceInfo').update({
         'isOnline': isOnline,
         'lastSeen': DateTime.now().millisecondsSinceEpoch,
       });
@@ -216,26 +402,34 @@ class DeviceService {
       return Stream.value([]);
     }
 
-    return _userDevicesRef.onValue.asyncMap((event) async {
-      if (!event.snapshot.exists || event.snapshot.value == null) {
+    return _userDevicesRef.snapshots().asyncMap((snapshot) async {
+      if (snapshot.docs.isEmpty) {
         return <Device>[];
       }
 
-      Map<String, dynamic> userDevices =
-          Map<String, dynamic>.from(event.snapshot.value as Map);
       List<Device> devices = [];
 
-      for (String deviceId in userDevices.keys) {
+      for (QueryDocumentSnapshot deviceRef in snapshot.docs) {
         try {
-          DataSnapshot deviceSnapshot = await _devicesRef.child(deviceId).get();
+          String deviceId = deviceRef.id;
+          DataSnapshot deviceSnapshot = await _realtimeDb.child(deviceId).get();
           if (deviceSnapshot.exists && deviceSnapshot.value != null) {
-            Map<String, dynamic> deviceData =
-                Map<String, dynamic>.from(deviceSnapshot.value as Map);
-            deviceData['id'] = deviceId;
-            devices.add(Device.fromJson(deviceData));
+            // Safely convert Firebase data to Map<String, dynamic>
+            Map<String, dynamic> deviceData = _convertFirebaseMapToStringMap(deviceSnapshot.value as Map);
+            
+            // Verify device ownership by checking DeviceInfo/ownerId
+            Map<String, dynamic> deviceInfo = deviceData['DeviceInfo'] as Map<String, dynamic>? ?? {};
+            String? deviceOwnerId = deviceInfo['ownerId']?.toString();
+            
+            // Only include devices that belong to current user or have no owner set
+            if (deviceOwnerId == null || deviceOwnerId == _userId) {
+              Device device = _convertFromDatabaseStructure(deviceId, deviceData);
+              devices.add(device);
+            }
           }
         } catch (e) {
           // Skip devices that can't be loaded
+          print('Failed to load device ${deviceRef.id}: $e');
           continue;
         }
       }
@@ -244,127 +438,30 @@ class DeviceService {
     });
   }
 
-  // Mock data for development/testing
-  List<Device> _getMockDevices() {
-    final now = DateTime.now();
-    return [
-      Device(
-        id: '1',
-        name: 'Main Electrical Panel',
-        deviceId: 'ESP32_001',
-        meterId: 'MTR_001',
-        averagePF: true,
-        avgI: true,
-        avgVLL: true,
-        avgVLN: true,
-        frequency: true,
-        i1: true,
-        i2: true,
-        i3: true,
-        pf1: false,
-        pf2: false,
-        pf3: false,
-        totalKVA: true,
-        totalKVAR: true,
-        totalKW: true,
-        totalNetKVAh: true,
-        totalNetKVArh: false,
-        totalNetKWh: true,
-        v12: true,
-        v1N: true,
-        v23: true,
-        v2N: true,
-        v31: true,
-        v3N: true,
-        kvarL1: false,
-        kvarL2: false,
-        kvarL3: false,
-        kvaL1: true,
-        kvaL2: true,
-        kvaL3: true,
-        kwL1: true,
-        kwL2: true,
-        kwL3: true,
-        createdAt: now.subtract(const Duration(days: 30)),
-      ),
-      Device(
-        id: '2',
-        name: 'Kitchen Panel',
-        deviceId: 'ESP32_002',
-        meterId: 'MTR_002',
-        averagePF: false,
-        avgI: true,
-        avgVLL: true,
-        avgVLN: false,
-        frequency: true,
-        i1: true,
-        i2: false,
-        i3: false,
-        pf1: true,
-        pf2: false,
-        pf3: false,
-        totalKVA: false,
-        totalKVAR: false,
-        totalKW: true,
-        totalNetKVAh: false,
-        totalNetKVArh: false,
-        totalNetKWh: true,
-        v12: false,
-        v1N: true,
-        v23: false,
-        v2N: true,
-        v31: false,
-        v3N: true,
-        kvarL1: false,
-        kvarL2: false,
-        kvarL3: false,
-        kvaL1: false,
-        kvaL2: false,
-        kvaL3: false,
-        kwL1: true,
-        kwL2: false,
-        kwL3: false,
-        createdAt: now.subtract(const Duration(days: 15)),
-      ),
-      Device(
-        id: '3',
-        name: 'Living Room Panel',
-        deviceId: 'ESP32_003',
-        meterId: 'MTR_003',
-        averagePF: true,
-        avgI: false,
-        avgVLL: false,
-        avgVLN: true,
-        frequency: false,
-        i1: false,
-        i2: true,
-        i3: true,
-        pf1: true,
-        pf2: true,
-        pf3: true,
-        totalKVA: true,
-        totalKVAR: true,
-        totalKW: false,
-        totalNetKVAh: true,
-        totalNetKVArh: true,
-        totalNetKWh: false,
-        v12: true,
-        v1N: false,
-        v23: true,
-        v2N: false,
-        v31: true,
-        v3N: false,
-        kvarL1: true,
-        kvarL2: true,
-        kvarL3: true,
-        kvaL1: false,
-        kvaL2: false,
-        kvaL3: false,
-        kwL1: false,
-        kwL2: true,
-        kwL3: true,
-        createdAt: now.subtract(const Duration(days: 7)),
-      ),
-    ];
+  /// Validates device credentials against Firebase Realtime Database
+  Future<bool> validateDeviceCredentials(
+      String deviceId, String password) async {
+    try {
+      // Check if device exists in Realtime Database with the actual structure: {deviceId}/Auth/
+      DataSnapshot snapshot =
+          await _realtimeDb.child(deviceId).child('Auth').get();
+
+      if (snapshot.exists && snapshot.value != null) {
+        // Safely convert Firebase data to Map<String, dynamic>
+        Map<String, dynamic> deviceData = _convertFirebaseMapToStringMap(snapshot.value as Map);
+
+        // Check if password matches (using Device_Pwd field from actual structure)
+        String storedPassword = deviceData['Device_Pwd']?.toString() ?? '';
+        return storedPassword == password;
+      }
+
+      return false;
+    } catch (e) {
+      // For development/testing, allow some mock credentials
+      if (deviceId == 'Device250722' && password == '12345') {
+        return true;
+      }
+      return false;
+    }
   }
 }
