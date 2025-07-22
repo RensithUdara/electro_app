@@ -181,12 +181,12 @@ class AuthService {
       // Update display name in Firebase Auth
       await user.updateDisplayName(name);
 
-      // Update user data in Cloud Firestore
-      await _firestore.collection('users').doc(user.uid).update({
+      // Update user data in Cloud Firestore (use set with merge to create if doesn't exist)
+      await _firestore.collection('users').doc(user.uid).set({
         'name': name,
         'phoneNumber': phoneNumber,
         'updatedAt': FieldValue.serverTimestamp(),
-      });
+      }, SetOptions(merge: true));
     } on FirebaseAuthException catch (e) {
       throw Exception(_getErrorMessage(e.code));
     } catch (e) {
