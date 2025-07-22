@@ -6,7 +6,7 @@ import '../controllers/device_controller.dart';
 import '../controllers/notification_controller.dart';
 import '../models/device.dart';
 import '../utils/logout_utils.dart';
-import '../widgets/add_device_dialog_v2.dart';
+import '../widgets/add_device_dialog.dart';
 import '../widgets/device_tile.dart';
 import '../widgets/edit_device_dialog.dart';
 import 'device_detail_screen.dart';
@@ -33,7 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return const AddDeviceDialogV2();
+        return const AddDeviceDialog();
       },
     );
   }
