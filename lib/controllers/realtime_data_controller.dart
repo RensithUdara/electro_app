@@ -93,7 +93,7 @@ class RealtimeDataController extends ChangeNotifier {
     _filteredData = null;
     _isConnected = false;
     _currentDevice = null;
-    
+
     // Schedule notifyListeners to run after the current frame to avoid
     // calling it during widget disposal when the framework is locked
     WidgetsBinding.instance.addPostFrameCallback((_) {

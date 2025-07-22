@@ -28,7 +28,7 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
   int _selectedTabIndex = 0;
   List<String> _parameterOrder =
       []; // Store the order of parameters for drag & drop
-  
+
   // Store reference to controller to avoid looking it up in dispose
   RealtimeDataController? _realtimeController;
 
@@ -41,7 +41,8 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
           .loadDeviceData(widget.device.id);
 
       // Connect to real-time data and store reference
-      _realtimeController = Provider.of<RealtimeDataController>(context, listen: false);
+      _realtimeController =
+          Provider.of<RealtimeDataController>(context, listen: false);
       _realtimeController?.connectToDevice(widget.device);
 
       // Load saved parameter order after a short delay to ensure data is loaded
