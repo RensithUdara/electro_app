@@ -93,7 +93,25 @@ class RealtimeDataController extends ChangeNotifier {
     _filteredData = null;
     _isConnected = false;
     _currentDevice = null;
-    notifyListeners();
+    
+    // Schedule notifyListeners to run after the current frame to avoid
+    // calling it during widget disposal when the framework is locked
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (hasListeners) {
+        notifyListeners();
+      }
+    });
+  }
+
+  // Safe disconnect method for use during disposal
+  void disconnectSafely() {
+    _dataSubscription?.cancel();
+    _dataSubscription = null;
+    _currentData = null;
+    _filteredData = null;
+    _isConnected = false;
+    _currentDevice = null;
+    // Don't notify listeners during disposal
   }
 
   // Refresh connection
