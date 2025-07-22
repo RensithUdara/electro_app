@@ -8,11 +8,14 @@ import 'controllers/device_controller.dart';
 import 'controllers/device_data_controller.dart';
 import 'controllers/notification_controller.dart';
 import 'controllers/realtime_data_controller.dart';
+import 'firebase_options.dart';
 import 'views/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 
