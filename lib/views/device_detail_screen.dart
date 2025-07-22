@@ -26,6 +26,9 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
   int _selectedTabIndex = 0;
   List<String> _parameterOrder =
       []; // Store the order of parameters for drag & drop
+  
+  // Store reference to controller to avoid looking it up in dispose
+  RealtimeDataController? _realtimeController;
 
   @override
   void initState() {
@@ -35,9 +38,9 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
       Provider.of<DeviceDataController>(context, listen: false)
           .loadDeviceData(widget.device.id);
 
-      // Connect to real-time data
-      Provider.of<RealtimeDataController>(context, listen: false)
-          .connectToDevice(widget.device);
+      // Connect to real-time data and store reference
+      _realtimeController = Provider.of<RealtimeDataController>(context, listen: false);
+      _realtimeController?.connectToDevice(widget.device);
 
       // Load saved parameter order after a short delay to ensure data is loaded
       Future.delayed(const Duration(milliseconds: 500), () {
@@ -51,10 +54,27 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
     });
   }
 
+  /// Formats parameter values to display with 2 decimal places
+  String _formatParameterValue(dynamic value) {
+    if (value == null) return '--';
+
+    if (value is num) {
+      return value.toStringAsFixed(2);
+    }
+
+    // Try to parse as a number
+    final numValue = num.tryParse(value.toString());
+    if (numValue != null) {
+      return numValue.toStringAsFixed(2);
+    }
+
+    return value.toString();
+  }
+
   @override
   void dispose() {
-    // Disconnect from real-time data when leaving the screen
-    Provider.of<RealtimeDataController>(context, listen: false).disconnect();
+    // Disconnect from real-time data when leaving the screen using stored reference
+    _realtimeController?.disconnect();
     super.dispose();
   }
 
@@ -1181,7 +1201,7 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
             children: [
               Expanded(
                 child: Text(
-                  isPlaceholder ? '--' : value.toString(),
+                  isPlaceholder ? '--' : _formatParameterValue(value),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
