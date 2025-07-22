@@ -1,12 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../models/user.dart' as models;
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final DatabaseReference _database = FirebaseDatabase.instance.ref();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   // Convert Firebase User to our User model
@@ -57,13 +57,13 @@ class AuthService {
       // Update user profile with name
       await result.user?.updateDisplayName(name);
 
-      // Save additional user data to Realtime Database
+      // Save additional user data to Cloud Firestore
       if (result.user != null) {
-        await _database.child('users').child(result.user!.uid).set({
+        await _firestore.collection('users').doc(result.user!.uid).set({
           'name': name,
           'email': email,
           'phoneNumber': phoneNumber,
-          'createdAt': DateTime.now().millisecondsSinceEpoch,
+          'createdAt': FieldValue.serverTimestamp(),
         });
       }
 
@@ -97,13 +97,13 @@ class AuthService {
       // Sign in to Firebase with the Google credential
       UserCredential result = await _auth.signInWithCredential(credential);
 
-      // Save user data to database if it's a new user
+      // Save user data to firestore if it's a new user
       if (result.additionalUserInfo?.isNewUser == true && result.user != null) {
-        await _database.child('users').child(result.user!.uid).set({
+        await _firestore.collection('users').doc(result.user!.uid).set({
           'name': result.user!.displayName ?? 'Unknown User',
           'email': result.user!.email ?? '',
           'phoneNumber': result.user!.phoneNumber ?? '',
-          'createdAt': DateTime.now().millisecondsSinceEpoch,
+          'createdAt': FieldValue.serverTimestamp(),
         });
       }
 
@@ -181,11 +181,11 @@ class AuthService {
       // Update display name in Firebase Auth
       await user.updateDisplayName(name);
 
-      // Update user data in Realtime Database
-      await _database.child('users').child(user.uid).update({
+      // Update user data in Cloud Firestore
+      await _firestore.collection('users').doc(user.uid).update({
         'name': name,
         'phoneNumber': phoneNumber,
-        'updatedAt': DateTime.now().millisecondsSinceEpoch,
+        'updatedAt': FieldValue.serverTimestamp(),
       });
     } on FirebaseAuthException catch (e) {
       throw Exception(_getErrorMessage(e.code));
