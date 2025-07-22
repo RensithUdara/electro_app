@@ -41,15 +41,14 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDdGyJVoNZCso9ZxhdI0W_29i--B2alJnk',
-    appId: '1:152632355525:web:141400ddd77c9507369eac',
-    messagingSenderId: '152632355525',
-    projectId: 'panel-monitor-691c6',
-    authDomain: 'panel-monitor-691c6.firebaseapp.com',
-    databaseURL: 'https://panel-monitor-691c6-default-rtdb.firebaseio.com',
-    storageBucket: 'panel-monitor-691c6.firebasestorage.app',
-    measurementId: 'G-6NWDDJFJPD',
-  );
+      apiKey: "AIzaSyDdGyJVoNZCso9ZxhdI0W_29i--B2alJnk",
+      authDomain: "panel-monitor-691c6.firebaseapp.com",
+      databaseURL: "https://panel-monitor-691c6-default-rtdb.firebaseio.com",
+      projectId: "panel-monitor-691c6",
+      storageBucket: "panel-monitor-691c6.firebasestorage.app",
+      messagingSenderId: "152632355525",
+      appId: "1:152632355525:web:141400ddd77c9507369eac",
+      measurementId: "G-6NWDDJFJPD");
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyAYytQdzZcK-gMmM9nFFAu-B-UOI2M_ttQ',
@@ -67,8 +66,10 @@ class DefaultFirebaseOptions {
     projectId: 'panel-monitor-691c6',
     databaseURL: 'https://panel-monitor-691c6-default-rtdb.firebaseio.com',
     storageBucket: 'panel-monitor-691c6.firebasestorage.app',
-    androidClientId: '152632355525-ibj1kcqjr8v3ldhmqc2ntf28haqp9r90.apps.googleusercontent.com',
-    iosClientId: '152632355525-rjs23v2o1sf80gjjvtbqd6433gkg91b6.apps.googleusercontent.com',
+    androidClientId:
+        '152632355525-ibj1kcqjr8v3ldhmqc2ntf28haqp9r90.apps.googleusercontent.com',
+    iosClientId:
+        '152632355525-rjs23v2o1sf80gjjvtbqd6433gkg91b6.apps.googleusercontent.com',
     iosBundleId: 'com.example.electroApp',
   );
 
@@ -79,8 +80,10 @@ class DefaultFirebaseOptions {
     projectId: 'panel-monitor-691c6',
     databaseURL: 'https://panel-monitor-691c6-default-rtdb.firebaseio.com',
     storageBucket: 'panel-monitor-691c6.firebasestorage.app',
-    androidClientId: '152632355525-ibj1kcqjr8v3ldhmqc2ntf28haqp9r90.apps.googleusercontent.com',
-    iosClientId: '152632355525-rjs23v2o1sf80gjjvtbqd6433gkg91b6.apps.googleusercontent.com',
+    androidClientId:
+        '152632355525-ibj1kcqjr8v3ldhmqc2ntf28haqp9r90.apps.googleusercontent.com',
+    iosClientId:
+        '152632355525-rjs23v2o1sf80gjjvtbqd6433gkg91b6.apps.googleusercontent.com',
     iosBundleId: 'com.example.electroApp',
   );
 
