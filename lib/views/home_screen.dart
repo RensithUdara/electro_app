@@ -6,7 +6,7 @@ import '../controllers/device_controller.dart';
 import '../controllers/notification_controller.dart';
 import '../models/device.dart';
 import '../utils/logout_utils.dart';
-import '../widgets/add_device_dialog.dart';
+import '../widgets/add_device_dialog_v2.dart';
 import '../widgets/device_tile.dart';
 import '../widgets/edit_device_dialog.dart';
 import 'device_detail_screen.dart';
@@ -33,7 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return const AddDeviceDialog();
+        return const AddDeviceDialogV2();
       },
     );
   }
@@ -73,7 +73,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 clipBehavior: Clip.none,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.notifications, color: Colors.white, size: 24),
+                    icon: const Icon(Icons.notifications,
+                        color: Colors.white, size: 24),
                     onPressed: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
@@ -87,7 +88,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       right: 6,
                       top: 6,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 4, vertical: 2),
                         decoration: BoxDecoration(
                           color: Colors.red,
                           borderRadius: BorderRadius.circular(12),
