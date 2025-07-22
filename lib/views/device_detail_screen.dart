@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously, unused_element
+
 import 'dart:math';
 
 import 'package:fl_chart/fl_chart.dart';

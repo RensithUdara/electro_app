@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'email_service.dart';
 
 class HelpSupportService {

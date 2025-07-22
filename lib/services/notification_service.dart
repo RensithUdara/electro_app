@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart' as fcm;
 import 'package:shared_preferences/shared_preferences.dart';
