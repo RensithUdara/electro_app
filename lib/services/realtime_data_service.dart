@@ -12,7 +12,7 @@ class RealtimeDataService {
 
   // Get real-time data stream for a specific device
   Stream<Map<String, dynamic>?> getDeviceRealtimeData(String deviceId) {
-    return _database.child(deviceId).child('instant').onValue.map((event) {
+    return _database.child(deviceId).child('Parameters').onValue.map((event) {
       if (event.snapshot.exists && event.snapshot.value != null) {
         return Map<String, dynamic>.from(event.snapshot.value as Map);
       }
