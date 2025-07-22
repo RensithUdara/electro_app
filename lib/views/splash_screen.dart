@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../controllers/auth_controller.dart';
-import '../widgets/particle_animation.dart';
 import 'home_screen.dart';
 import 'login_screen.dart';
 
@@ -17,124 +15,98 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
-  late AnimationController _fadeController;
-  late AnimationController _scaleController;
-  late AnimationController _slideController;
-  late AnimationController _rotateController;
-  late AnimationController _textAnimationController;
+  late AnimationController _logoController;
+  late Animation<double> _logoScaleAnimation;
+  late Animation<double> _logoFadeAnimation;
 
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _scaleAnimation;
-  late Animation<Offset> _slideAnimation;
-  late Animation<double> _rotateAnimation;
+  late AnimationController _textController;
+  late Animation<Offset> _textSlideAnimation;
   late Animation<double> _textFadeAnimation;
-  late Animation<double> _textScaleAnimation;
+
+  late AnimationController _taglineController;
+  late Animation<double> _taglineFadeAnimation;
+  late Animation<double> _taglineScaleAnimation;
+
+  late AnimationController _overallSlideController;
+  late Animation<Offset> _overallSlideAnimation;
 
   @override
   void initState() {
     super.initState();
 
-    // Initialize animation controllers
-    _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
+    _overallSlideController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
 
-    _scaleController = AnimationController(
-      duration: const Duration(milliseconds: 2000),
-      vsync: this,
-    );
-
-    _slideController = AnimationController(
-      duration: const Duration(milliseconds: 1800),
-      vsync: this,
-    );
-
-    _rotateController = AnimationController(
-      duration: const Duration(milliseconds: 3000),
-      vsync: this,
-    );
-
-    _textAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 2500),
-      vsync: this,
-    );
-
-    // Initialize animations
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
+    _overallSlideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.05),
+      end: Offset.zero,
     ).animate(CurvedAnimation(
-      parent: _fadeController,
+      parent: _overallSlideController,
       curve: Curves.easeInOut,
     ));
 
-    _scaleAnimation = Tween<double>(
-      begin: 0.3,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _scaleController,
-      curve: Curves.elasticOut,
-    ));
+    _logoController = AnimationController(
+      duration: const Duration(milliseconds: 900),
+      vsync: this,
+    );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.5),
+    _logoScaleAnimation = Tween<double>(begin: 0.2, end: 1.0).animate(
+      CurvedAnimation(parent: _logoController, curve: Curves.elasticOut),
+    );
+
+    _logoFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _logoController, curve: Curves.easeIn),
+    );
+
+    _textController = AnimationController(
+      duration: const Duration(milliseconds: 700),
+      vsync: this,
+    );
+
+    _textSlideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.4),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOutBack,
-    ));
+    ).animate(
+      CurvedAnimation(parent: _textController, curve: Curves.easeOutCubic),
+    );
 
-    _rotateAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _rotateController,
-      curve: Curves.elasticInOut,
-    ));
+    _textFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _textController, curve: Curves.easeIn),
+    );
 
-    _textFadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _textAnimationController,
-      curve: const Interval(0.3, 1.0, curve: Curves.easeInOut),
-    ));
+    _taglineController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
 
-    _textScaleAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _textAnimationController,
-      curve: const Interval(0.3, 1.0, curve: Curves.bounceOut),
-    ));
+    _taglineFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _taglineController, curve: Curves.easeIn),
+    );
 
-    // Start animations with staggered timing
-    _startAnimations();
+    _taglineScaleAnimation = Tween<double>(begin: 0.85, end: 1.0).animate(
+      CurvedAnimation(parent: _taglineController, curve: Curves.easeOutBack),
+    );
 
-    // Navigate after delay
-    _navigateToNextScreen();
-  }
-
-  void _startAnimations() async {
-    _fadeController.forward();
-
-    await Future.delayed(const Duration(milliseconds: 300));
-    _scaleController.forward();
-
-    await Future.delayed(const Duration(milliseconds: 200));
-    _slideController.forward();
-
-    await Future.delayed(const Duration(milliseconds: 400));
-    _textAnimationController.forward();
-
-    await Future.delayed(const Duration(milliseconds: 100));
-    _rotateController.forward();
+    // Animation Chain
+    _logoController.forward().then((_) {
+      Future.delayed(const Duration(milliseconds: 200), () {
+        _textController.forward().then((_) {
+          Future.delayed(const Duration(milliseconds: 200), () {
+            _taglineController.forward().then((_) {
+              _overallSlideController.forward();
+              Future.delayed(const Duration(milliseconds: 500), () {
+                _navigateToNextScreen();
+              });
+            });
+          });
+        });
+      });
+    });
   }
 
   Future<void> _navigateToNextScreen() async {
-    await Future.delayed(const Duration(seconds: 3));
-
     if (mounted) {
       final authController =
           Provider.of<AuthController>(context, listen: false);
@@ -148,25 +120,40 @@ class _SplashScreenState extends State<SplashScreen>
         autoLoginSuccess = await authController.tryAutoLogin();
       }
 
+      Widget destinationScreen;
+      
       if (authController.isLoggedIn || autoLoginSuccess) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
+        destinationScreen = const HomeScreen();
       } else {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-        );
+        destinationScreen = const LoginScreen();
       }
+
+      // Use a fade transition to navigate
+      Navigator.pushReplacement(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) => destinationScreen,
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            final fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeIn),
+            );
+            return FadeTransition(
+              opacity: fadeAnimation,
+              child: child,
+            );
+          },
+          transitionDuration: const Duration(milliseconds: 400),
+        ),
+      );
     }
   }
 
   @override
   void dispose() {
-    _fadeController.dispose();
-    _scaleController.dispose();
-    _slideController.dispose();
-    _rotateController.dispose();
-    _textAnimationController.dispose();
+    _logoController.dispose();
+    _textController.dispose();
+    _taglineController.dispose();
+    _overallSlideController.dispose();
     super.dispose();
   }
 
@@ -174,226 +161,79 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-        ),
-        child: Stack(
-          children: [
-            // Particle background animation (subtle on white background)
-            Positioned.fill(
-              child: Opacity(
-                opacity: 0.1,
-                child: ParticleAnimation(
-                  particleCount: 10,
-                  particleColor: const Color(0xFF1E3A8A).withOpacity(0.3),
-                  maxRadius: 1.5,
-                ),
-              ),
-            ),
-
-            // Main content
-            Column(
+        color: Colors.white,
+        child: Center(
+          child: SlideTransition(
+            position: _overallSlideAnimation,
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Logo with enhanced animations (no shadows)
-                AnimatedBuilder(
-                  animation: Listenable.merge([
-                    _fadeAnimation,
-                    _scaleAnimation,
-                    _rotateAnimation,
-                  ]),
-                  builder: (context, child) {
-                    return Transform.scale(
-                      scale: _scaleAnimation.value,
-                      child: Transform.rotate(
-                        angle: _rotateAnimation.value * 0.05,
-                        child: Opacity(
-                          opacity: _fadeAnimation.value,
-                          child: ClipRRect(
+                FadeTransition(
+                  opacity: _logoFadeAnimation,
+                  child: ScaleTransition(
+                    scale: _logoScaleAnimation,
+                    child: Image.asset(
+                      'assets/images/app_icon.png',
+                      width: 240,
+                      height: 240,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: 240,
+                          height: 240,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E3A8A).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(35),
-                            child: Image.asset(
-                              'assets/images/logo.png',
-                              width: 170,
-                              height: 170,
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) {
-                                // Clean fallback design
-                                return Container(
-                                  width: 170,
-                                  height: 170,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF1E3A8A)
-                                        .withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(35),
-                                    border: Border.all(
-                                      color: const Color(0xFF1E3A8A),
-                                      width: 2,
-                                    ),
-                                  ),
-                                  child: const Icon(
-                                    Icons.electrical_services,
-                                    size: 90,
-                                    color: Color(0xFF1E3A8A),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-
-                const SizedBox(height: 40),
-
-                // App Name with slide and enhanced typography (dark blue)
-                SlideTransition(
-                  position: _slideAnimation,
-                  child: FadeTransition(
-                    opacity: _textFadeAnimation,
-                    child: ScaleTransition(
-                      scale: _textScaleAnimation,
-                      child: Column(
-                        children: [
-                          Text(
-                            'ElectroApp',
-                            style: GoogleFonts.poppins(
-                              fontSize: 42,
-                              fontWeight: FontWeight.bold,
+                            border: Border.all(
                               color: const Color(0xFF1E3A8A),
-                              letterSpacing: 2.0,
+                              width: 2,
                             ),
                           ),
-
-                          const SizedBox(height: 8),
-
-                          // Animated underline
-                          AnimatedBuilder(
-                            animation: _textAnimationController,
-                            builder: (context, child) {
-                              return Container(
-                                width: 180 * _textAnimationController.value,
-                                height: 3,
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    colors: [
-                                      Colors.transparent,
-                                      Color(0xFF1E3A8A),
-                                      Colors.transparent,
-                                    ],
-                                  ),
-                                  borderRadius: BorderRadius.circular(2),
-                                ),
-                              );
-                            },
+                          child: const Icon(
+                            Icons.electrical_services,
+                            size: 120,
+                            color: Color(0xFF1E3A8A),
                           ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
                   ),
                 ),
-
-                const SizedBox(height: 16),
-
-                // Enhanced tagline (dark blue)
+                const SizedBox(height: 12),
                 SlideTransition(
-                  position: _slideAnimation,
+                  position: _textSlideAnimation,
                   child: FadeTransition(
                     opacity: _textFadeAnimation,
                     child: Text(
-                      'Electrical Device Monitoring',
-                      style: GoogleFonts.roboto(
-                        fontSize: 18,
-                        color: const Color(0xFF1E3A8A).withOpacity(0.8),
-                        fontWeight: FontWeight.w400,
-                        letterSpacing: 1.2,
+                      "ElectroApp",
+                      style: GoogleFonts.poppins(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
+                        color: const Color(0xFF1E3A8A),
                       ),
                     ),
                   ),
                 ),
-
-                const SizedBox(height: 80),
-
-                // Loading indicator with clean design
-                FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: AnimatedBuilder(
-                    animation: _rotateController,
-                    builder: (context, child) {
-                      return Transform.scale(
-                        scale: 1.0 + (0.05 * _rotateAnimation.value),
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: const Color(0xFF1E3A8A).withOpacity(0.05),
-                            border: Border.all(
-                              color: const Color(0xFF1E3A8A).withOpacity(0.2),
-                              width: 1,
-                            ),
-                          ),
-                          child: const SpinKitWave(
-                            color: Color(0xFF1E3A8A),
-                            size: 30.0,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Loading text (dark blue)
-                FadeTransition(
-                  opacity: _textFadeAnimation,
-                  child: Text(
-                    'Initializing...',
-                    style: GoogleFonts.roboto(
-                      fontSize: 16,
-                      color: const Color(0xFF1E3A8A).withOpacity(0.7),
-                      fontWeight: FontWeight.w300,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                ),
-
                 const SizedBox(height: 8),
-
-                // Progress dots animation (dark blue)
                 FadeTransition(
-                  opacity: _textFadeAnimation,
-                  child: AnimatedBuilder(
-                    animation: _rotateController,
-                    builder: (context, child) {
-                      return Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(3, (index) {
-                          final delay = index * 0.3;
-                          final animationValue =
-                              (_rotateController.value + delay) % 1.0;
-                          return Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 4),
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: const Color(0xFF1E3A8A).withOpacity(
-                                0.3 + (0.5 * animationValue),
-                              ),
-                            ),
-                          );
-                        }),
-                      );
-                    },
+                  opacity: _taglineFadeAnimation,
+                  child: ScaleTransition(
+                    scale: _taglineScaleAnimation,
+                    child: Text(
+                      "Electrical Device Monitoring",
+                      style: GoogleFonts.roboto(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                        color: const Color(0xFF3B82F6),
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );
