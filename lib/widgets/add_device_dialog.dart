@@ -130,7 +130,7 @@ class _AddDeviceDialogState extends State<AddDeviceDialog> {
       );
 
       if (success && mounted) {
-        Navigator.of(context).pop();
+        Navigator.of(context).pop(true); // Return true to indicate success
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content:
@@ -722,16 +722,42 @@ class _AddDeviceDialogState extends State<AddDeviceDialog> {
 
   Widget _buildCheckbox(
       String key, String label, bool value, Function(bool) onChanged) {
-    return CheckboxListTile(
-      title: Text(
-        label,
-        style: const TextStyle(fontSize: 13),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 4),
+      decoration: BoxDecoration(
+        color: value
+            ? const Color(0xFF1E3A8A).withOpacity(0.05)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: value
+              ? const Color(0xFF1E3A8A).withOpacity(0.2)
+              : Colors.transparent,
+        ),
       ),
-      value: value,
-      onChanged: (newValue) => onChanged(newValue ?? false),
-      activeColor: const Color(0xFF1E3A8A),
-      dense: true,
-      contentPadding: EdgeInsets.zero,
+      child: CheckboxListTile(
+        title: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: value ? FontWeight.w600 : FontWeight.normal,
+            color: value ? const Color(0xFF1E3A8A) : Colors.black87,
+          ),
+        ),
+        subtitle: Text(
+          'Parameter: $key',
+          style: TextStyle(
+            fontSize: 11,
+            color: Colors.grey[600],
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+        value: value,
+        onChanged: (newValue) => onChanged(newValue ?? false),
+        activeColor: const Color(0xFF1E3A8A),
+        dense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      ),
     );
   }
 
