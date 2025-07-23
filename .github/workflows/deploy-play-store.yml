@@ -1,0 +1,83 @@
+name: Deploy to Google Play Store
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      track:
+        description: 'Play Store track (internal, alpha, beta, production)'
+        required: true
+        default: 'internal'
+        type: choice
+        options:
+          - internal
+          - alpha
+          - beta
+          - production
+
+env:
+  FLUTTER_VERSION: '3.24.3'
+  JAVA_VERSION: '17'
+
+jobs:
+  deploy_to_play_store:
+    runs-on: ubuntu-latest
+    name: Deploy to Google Play Store
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Run tests
+        run: flutter test
+
+      - name: Setup Android signing
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/keystore.jks
+          echo "storeFile=keystore.jks" >> android/key.properties
+          echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}" >> android/key.properties
+          echo "storePassword=${{ secrets.ANDROID_STORE_PASSWORD }}" >> android/key.properties
+          echo "keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}" >> android/key.properties
+
+      - name: Build App Bundle
+        run: flutter build appbundle --release
+
+      - name: Setup Google Service Account
+        run: |
+          echo "${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}" > google-service-account.json
+
+      - name: Deploy to Play Store
+        uses: r0adkll/upload-google-play@v1.1.3
+        with:
+          serviceAccountJson: google-service-account.json
+          packageName: com.example.electro_app # Update this with your actual package name
+          releaseFiles: build/app/outputs/bundle/release/app-release.aab
+          track: ${{ github.event.inputs.track || 'internal' }}
+          status: completed
+          inAppUpdatePriority: 2
+          userFraction: 0.1
+          whatsNewDirectory: fastlane/metadata/android/en-US/changelogs
+
+      - name: Clean up
+        if: always()
+        run: |
+          rm -f android/app/keystore.jks
+          rm -f android/key.properties
+          rm -f google-service-account.json
