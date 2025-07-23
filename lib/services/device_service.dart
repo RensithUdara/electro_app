@@ -77,13 +77,14 @@ class DeviceService {
             Map<String, dynamic> deviceData =
                 _convertFirebaseMapToStringMap(deviceSnapshot.value as Map);
 
-            // Verify device ownership by checking DeviceInfo/ownerId
-            Map<String, dynamic> deviceInfo =
-                deviceData['DeviceInfo'] as Map<String, dynamic>? ?? {};
-            String? deviceOwnerId = deviceInfo['ownerId']?.toString();
+            // Check if current user has access to this device
+            final users = deviceData['Users'] as Map<String, dynamic>? ?? {};
+            final currentUserData =
+                users[_userId] as Map<String, dynamic>? ?? {};
 
-            // Double-check ownership using both Firestore reference and Realtime Database ownerId
-            if (deviceOwnerId == _userId || deviceOwnerId == null) {
+            // User has access if they exist in the device's Users collection with active status
+            if (currentUserData.isNotEmpty &&
+                currentUserData['status'] == 'active') {
               // Convert from actual database structure to our Device model
               Device device =
                   _convertFromDatabaseStructure(deviceId, deviceData);
@@ -92,7 +93,7 @@ class DeviceService {
                   'Successfully loaded device: ${device.name} (${device.id}) for user $_userId');
             } else {
               print(
-                  'Device $deviceId ownership mismatch - Firestore reference exists but ownerId=$deviceOwnerId != $_userId');
+                  'Device $deviceId: Current user $_userId does not have access or is not active');
               // Remove invalid reference from user's Firestore collection
               await _userDevicesRef.doc(deviceId).delete();
               print(
@@ -141,49 +142,57 @@ class DeviceService {
   Device _convertFromDatabaseStructure(
       String deviceId, Map<String, dynamic> data) {
     final auth = data['Auth'] as Map<String, dynamic>? ?? {};
-    final params = data['Parameters'] as Map<String, dynamic>? ?? {};
-    final deviceInfo = data['DeviceInfo'] as Map<String, dynamic>? ?? {};
     final meterAddress = data['MeterAddress']?.toString() ?? '1';
+
+    // Get user-specific data from Users collection
+    final users = data['Users'] as Map<String, dynamic>? ?? {};
+    final currentUserData = users[_userId] as Map<String, dynamic>? ?? {};
+    final userParams =
+        currentUserData['Parameters'] as Map<String, dynamic>? ?? {};
+
+    // Use user-specific name if available, otherwise use device ID
+    String deviceName = currentUserData['userName']?.toString() ?? deviceId;
 
     return Device(
       id: deviceId,
-      name: deviceInfo['name']?.toString() ?? 'Unknown Device',
+      name: deviceName,
       deviceId: auth['Device_ID']?.toString() ?? deviceId,
       meterId: meterAddress,
-      averagePF: (params['Average_PF'] ?? 0) == 1,
-      avgI: (params['Avg_I'] ?? 0) == 1,
-      avgVLL: (params['Avg_V_LL'] ?? 0) == 1,
-      avgVLN: (params['Avg_V_LN'] ?? 0) == 1,
-      frequency: (params['Frequency'] ?? 0) == 1,
-      i1: (params['I1'] ?? 0) == 1,
-      i2: (params['I2'] ?? 0) == 1,
-      i3: (params['I3'] ?? 0) == 1,
-      pf1: (params['PF1'] ?? 0) == 1,
-      pf2: (params['PF2'] ?? 0) == 1,
-      pf3: (params['PF3'] ?? 0) == 1,
-      totalKVA: (params['Total_KVA'] ?? 0) == 1,
-      totalKVAR: (params['Total_KVAR'] ?? 0) == 1,
-      totalKW: (params['Total_KW'] ?? 0) == 1,
-      totalNetKVAh: (params['Total_Net_KVAh'] ?? 0) == 1,
-      totalNetKVArh: (params['Total_Net_KVArh'] ?? 0) == 1,
-      totalNetKWh: (params['Total_Net_KWh'] ?? 0) == 1,
-      v12: (params['V12'] ?? 0) == 1,
-      v1N: (params['V1N'] ?? 0) == 1,
-      v23: (params['V23'] ?? 0) == 1,
-      v2N: (params['V2N'] ?? 0) == 1,
-      v31: (params['V31'] ?? 0) == 1,
-      v3N: (params['V3N'] ?? 0) == 1,
-      kvarL1: (params['KVAR_L1'] ?? 0) == 1,
-      kvarL2: (params['KVAR_L2'] ?? 0) == 1,
-      kvarL3: (params['KVAR_L3'] ?? 0) == 1,
-      kvaL1: (params['KVA_L1'] ?? 0) == 1,
-      kvaL2: (params['KVA_L2'] ?? 0) == 1,
-      kvaL3: (params['KVA_L3'] ?? 0) == 1,
-      kwL1: (params['KW_L1'] ?? 0) == 1,
-      kwL2: (params['KW_L2'] ?? 0) == 1,
-      kwL3: (params['KW_L3'] ?? 0) == 1,
-      createdAt: DateTime.tryParse(deviceInfo['createdAt']?.toString() ?? '') ??
-          DateTime.now(),
+      averagePF: (userParams['Average_PF'] ?? 0) == 1,
+      avgI: (userParams['Avg_I'] ?? 0) == 1,
+      avgVLL: (userParams['Avg_V_LL'] ?? 0) == 1,
+      avgVLN: (userParams['Avg_V_LN'] ?? 0) == 1,
+      frequency: (userParams['Frequency'] ?? 0) == 1,
+      i1: (userParams['I1'] ?? 0) == 1,
+      i2: (userParams['I2'] ?? 0) == 1,
+      i3: (userParams['I3'] ?? 0) == 1,
+      pf1: (userParams['PF1'] ?? 0) == 1,
+      pf2: (userParams['PF2'] ?? 0) == 1,
+      pf3: (userParams['PF3'] ?? 0) == 1,
+      totalKVA: (userParams['Total_KVA'] ?? 0) == 1,
+      totalKVAR: (userParams['Total_KVAR'] ?? 0) == 1,
+      totalKW: (userParams['Total_KW'] ?? 0) == 1,
+      totalNetKVAh: (userParams['Total_Net_KVAh'] ?? 0) == 1,
+      totalNetKVArh: (userParams['Total_Net_KVArh'] ?? 0) == 1,
+      totalNetKWh: (userParams['Total_Net_KWh'] ?? 0) == 1,
+      v12: (userParams['V12'] ?? 0) == 1,
+      v1N: (userParams['V1N'] ?? 0) == 1,
+      v23: (userParams['V23'] ?? 0) == 1,
+      v2N: (userParams['V2N'] ?? 0) == 1,
+      v31: (userParams['V31'] ?? 0) == 1,
+      v3N: (userParams['V3N'] ?? 0) == 1,
+      kvarL1: (userParams['KVAR_L1'] ?? 0) == 1,
+      kvarL2: (userParams['KVAR_L2'] ?? 0) == 1,
+      kvarL3: (userParams['KVAR_L3'] ?? 0) == 1,
+      kvaL1: (userParams['KVA_L1'] ?? 0) == 1,
+      kvaL2: (userParams['KVA_L2'] ?? 0) == 1,
+      kvaL3: (userParams['KVA_L3'] ?? 0) == 1,
+      kwL1: (userParams['KW_L1'] ?? 0) == 1,
+      kwL2: (userParams['KW_L2'] ?? 0) == 1,
+      kwL3: (userParams['KW_L3'] ?? 0) == 1,
+      createdAt:
+          DateTime.tryParse(currentUserData['addedAt']?.toString() ?? '') ??
+              DateTime.now(),
     );
   }
 
@@ -247,17 +256,24 @@ class DeviceService {
         throw Exception('Device password not found in system.');
       }
 
-      // Update only the DeviceInfo section with user-specific data (don't overwrite the whole device)
-      await _realtimeDb.child(deviceId).child('DeviceInfo').update({
-        'name': name,
-        'ownerId': _userId,
+      // Instead of overwriting ownerId, add user to device's users collection
+      // This allows multiple users to access the same device
+      await _realtimeDb.child(deviceId).child('Users').child(_userId!).set({
+        'userId': _userId,
+        'userName': name, // User's custom name for this device
         'addedAt': DateTime.now().toIso8601String(),
+        'status': 'active',
       });
 
-      print('Device $deviceId: Updated DeviceInfo with ownerId=$_userId');
+      print('Device $deviceId: Added user $_userId to device users collection');
 
-      // Update Parameters based on user preferences (convert boolean to 1/0)
-      await _realtimeDb.child(deviceId).child('Parameters').update({
+      // Store user-specific parameters under the user's section
+      await _realtimeDb
+          .child(deviceId)
+          .child('Users')
+          .child(_userId!)
+          .child('Parameters')
+          .set({
         'Average_PF': averagePF ? 1 : 0,
         'Avg_I': avgI ? 1 : 0,
         'Avg_V_LL': avgVLL ? 1 : 0,
@@ -292,7 +308,26 @@ class DeviceService {
         'KW_L3': kwL3 ? 1 : 0,
       });
 
-      // Update MeterAddress if needed
+      // Update global device info only if it doesn't exist (preserve original device metadata)
+      DataSnapshot deviceInfoSnapshot =
+          await _realtimeDb.child(deviceId).child('DeviceInfo').get();
+      if (!deviceInfoSnapshot.exists || deviceInfoSnapshot.value == null) {
+        await _realtimeDb.child(deviceId).child('DeviceInfo').set({
+          'deviceId': deviceId,
+          'createdAt': DateTime.now().toIso8601String(),
+          'totalUsers': 1,
+        });
+      } else {
+        // Increment user count
+        Map<String, dynamic> deviceInfo =
+            _convertFirebaseMapToStringMap(deviceInfoSnapshot.value as Map);
+        int currentUserCount = (deviceInfo['totalUsers'] ?? 0) + 1;
+        await _realtimeDb.child(deviceId).child('DeviceInfo').update({
+          'totalUsers': currentUserCount,
+          'lastUserAdded': _userId,
+          'lastAddedAt': DateTime.now().toIso8601String(),
+        });
+      } // Update MeterAddress if needed
       await _realtimeDb.child(deviceId).update({
         'MeterAddress': int.tryParse(meterId) ?? 1,
       });
@@ -382,11 +417,29 @@ class DeviceService {
         throw Exception('User not authenticated');
       }
 
-      // Remove device from user's devices subcollection
+      // Remove user from device's Users collection in Realtime Database
+      await _realtimeDb.child(deviceId).child('Users').child(_userId!).remove();
+
+      // Update device user count
+      DataSnapshot deviceInfoSnapshot =
+          await _realtimeDb.child(deviceId).child('DeviceInfo').get();
+      if (deviceInfoSnapshot.exists && deviceInfoSnapshot.value != null) {
+        Map<String, dynamic> deviceInfo =
+            _convertFirebaseMapToStringMap(deviceInfoSnapshot.value as Map);
+        int currentUserCount = (deviceInfo['totalUsers'] ?? 1) - 1;
+        if (currentUserCount < 0) currentUserCount = 0;
+
+        await _realtimeDb.child(deviceId).child('DeviceInfo').update({
+          'totalUsers': currentUserCount,
+          'lastUserRemoved': _userId,
+          'lastRemovedAt': DateTime.now().toIso8601String(),
+        });
+      }
+
+      // Remove device from user's devices subcollection in Firestore
       await _userDevicesRef.doc(deviceId).delete();
 
-      // Optionally, remove the device entirely if no other users have it
-      // For now, we'll just remove it from the user's collection
+      print('User $_userId removed from device $deviceId');
     } catch (e) {
       throw Exception('Failed to remove device: $e');
     }
@@ -412,63 +465,83 @@ class DeviceService {
   Future<void> updateDevice(
       String deviceId, Map<String, dynamic> updates) async {
     try {
-      // Convert updates to match the database structure
-      Map<String, dynamic> structuredUpdates = {};
-
-      // Handle DeviceInfo updates
-      if (updates.containsKey('name')) {
-        structuredUpdates['DeviceInfo/name'] = updates['name'];
+      if (_userId == null) {
+        throw Exception('User not authenticated');
       }
 
-      // Handle Parameters updates - convert boolean to 1/0
+      // Update user-specific device name
+      if (updates.containsKey('name')) {
+        await _realtimeDb
+            .child(deviceId)
+            .child('Users')
+            .child(_userId!)
+            .update({
+          'userName': updates['name'],
+          'lastModified': DateTime.now().toIso8601String(),
+        });
+      }
+
+      // Handle user-specific Parameters updates - convert boolean to 1/0
+      Map<String, dynamic> userParams = {};
       final paramMap = {
-        'averagePF': 'Parameters/Average_PF',
-        'avgI': 'Parameters/Avg_I',
-        'avgVLL': 'Parameters/Avg_V_LL',
-        'avgVLN': 'Parameters/Avg_V_LN',
-        'frequency': 'Parameters/Frequency',
-        'i1': 'Parameters/I1',
-        'i2': 'Parameters/I2',
-        'i3': 'Parameters/I3',
-        'pf1': 'Parameters/PF1',
-        'pf2': 'Parameters/PF2',
-        'pf3': 'Parameters/PF3',
-        'totalKVA': 'Parameters/Total_KVA',
-        'totalKVAR': 'Parameters/Total_KVAR',
-        'totalKW': 'Parameters/Total_KW',
-        'totalNetKVAh': 'Parameters/Total_Net_KVAh',
-        'totalNetKVArh': 'Parameters/Total_Net_KVArh',
-        'totalNetKWh': 'Parameters/Total_Net_KWh',
-        'v12': 'Parameters/V12',
-        'v1N': 'Parameters/V1N',
-        'v23': 'Parameters/V23',
-        'v2N': 'Parameters/V2N',
-        'v31': 'Parameters/V31',
-        'v3N': 'Parameters/V3N',
-        'kvarL1': 'Parameters/KVAR_L1',
-        'kvarL2': 'Parameters/KVAR_L2',
-        'kvarL3': 'Parameters/KVAR_L3',
-        'kvaL1': 'Parameters/KVA_L1',
-        'kvaL2': 'Parameters/KVA_L2',
-        'kvaL3': 'Parameters/KVA_L3',
-        'kwL1': 'Parameters/KW_L1',
-        'kwL2': 'Parameters/KW_L2',
-        'kwL3': 'Parameters/KW_L3',
+        'averagePF': 'Average_PF',
+        'avgI': 'Avg_I',
+        'avgVLL': 'Avg_V_LL',
+        'avgVLN': 'Avg_V_LN',
+        'frequency': 'Frequency',
+        'i1': 'I1',
+        'i2': 'I2',
+        'i3': 'I3',
+        'pf1': 'PF1',
+        'pf2': 'PF2',
+        'pf3': 'PF3',
+        'totalKVA': 'Total_KVA',
+        'totalKVAR': 'Total_KVAR',
+        'totalKW': 'Total_KW',
+        'totalNetKVAh': 'Total_Net_KVAh',
+        'totalNetKVArh': 'Total_Net_KVArh',
+        'totalNetKWh': 'Total_Net_KWh',
+        'v12': 'V12',
+        'v1N': 'V1N',
+        'v23': 'V23',
+        'v2N': 'V2N',
+        'v31': 'V31',
+        'v3N': 'V3N',
+        'kvarL1': 'KVAR_L1',
+        'kvarL2': 'KVAR_L2',
+        'kvarL3': 'KVAR_L3',
+        'kvaL1': 'KVA_L1',
+        'kvaL2': 'KVA_L2',
+        'kvaL3': 'KVA_L3',
+        'kwL1': 'KW_L1',
+        'kwL2': 'KW_L2',
+        'kwL3': 'KW_L3',
       };
 
       for (String key in paramMap.keys) {
         if (updates.containsKey(key)) {
-          structuredUpdates[paramMap[key]!] = updates[key] == true ? 1 : 0;
+          userParams[paramMap[key]!] = updates[key] == true ? 1 : 0;
         }
       }
 
-      // Handle MeterAddress
-      if (updates.containsKey('meterId')) {
-        structuredUpdates['MeterAddress'] =
-            int.tryParse(updates['meterId'].toString()) ?? 1;
+      // Update user-specific parameters
+      if (userParams.isNotEmpty) {
+        await _realtimeDb
+            .child(deviceId)
+            .child('Users')
+            .child(_userId!)
+            .child('Parameters')
+            .update(userParams);
       }
 
-      await _realtimeDb.child(deviceId).update(structuredUpdates);
+      // Handle MeterAddress (global device setting)
+      if (updates.containsKey('meterId')) {
+        await _realtimeDb.child(deviceId).update({
+          'MeterAddress': int.tryParse(updates['meterId'].toString()) ?? 1,
+        });
+      }
+
+      print('Updated device $deviceId for user $_userId');
     } catch (e) {
       throw Exception('Failed to update device: $e');
     }
@@ -527,14 +600,14 @@ class DeviceService {
             Map<String, dynamic> deviceData =
                 _convertFirebaseMapToStringMap(deviceSnapshot.value as Map);
 
-            // Verify device ownership by checking DeviceInfo/ownerId
-            Map<String, dynamic> deviceInfo =
-                deviceData['DeviceInfo'] as Map<String, dynamic>? ?? {};
-            String? deviceOwnerId = deviceInfo['ownerId']?.toString();
+            // Check if current user has access to this device
+            final users = deviceData['Users'] as Map<String, dynamic>? ?? {};
+            final currentUserData =
+                users[_userId] as Map<String, dynamic>? ?? {};
 
-            // Only include devices that belong to current user
-            if (deviceOwnerId == _userId ||
-                (deviceOwnerId == null && documentUserId == _userId)) {
+            // User has access if they exist in the device's Users collection with active status
+            if (currentUserData.isNotEmpty &&
+                currentUserData['status'] == 'active') {
               Device device =
                   _convertFromDatabaseStructure(deviceId, deviceData);
               devices.add(device);
@@ -542,7 +615,7 @@ class DeviceService {
                   'Device watch: Added device ${device.name} (${device.id}) for user $_userId');
             } else {
               print(
-                  'Device watch: Ownership mismatch for device $deviceId - ownerId=$deviceOwnerId, userId=$_userId');
+                  'Device watch: User $_userId does not have access to device $deviceId or is not active');
             }
           } else {
             print(
