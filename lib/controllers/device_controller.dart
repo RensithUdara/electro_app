@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../models/device.dart';
 import '../services/device_service.dart';
@@ -10,6 +12,7 @@ class DeviceController extends ChangeNotifier {
   List<Device> _devices = [];
   bool _isLoading = false;
   String? _errorMessage;
+  StreamSubscription<List<Device>>? _deviceStreamSubscription;
 
   List<Device> get devices => _devices;
   bool get isLoading => _isLoading;
@@ -26,14 +29,61 @@ class DeviceController extends ChangeNotifier {
     notifyListeners();
 
     try {
+      print('Loading devices for current user...');
+
+      // Clear existing devices to ensure fresh load
+      _devices.clear();
+
+      // Load devices from service with retry mechanism
       _devices = await _deviceService.getDevices();
+
+      print('Successfully loaded ${_devices.length} devices');
       _isLoading = false;
       notifyListeners();
     } catch (e) {
+      print('Error loading devices: $e');
       _errorMessage = 'Failed to load devices: ${e.toString()}';
       _isLoading = false;
+      _devices = []; // Ensure empty list on error
       notifyListeners();
     }
+  }
+
+  /// Force refresh devices with a complete reload
+  Future<void> refreshDevices() async {
+    await loadDevices();
+  }
+
+  /// Start listening to device changes in real-time
+  void startDeviceStream() {
+    _deviceStreamSubscription?.cancel(); // Cancel any existing subscription
+
+    _deviceStreamSubscription = _deviceService.watchDevices().listen(
+      (deviceList) {
+        print('Device stream update: received ${deviceList.length} devices');
+        _devices = deviceList;
+        _isLoading = false;
+        _errorMessage = null;
+        notifyListeners();
+      },
+      onError: (error) {
+        print('Device stream error: $error');
+        _errorMessage = 'Failed to sync devices: $error';
+        notifyListeners();
+      },
+    );
+  }
+
+  /// Stop listening to device changes
+  void stopDeviceStream() {
+    _deviceStreamSubscription?.cancel();
+    _deviceStreamSubscription = null;
+  }
+
+  @override
+  void dispose() {
+    _deviceStreamSubscription?.cancel();
+    super.dispose();
   }
 
   Future<bool> addDevice({
@@ -117,16 +167,31 @@ class DeviceController extends ChangeNotifier {
       );
 
       if (device != null) {
-        _devices.add(device);
-        _isLoading = false;
-        notifyListeners();
-        
+        // Wait a bit longer before refreshing to ensure database consistency
+        await Future.delayed(const Duration(milliseconds: 1500));
+
+        // Refresh from database to ensure consistency and get the latest state
+        await loadDevices();
+
+        // Verify the device was actually added
+        bool deviceExists =
+            _devices.any((d) => d.id == device.id || d.deviceId == deviceId);
+        if (!deviceExists) {
+          print(
+              'Warning: Device was created but not found in user device list');
+          // Try one more refresh
+          await Future.delayed(const Duration(milliseconds: 1000));
+          await loadDevices();
+        }
+
         // Create notification for device addition
         await _notificationService.createDeviceNotification(
           action: 'add',
           deviceName: name,
         );
-        
+
+        print(
+            'Device $name successfully added and verified in user device list');
         return true;
       } else {
         _errorMessage = 'Failed to add device';
@@ -147,11 +212,11 @@ class DeviceController extends ChangeNotifier {
       // Find device name before removing
       final device = _devices.firstWhere((d) => d.id == deviceId);
       final deviceName = device.name;
-      
+
       await _deviceService.removeDevice(deviceId);
       _devices.removeWhere((device) => device.id == deviceId);
       notifyListeners();
-      
+
       // Create notification for device removal
       await _notificationService.createDeviceNotification(
         action: 'delete',
@@ -246,26 +311,15 @@ class DeviceController extends ChangeNotifier {
 
       await _deviceService.updateDevice(deviceId, updates);
 
-      // Update local device list
-      final deviceIndex =
-          _devices.indexWhere((device) => device.id == deviceId);
-      if (deviceIndex != -1) {
-        _devices[deviceIndex] = Device.fromJson({
-          'id': deviceId,
-          ...updates,
-          'createdAt': _devices[deviceIndex].createdAt.toIso8601String(),
-        });
-      }
+      // Refresh device list from database to ensure consistency
+      await loadDevices();
 
-      _isLoading = false;
-      notifyListeners();
-      
       // Create notification for device update
       await _notificationService.createDeviceNotification(
         action: 'edit',
         deviceName: name,
       );
-      
+
       return true;
     } catch (e) {
       _errorMessage = 'Error updating device: ${e.toString()}';
