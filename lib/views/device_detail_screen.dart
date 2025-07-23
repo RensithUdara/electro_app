@@ -551,7 +551,7 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                             fontSize: 13,
                             color: isPlaceholder
                                 ? Colors.grey[600]
-                                : Colors.black87,
+                                : const Color(0xFF1E3A8A), // Dark blue color
                           ),
                         ),
                       ),
@@ -1097,7 +1097,7 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                     fontWeight: FontWeight.w600,
                     color: isPlaceholder
                         ? Colors.grey[500]
-                        : Colors.black87,
+                        : const Color(0xFF1E3A8A), // Dark blue color
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -1367,10 +1367,10 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                     children: [
                       Text(
                         parameterInfo['description'] ?? parameter,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: Colors.grey[600],
+                          color: Color(0xFF1E3A8A), // Dark blue color
                         ),
                       ),
                     ],
@@ -1466,6 +1466,7 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
+                        color: Color(0xFF1E3A8A), // Dark blue color
                       ),
                     ),
                   ],
