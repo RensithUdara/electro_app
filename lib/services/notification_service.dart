@@ -1,8 +1,11 @@
 // ignore_for_file: avoid_print
 
 import 'dart:convert';
+
 import 'package:firebase_messaging/firebase_messaging.dart' as fcm;
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/notification.dart';
 
 class NotificationService {
@@ -10,7 +13,10 @@ class NotificationService {
   factory NotificationService() => _instance;
   NotificationService._internal();
 
-  final fcm.FirebaseMessaging _firebaseMessaging = fcm.FirebaseMessaging.instance;
+  final fcm.FirebaseMessaging _firebaseMessaging =
+      fcm.FirebaseMessaging.instance;
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
   static const String _notificationsKey = 'notifications';
   static const String _settingsKey = 'notification_settings';
 
@@ -24,14 +30,39 @@ class NotificationService {
   // Initialize notification service
   Future<void> initialize() async {
     await _requestPermissions();
+    await _initializeLocalNotifications();
     await _loadNotifications();
     await _loadSettings();
     await _setupFCM();
   }
 
+  // Initialize local notifications
+  Future<void> _initializeLocalNotifications() async {
+    const initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const initializationSettingsIOS = DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
+    const initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsIOS,
+    );
+
+    await _localNotifications.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) {
+        // Handle notification tap
+        print('Local notification tapped: ${response.payload}');
+      },
+    );
+  }
+
   // Request notification permissions
   Future<void> _requestPermissions() async {
-    fcm.NotificationSettings fcmSettings = await _firebaseMessaging.requestPermission(
+    fcm.NotificationSettings fcmSettings =
+        await _firebaseMessaging.requestPermission(
       alert: true,
       announcement: false,
       badge: true,
@@ -51,7 +82,8 @@ class NotificationService {
     print('FCM Token: $token');
 
     // Handle background messages
-    fcm.FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    fcm.FirebaseMessaging.onBackgroundMessage(
+        _firebaseMessagingBackgroundHandler);
 
     // Handle foreground messages
     fcm.FirebaseMessaging.onMessage.listen((fcm.RemoteMessage message) {
@@ -59,12 +91,14 @@ class NotificationService {
     });
 
     // Handle notification taps
-    fcm.FirebaseMessaging.onMessageOpenedApp.listen((fcm.RemoteMessage message) {
+    fcm.FirebaseMessaging.onMessageOpenedApp
+        .listen((fcm.RemoteMessage message) {
       _handleNotificationTap(message);
     });
 
     // Check for initial message (app opened from notification)
-    fcm.RemoteMessage? initialMessage = await _firebaseMessaging.getInitialMessage();
+    fcm.RemoteMessage? initialMessage =
+        await _firebaseMessaging.getInitialMessage();
     if (initialMessage != null) {
       _handleNotificationTap(initialMessage);
     }
@@ -123,7 +157,7 @@ class NotificationService {
     switch (action) {
       case 'add':
         title = 'Device Added';
-        body = 'New device "$deviceName" has been added successfully';
+        body = 'Please restart your device $deviceName';
         break;
       case 'edit':
         title = 'Device Updated';
@@ -138,12 +172,97 @@ class NotificationService {
         body = 'Action performed on device "$deviceName"';
     }
 
+    // Create local notification
     await _addNotification(
       title: title,
       body: body,
       type: 'device',
       data: {'action': action, 'deviceName': deviceName},
     );
+
+    // Send Firebase push notification for device addition
+    if (action == 'add') {
+      await _sendFirebasePushNotification(
+        title: title,
+        body: body,
+        data: {'action': action, 'deviceName': deviceName, 'type': 'device'},
+      );
+    }
+  }
+
+  // Send Firebase push notification
+  Future<void> _sendFirebasePushNotification({
+    required String title,
+    required String body,
+    Map<String, dynamic>? data,
+  }) async {
+    try {
+      // Get the current FCM token
+      String? token = await _firebaseMessaging.getToken();
+
+      if (token != null) {
+        // Create a local notification that simulates a push notification
+        final message = fcm.RemoteMessage(
+          notification: fcm.RemoteNotification(
+            title: title,
+            body: body,
+          ),
+          data: data ?? {},
+        );
+
+        // Handle the message as if it came from Firebase
+        _handleForegroundMessage(message);
+
+        // Also send a system notification to ensure user sees it
+        await _sendSystemNotification(title: title, body: body);
+
+        print('Firebase push notification sent: $title - $body');
+      } else {
+        print('Unable to get FCM token for push notification');
+      }
+    } catch (e) {
+      print('Error sending Firebase push notification: $e');
+    }
+  }
+
+  // Send system notification (simulates Firebase push notification popup)
+  Future<void> _sendSystemNotification({
+    required String title,
+    required String body,
+  }) async {
+    try {
+      const androidNotificationDetails = AndroidNotificationDetails(
+        'device_channel',
+        'Device Notifications',
+        channelDescription: 'Notifications for device related actions',
+        importance: Importance.high,
+        priority: Priority.high,
+        showWhen: true,
+      );
+
+      const iosNotificationDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      );
+
+      const notificationDetails = NotificationDetails(
+        android: androidNotificationDetails,
+        iOS: iosNotificationDetails,
+      );
+
+      await _localNotifications.show(
+        DateTime.now().millisecondsSinceEpoch.remainder(100000),
+        title,
+        body,
+        notificationDetails,
+        payload: 'device_notification',
+      );
+
+      print('System notification shown: $title - $body');
+    } catch (e) {
+      print('Error sending system notification: $e');
+    }
   }
 
   // Create notification for profile updates
@@ -202,7 +321,8 @@ class NotificationService {
 
   // Mark all notifications as read
   Future<void> markAllAsRead() async {
-    _notifications = _notifications.map((n) => n.copyWith(isRead: true)).toList();
+    _notifications =
+        _notifications.map((n) => n.copyWith(isRead: true)).toList();
     await _saveNotifications();
   }
 
@@ -229,7 +349,7 @@ class NotificationService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final notificationsJson = prefs.getString(_notificationsKey);
-      
+
       if (notificationsJson != null) {
         final List<dynamic> notificationsList = jsonDecode(notificationsJson);
         _notifications = notificationsList
@@ -259,7 +379,7 @@ class NotificationService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final settingsJson = prefs.getString(_settingsKey);
-      
+
       if (settingsJson != null) {
         _settings = NotificationSettings.fromJson(jsonDecode(settingsJson));
       }
@@ -281,6 +401,7 @@ class NotificationService {
 
 // Background message handler
 @pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(fcm.RemoteMessage message) async {
+Future<void> _firebaseMessagingBackgroundHandler(
+    fcm.RemoteMessage message) async {
   print('Handling a background message: ${message.messageId}');
 }
