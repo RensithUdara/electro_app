@@ -30,7 +30,7 @@ dependencies:
   # Local notifications
   flutter_local_notifications: ^17.2.1+2
   # Google Sign-In
-  google_sign_in: ^6.1.4
+  google_sign_in: ^7.1.1
   # Google Fonts
   google_fonts: ^6.1.0
   # URL Launcher
