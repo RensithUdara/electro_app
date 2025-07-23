@@ -30,10 +30,6 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
   late bool _pf3;
   late bool _totalKVA;
   late bool _totalKVAR;
-  late bool _totalKW;
-  late bool _totalNetKVAh;
-  late bool _totalNetKVArh;
-  late bool _totalNetKWh;
   late bool _v12;
   late bool _v1N;
   late bool _v23;
@@ -68,10 +64,6 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
     _pf3 = widget.device.pf3;
     _totalKVA = widget.device.totalKVA;
     _totalKVAR = widget.device.totalKVAR;
-    _totalKW = widget.device.totalKW;
-    _totalNetKVAh = widget.device.totalNetKVAh;
-    _totalNetKVArh = widget.device.totalNetKVArh;
-    _totalNetKWh = widget.device.totalNetKWh;
     _v12 = widget.device.v12;
     _v1N = widget.device.v1N;
     _v23 = widget.device.v23;
@@ -118,10 +110,10 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
         pf3: _pf3,
         totalKVA: _totalKVA,
         totalKVAR: _totalKVAR,
-        totalKW: _totalKW,
-        totalNetKVAh: _totalNetKVAh,
-        totalNetKVArh: _totalNetKVArh,
-        totalNetKWh: _totalNetKWh,
+        totalKW: false,
+        totalNetKVAh: false,
+        totalNetKVArh: false,
+        totalNetKWh: false,
         v12: _v12,
         v1N: _v1N,
         v23: _v23,
@@ -422,32 +414,6 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
                                 'Total Reactive Power',
                                 _totalKVAR,
                                 (value) => setState(() => _totalKVAR = value)),
-                            _buildCheckbox(
-                                'Total_kW',
-                                'Total Active Power',
-                                _totalKW,
-                                (value) => setState(() => _totalKW = value)),
-
-                            // Energy Measurements
-                            _buildSectionHeader('Energy Measurements'),
-                            _buildCheckbox(
-                                'Total_net_kVAh',
-                                'Total Net Apparent Energy',
-                                _totalNetKVAh,
-                                (value) =>
-                                    setState(() => _totalNetKVAh = value)),
-                            _buildCheckbox(
-                                'Total_net_kVArh',
-                                'Total Net Reactive Energy',
-                                _totalNetKVArh,
-                                (value) =>
-                                    setState(() => _totalNetKVArh = value)),
-                            _buildCheckbox(
-                                'Total_net_kWh',
-                                'Total Net Active Energy',
-                                _totalNetKWh,
-                                (value) =>
-                                    setState(() => _totalNetKWh = value)),
 
                             // Voltage Measurements
                             _buildSectionHeader('Voltage Measurements'),
