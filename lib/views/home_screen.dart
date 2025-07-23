@@ -25,26 +25,73 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<DeviceController>(context, listen: false).loadDevices();
+      final deviceController =
+          Provider.of<DeviceController>(context, listen: false);
+      // Start with regular load, then enable real-time stream
+      deviceController.loadDevices().then((_) {
+        deviceController.startDeviceStream();
+      });
     });
   }
 
-  void _showAddDeviceDialog() {
-    showDialog(
+  @override
+  void dispose() {
+    // Stop device stream when screen is disposed
+    final deviceController =
+        Provider.of<DeviceController>(context, listen: false);
+    deviceController.stopDeviceStream();
+    super.dispose();
+  }
+
+  void _showAddDeviceDialog() async {
+    final result = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
         return const AddDeviceDialog();
       },
     );
+
+    // If a device was successfully added, refresh the device list with retry
+    if (result == true && mounted) {
+      final deviceController =
+          Provider.of<DeviceController>(context, listen: false);
+
+      // Show loading indicator while refreshing
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Refreshing device list...'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+
+      // Refresh with longer delay to ensure database consistency
+      await Future.delayed(const Duration(milliseconds: 500));
+      await deviceController.loadDevices();
+
+      // If still no devices after reasonable time, try one more refresh
+      if (deviceController.devices.isEmpty) {
+        await Future.delayed(const Duration(milliseconds: 1000));
+        await deviceController.loadDevices();
+      }
+    }
   }
 
-  void _showEditDeviceDialog(Device device) {
-    showDialog(
+  void _showEditDeviceDialog(Device device) async {
+    final result = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
         return EditDeviceDialog(device: device);
       },
     );
+
+    // If a device was successfully updated, refresh the device list
+    if (result == true && mounted) {
+      final deviceController =
+          Provider.of<DeviceController>(context, listen: false);
+      await deviceController.loadDevices();
+    }
   }
 
   Future<void> _logout() async {
@@ -292,7 +339,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 return RefreshIndicator(
                   onRefresh: () async {
+                    print('User triggered pull-to-refresh - reloading devices');
+                    final deviceController =
+                        Provider.of<DeviceController>(context, listen: false);
+
+                    // Clear any previous errors
+                    deviceController.clearError();
+
+                    // Perform refresh with retry mechanism
                     await deviceController.loadDevices();
+
+                    // If refresh failed or returned empty, try once more
+                    if (deviceController.errorMessage != null ||
+                        deviceController.devices.isEmpty) {
+                      print(
+                          'First refresh attempt had issues, trying again...');
+                      await Future.delayed(const Duration(milliseconds: 1000));
+                      await deviceController.loadDevices();
+                    }
+
+                    print(
+                        'Pull-to-refresh completed with ${deviceController.devices.length} devices');
                   },
                   child: ListView.builder(
                     padding: const EdgeInsets.all(16),
