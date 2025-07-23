@@ -58,7 +58,7 @@ class NotificationService {
           print('Local notification tapped: ${response.payload}');
         },
       );
-      
+
       print('Local notifications initialized successfully');
     } catch (e) {
       print('Error initializing local notifications: $e');
