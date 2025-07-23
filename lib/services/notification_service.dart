@@ -38,25 +38,32 @@ class NotificationService {
 
   // Initialize local notifications
   Future<void> _initializeLocalNotifications() async {
-    const initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-    const initializationSettingsIOS = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
-    const initializationSettings = InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsIOS,
-    );
+    try {
+      const initializationSettingsAndroid =
+          AndroidInitializationSettings('@mipmap/ic_launcher');
+      const initializationSettingsIOS = DarwinInitializationSettings(
+        requestAlertPermission: true,
+        requestBadgePermission: true,
+        requestSoundPermission: true,
+      );
+      const initializationSettings = InitializationSettings(
+        android: initializationSettingsAndroid,
+        iOS: initializationSettingsIOS,
+      );
 
-    await _localNotifications.initialize(
-      initializationSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse response) {
-        // Handle notification tap
-        print('Local notification tapped: ${response.payload}');
-      },
-    );
+      await _localNotifications.initialize(
+        initializationSettings,
+        onDidReceiveNotificationResponse: (NotificationResponse response) {
+          // Handle notification tap
+          print('Local notification tapped: ${response.payload}');
+        },
+      );
+      
+      print('Local notifications initialized successfully');
+    } catch (e) {
+      print('Error initializing local notifications: $e');
+      // Continue without local notifications if initialization fails
+    }
   }
 
   // Request notification permissions
@@ -262,6 +269,8 @@ class NotificationService {
       print('System notification shown: $title - $body');
     } catch (e) {
       print('Error sending system notification: $e');
+      // If local notifications fail, we still have the in-app notification
+      print('Falling back to in-app notification only');
     }
   }
 
