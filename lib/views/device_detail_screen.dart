@@ -533,18 +533,6 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
-                  DataColumn(
-                    label: Text(
-                      'Description',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  DataColumn(
-                    label: Text(
-                      'Last Updated',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
                 ],
                 rows: parameterKeys.map((parameter) {
                   final value = filteredData[parameter];
@@ -556,45 +544,20 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                   return DataRow(
                     cells: [
                       DataCell(
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 8),
-                          decoration: BoxDecoration(
+                        Text(
+                          parameterInfo['description'] ?? parameter,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
                             color: isPlaceholder
-                                ? Colors.grey[200]
-                                : const Color(0xFF1E3A8A).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                parameterInfo['description'] ?? parameter,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                  color: isPlaceholder
-                                      ? Colors.grey[600]
-                                      : const Color(0xFF1E3A8A),
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                parameter,
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.grey[600],
-                                  fontStyle: FontStyle.italic,
-                                ),
-                              ),
-                            ],
+                                ? Colors.grey[600]
+                                : Colors.black87,
                           ),
                         ),
                       ),
                       DataCell(
                         Text(
-                          isPlaceholder ? '--' : value.toString(),
+                          isPlaceholder ? '--' : _formatParameterValue(value),
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
@@ -612,58 +575,6 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ),
-                      DataCell(
-                        SizedBox(
-                          width: 200,
-                          child: Text(
-                            parameterInfo['description']!,
-                            style: TextStyle(
-                                color: isPlaceholder
-                                    ? Colors.grey[400]
-                                    : Colors.grey[600]),
-                            softWrap: true,
-                          ),
-                        ),
-                      ),
-                      DataCell(
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: isPlaceholder
-                                ? Colors.grey[100]
-                                : Colors.green[50],
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                                color: isPlaceholder
-                                    ? Colors.grey[300]!
-                                    : Colors.green[200]!),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.circle,
-                                size: 8,
-                                color: isPlaceholder
-                                    ? Colors.grey[400]
-                                    : Colors.green[600],
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                isPlaceholder ? 'No Data' : 'Live',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: isPlaceholder
-                                      ? Colors.grey[400]
-                                      : Colors.green[600],
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
                           ),
                         ),
                       ),
@@ -1153,7 +1064,7 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
         color: isPlaceholder
             ? Colors.grey[200]
             : isHovered
-                ? Colors.blue[50]
+                ? Colors.grey[50]
                 : Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: isDragging
@@ -1171,14 +1082,6 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                   offset: const Offset(0, 2),
                 ),
               ],
-        border: isHovered
-            ? Border.all(color: Colors.blue[300]!, width: 2)
-            : isPlaceholder
-                ? Border.all(
-                    color: Colors.grey[400]!,
-                    width: 2,
-                    style: BorderStyle.solid)
-                : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1187,32 +1090,17 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
           Row(
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      description,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: isPlaceholder
-                            ? Colors.grey[500]
-                            : const Color(0xFF1E3A8A),
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      parameter,
-                      style: TextStyle(
-                        fontSize: 9,
-                        color:
-                            isPlaceholder ? Colors.grey[400] : Colors.grey[500],
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: isPlaceholder
+                        ? Colors.grey[500]
+                        : Colors.black87,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               if (!isPlaceholder)
@@ -1485,14 +1373,6 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                           color: Colors.grey[600],
                         ),
                       ),
-                      Text(
-                        '$parameter (${parameterInfo['unit']})',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.grey[500],
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -1588,14 +1468,6 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    Text(
-                      '$parameter (${parameterInfo['unit']})',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.grey[600],
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -1606,7 +1478,7 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  value.toString(),
+                  _formatParameterValue(value),
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: _getParameterColor(parameter),
