@@ -558,21 +558,37 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                       DataCell(
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
+                              horizontal: 8, vertical: 8),
                           decoration: BoxDecoration(
                             color: isPlaceholder
                                 ? Colors.grey[200]
                                 : const Color(0xFF1E3A8A).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Text(
-                            parameter,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: isPlaceholder
-                                  ? Colors.grey[600]
-                                  : const Color(0xFF1E3A8A),
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                parameterInfo['description'] ?? parameter,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                  color: isPlaceholder
+                                      ? Colors.grey[600]
+                                      : const Color(0xFF1E3A8A),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                parameter,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.grey[600],
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -1171,15 +1187,32 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  parameter,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: isPlaceholder
-                        ? Colors.grey[500]
-                        : const Color(0xFF1E3A8A),
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      description,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: isPlaceholder
+                            ? Colors.grey[500]
+                            : const Color(0xFF1E3A8A),
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      parameter,
+                      style: TextStyle(
+                        fontSize: 9,
+                        color:
+                            isPlaceholder ? Colors.grey[400] : Colors.grey[500],
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               if (!isPlaceholder)
@@ -1190,17 +1223,7 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                 ),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            description,
-            style: TextStyle(
-              fontSize: 10,
-              color: isPlaceholder ? Colors.grey[400] : Colors.grey[600],
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
@@ -1451,13 +1474,26 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
-                    '$parameter (${parameterInfo['unit']})',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey[600],
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        parameterInfo['description'] ?? parameter,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      Text(
+                        '$parameter (${parameterInfo['unit']})',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.grey[500],
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 Container(
@@ -1542,12 +1578,25 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(
-                  '$parameter (${parameterInfo['unit']})',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      parameterInfo['description'] ?? parameter,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      '$parameter (${parameterInfo['unit']})',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.grey[600],
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Container(
