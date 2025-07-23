@@ -1,8 +1,8 @@
 // ignore_for_file: avoid_print
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/device.dart';
 
@@ -28,12 +28,37 @@ class DeviceService {
         throw Exception('User not authenticated');
       }
 
-      // Get user's device IDs from Firestore (user data)
-      QuerySnapshot userDevicesSnapshot = await _userDevicesRef.get();
+      print('Getting devices for user: $_userId');
 
-      if (userDevicesSnapshot.docs.isEmpty) {
+      // Add retry mechanism for Firestore operations
+      int retryCount = 0;
+      const int maxRetries = 3;
+      QuerySnapshot? userDevicesSnapshot;
+
+      while (retryCount < maxRetries) {
+        try {
+          // Get user's device IDs from Firestore (user data)
+          userDevicesSnapshot = await _userDevicesRef.get();
+          break; // Success, exit retry loop
+        } catch (firestoreError) {
+          retryCount++;
+          print('Firestore read attempt $retryCount failed: $firestoreError');
+          if (retryCount >= maxRetries) {
+            throw Exception(
+                'Failed to access Firestore after $maxRetries attempts: $firestoreError');
+          }
+          await Future.delayed(
+              Duration(milliseconds: 500 * retryCount)); // Exponential backoff
+        }
+      }
+
+      if (userDevicesSnapshot == null || userDevicesSnapshot.docs.isEmpty) {
+        print('No devices found in Firestore for user $_userId');
         return []; // No devices found
       }
+
+      print(
+          'Found ${userDevicesSnapshot.docs.length} device references in Firestore for user $_userId');
 
       List<Device> devices = [];
 
@@ -41,22 +66,45 @@ class DeviceService {
       for (QueryDocumentSnapshot deviceRef in userDevicesSnapshot.docs) {
         try {
           String deviceId = deviceRef.id;
+
+          print('Processing device reference: $deviceId from Firestore');
+
+          // Get device data from Realtime Database
           DataSnapshot deviceSnapshot = await _realtimeDb.child(deviceId).get();
 
           if (deviceSnapshot.exists && deviceSnapshot.value != null) {
             // Safely convert Firebase data to Map<String, dynamic>
-            Map<String, dynamic> deviceData = _convertFirebaseMapToStringMap(deviceSnapshot.value as Map);
-            
+            Map<String, dynamic> deviceData =
+                _convertFirebaseMapToStringMap(deviceSnapshot.value as Map);
+
             // Verify device ownership by checking DeviceInfo/ownerId
-            Map<String, dynamic> deviceInfo = deviceData['DeviceInfo'] as Map<String, dynamic>? ?? {};
+            Map<String, dynamic> deviceInfo =
+                deviceData['DeviceInfo'] as Map<String, dynamic>? ?? {};
             String? deviceOwnerId = deviceInfo['ownerId']?.toString();
-            
-            // Only include devices that belong to current user or have no owner set
-            if (deviceOwnerId == null || deviceOwnerId == _userId) {
+
+            // Double-check ownership using both Firestore reference and Realtime Database ownerId
+            if (deviceOwnerId == _userId || deviceOwnerId == null) {
               // Convert from actual database structure to our Device model
-              Device device = _convertFromDatabaseStructure(deviceId, deviceData);
+              Device device =
+                  _convertFromDatabaseStructure(deviceId, deviceData);
               devices.add(device);
+              print(
+                  'Successfully loaded device: ${device.name} (${device.id}) for user $_userId');
+            } else {
+              print(
+                  'Device $deviceId ownership mismatch - Firestore reference exists but ownerId=$deviceOwnerId != $_userId');
+              // Remove invalid reference from user's Firestore collection
+              await _userDevicesRef.doc(deviceId).delete();
+              print(
+                  'Removed invalid device reference $deviceId from user $_userId Firestore collection');
             }
+          } else {
+            print(
+                'Device $deviceId exists in Firestore but not in Realtime Database - removing stale reference');
+            // Remove stale reference from user's devices
+            await _userDevicesRef.doc(deviceId).delete();
+            print(
+                'Cleaned up stale device reference $deviceId for user $_userId');
           }
         } catch (e) {
           // Skip devices that can't be loaded but continue with others
@@ -65,20 +113,23 @@ class DeviceService {
         }
       }
 
+      print('Final device count for user $_userId: ${devices.length}');
       return devices;
     } catch (e) {
-      // If Firebase fails, return empty list
-      return [];
+      print('Critical error in getDevices(): $e');
+      throw Exception('Failed to load devices: $e');
     }
   }
 
   // Helper method to safely convert Firebase Map to Map<String, dynamic>
-  Map<String, dynamic> _convertFirebaseMapToStringMap(Map<Object?, Object?> firebaseMap) {
+  Map<String, dynamic> _convertFirebaseMapToStringMap(
+      Map<Object?, Object?> firebaseMap) {
     Map<String, dynamic> result = {};
     firebaseMap.forEach((key, value) {
       String stringKey = key?.toString() ?? '';
       if (value is Map) {
-        result[stringKey] = _convertFirebaseMapToStringMap(Map<Object?, Object?>.from(value));
+        result[stringKey] =
+            _convertFirebaseMapToStringMap(Map<Object?, Object?>.from(value));
       } else {
         result[stringKey] = value;
       }
@@ -87,7 +138,8 @@ class DeviceService {
   }
 
   // Helper method to convert from database structure to Device model
-  Device _convertFromDatabaseStructure(String deviceId, Map<String, dynamic> data) {
+  Device _convertFromDatabaseStructure(
+      String deviceId, Map<String, dynamic> data) {
     final auth = data['Auth'] as Map<String, dynamic>? ?? {};
     final params = data['Parameters'] as Map<String, dynamic>? ?? {};
     final deviceInfo = data['DeviceInfo'] as Map<String, dynamic>? ?? {};
@@ -130,7 +182,8 @@ class DeviceService {
       kwL1: (params['KW_L1'] ?? 0) == 1,
       kwL2: (params['KW_L2'] ?? 0) == 1,
       kwL3: (params['KW_L3'] ?? 0) == 1,
-      createdAt: DateTime.tryParse(deviceInfo['createdAt']?.toString() ?? '') ?? DateTime.now(),
+      createdAt: DateTime.tryParse(deviceInfo['createdAt']?.toString() ?? '') ??
+          DateTime.now(),
     );
   }
 
@@ -177,15 +230,19 @@ class DeviceService {
       }
 
       // First check if device exists and get its password from Firebase
-      DataSnapshot existingDeviceSnapshot = await _realtimeDb.child(deviceId).child('Auth').get();
-      
-      if (!existingDeviceSnapshot.exists || existingDeviceSnapshot.value == null) {
-        throw Exception('Device not found in system. Please ensure the device is registered in the backend first.');
+      DataSnapshot existingDeviceSnapshot =
+          await _realtimeDb.child(deviceId).child('Auth').get();
+
+      if (!existingDeviceSnapshot.exists ||
+          existingDeviceSnapshot.value == null) {
+        throw Exception(
+            'Device not found in system. Please ensure the device is registered in the backend first.');
       }
-      
-      Map<String, dynamic> existingAuthData = _convertFirebaseMapToStringMap(existingDeviceSnapshot.value as Map);
+
+      Map<String, dynamic> existingAuthData =
+          _convertFirebaseMapToStringMap(existingDeviceSnapshot.value as Map);
       String devicePassword = existingAuthData['Device_Pwd']?.toString() ?? '';
-      
+
       if (devicePassword.isEmpty) {
         throw Exception('Device password not found in system.');
       }
@@ -196,6 +253,8 @@ class DeviceService {
         'ownerId': _userId,
         'addedAt': DateTime.now().toIso8601String(),
       });
+
+      print('Device $deviceId: Updated DeviceInfo with ownerId=$_userId');
 
       // Update Parameters based on user preferences (convert boolean to 1/0)
       await _realtimeDb.child(deviceId).child('Parameters').update({
@@ -238,12 +297,38 @@ class DeviceService {
         'MeterAddress': int.tryParse(meterId) ?? 1,
       });
 
-      // Add device reference to user's devices subcollection in Firestore
+      // Add device reference to user's devices subcollection in Firestore with enhanced data
+      print('Adding device reference to Firestore for user $_userId');
       await _userDevicesRef.doc(deviceId).set({
         'deviceId': deviceId,
         'name': name,
+        'userId': _userId, // Explicit user ID for double verification
         'addedAt': FieldValue.serverTimestamp(),
+        'addedBy': _userId,
+        'meterId': meterId,
+        'status': 'active',
+        'lastModified': FieldValue.serverTimestamp(),
       });
+
+      print(
+          'Successfully added device reference to Firestore: $deviceId -> user $_userId');
+
+      // Verify the Firestore write was successful
+      try {
+        DocumentSnapshot verifyDoc = await _userDevicesRef.doc(deviceId).get();
+        if (!verifyDoc.exists) {
+          throw Exception(
+              'Firestore write verification failed - document not found');
+        }
+        print('Firestore write verification successful for device $deviceId');
+      } catch (verifyError) {
+        print('Firestore write verification failed: $verifyError');
+        throw Exception(
+            'Failed to verify device mapping in Firestore: $verifyError');
+      }
+
+      // Extended delay to ensure both Firebase Realtime Database and Firestore propagation
+      await Future.delayed(const Duration(milliseconds: 1000));
 
       // Return the created device (convert back to our Device model format)
       final returnData = {
@@ -313,7 +398,8 @@ class DeviceService {
 
       if (snapshot.exists && snapshot.value != null) {
         // Safely convert Firebase data to Map<String, dynamic>
-        Map<String, dynamic> deviceData = _convertFirebaseMapToStringMap(snapshot.value as Map);
+        Map<String, dynamic> deviceData =
+            _convertFirebaseMapToStringMap(snapshot.value as Map);
         return _convertFromDatabaseStructure(deviceId, deviceData);
       }
 
@@ -328,12 +414,12 @@ class DeviceService {
     try {
       // Convert updates to match the database structure
       Map<String, dynamic> structuredUpdates = {};
-      
+
       // Handle DeviceInfo updates
       if (updates.containsKey('name')) {
         structuredUpdates['DeviceInfo/name'] = updates['name'];
       }
-      
+
       // Handle Parameters updates - convert boolean to 1/0
       final paramMap = {
         'averagePF': 'Parameters/Average_PF',
@@ -369,18 +455,19 @@ class DeviceService {
         'kwL2': 'Parameters/KW_L2',
         'kwL3': 'Parameters/KW_L3',
       };
-      
+
       for (String key in paramMap.keys) {
         if (updates.containsKey(key)) {
           structuredUpdates[paramMap[key]!] = updates[key] == true ? 1 : 0;
         }
       }
-      
+
       // Handle MeterAddress
       if (updates.containsKey('meterId')) {
-        structuredUpdates['MeterAddress'] = int.tryParse(updates['meterId'].toString()) ?? 1;
+        structuredUpdates['MeterAddress'] =
+            int.tryParse(updates['meterId'].toString()) ?? 1;
       }
-      
+
       await _realtimeDb.child(deviceId).update(structuredUpdates);
     } catch (e) {
       throw Exception('Failed to update device: $e');
@@ -404,38 +491,77 @@ class DeviceService {
       return Stream.value([]);
     }
 
+    print('Setting up device watch stream for user: $_userId');
+
     return _userDevicesRef.snapshots().asyncMap((snapshot) async {
       if (snapshot.docs.isEmpty) {
+        print('Device watch: No device references found for user $_userId');
         return <Device>[];
       }
+
+      print(
+          'Device watch: Found ${snapshot.docs.length} device references for user $_userId');
 
       List<Device> devices = [];
 
       for (QueryDocumentSnapshot deviceRef in snapshot.docs) {
         try {
           String deviceId = deviceRef.id;
+          Map<String, dynamic> firestoreData =
+              deviceRef.data() as Map<String, dynamic>;
+
+          // Verify this device reference belongs to current user
+          String? documentUserId = firestoreData['userId']?.toString() ??
+              firestoreData['addedBy']?.toString();
+          if (documentUserId != null && documentUserId != _userId) {
+            print(
+                'Device watch: Skipping device $deviceId - belongs to different user $documentUserId');
+            continue;
+          }
+
+          print('Device watch: Processing device $deviceId for user $_userId');
+
           DataSnapshot deviceSnapshot = await _realtimeDb.child(deviceId).get();
           if (deviceSnapshot.exists && deviceSnapshot.value != null) {
             // Safely convert Firebase data to Map<String, dynamic>
-            Map<String, dynamic> deviceData = _convertFirebaseMapToStringMap(deviceSnapshot.value as Map);
-            
+            Map<String, dynamic> deviceData =
+                _convertFirebaseMapToStringMap(deviceSnapshot.value as Map);
+
             // Verify device ownership by checking DeviceInfo/ownerId
-            Map<String, dynamic> deviceInfo = deviceData['DeviceInfo'] as Map<String, dynamic>? ?? {};
+            Map<String, dynamic> deviceInfo =
+                deviceData['DeviceInfo'] as Map<String, dynamic>? ?? {};
             String? deviceOwnerId = deviceInfo['ownerId']?.toString();
-            
-            // Only include devices that belong to current user or have no owner set
-            if (deviceOwnerId == null || deviceOwnerId == _userId) {
-              Device device = _convertFromDatabaseStructure(deviceId, deviceData);
+
+            // Only include devices that belong to current user
+            if (deviceOwnerId == _userId ||
+                (deviceOwnerId == null && documentUserId == _userId)) {
+              Device device =
+                  _convertFromDatabaseStructure(deviceId, deviceData);
               devices.add(device);
+              print(
+                  'Device watch: Added device ${device.name} (${device.id}) for user $_userId');
+            } else {
+              print(
+                  'Device watch: Ownership mismatch for device $deviceId - ownerId=$deviceOwnerId, userId=$_userId');
             }
+          } else {
+            print(
+                'Device watch: Device $deviceId not found in Realtime Database, cleaning up Firestore reference');
+            // Async cleanup of stale reference (don't await to avoid blocking the stream)
+            _userDevicesRef.doc(deviceId).delete().catchError((error) {
+              print(
+                  'Error cleaning up stale device reference $deviceId: $error');
+            });
           }
         } catch (e) {
           // Skip devices that can't be loaded
-          print('Failed to load device ${deviceRef.id}: $e');
+          print('Device watch: Failed to load device ${deviceRef.id}: $e');
           continue;
         }
       }
 
+      print(
+          'Device watch: Returning ${devices.length} devices for user $_userId');
       return devices;
     });
   }
@@ -450,7 +576,8 @@ class DeviceService {
 
       if (snapshot.exists && snapshot.value != null) {
         // Safely convert Firebase data to Map<String, dynamic>
-        Map<String, dynamic> deviceData = _convertFirebaseMapToStringMap(snapshot.value as Map);
+        Map<String, dynamic> deviceData =
+            _convertFirebaseMapToStringMap(snapshot.value as Map);
 
         // Check if password matches (using Device_Pwd field from actual structure)
         String storedPassword = deviceData['Device_Pwd']?.toString() ?? '';
@@ -464,6 +591,73 @@ class DeviceService {
         return true;
       }
       return false;
+    }
+  }
+
+  /// Debug method to verify user-device mapping integrity
+  Future<Map<String, dynamic>> debugUserDeviceMapping() async {
+    if (_userId == null) {
+      return {'error': 'User not authenticated'};
+    }
+
+    try {
+      print('=== DEBUG: User-Device Mapping for $_userId ===');
+
+      // Check Firestore user device collection
+      QuerySnapshot firestoreDevices = await _userDevicesRef.get();
+      List<Map<String, dynamic>> firestoreData = [];
+
+      for (var doc in firestoreDevices.docs) {
+        Map<String, dynamic> docData = doc.data() as Map<String, dynamic>;
+        docData['documentId'] = doc.id;
+        firestoreData.add(docData);
+        print('Firestore device reference: ${doc.id} -> $docData');
+      }
+
+      // Check Realtime Database device ownership
+      List<Map<String, dynamic>> realtimeData = [];
+      for (var firestoreDevice in firestoreData) {
+        String deviceId = firestoreDevice['documentId'];
+        DataSnapshot deviceSnapshot = await _realtimeDb.child(deviceId).get();
+
+        if (deviceSnapshot.exists && deviceSnapshot.value != null) {
+          Map<String, dynamic> deviceData =
+              _convertFirebaseMapToStringMap(deviceSnapshot.value as Map);
+          Map<String, dynamic> deviceInfo =
+              deviceData['DeviceInfo'] as Map<String, dynamic>? ?? {};
+
+          realtimeData.add({
+            'deviceId': deviceId,
+            'exists': true,
+            'ownerId': deviceInfo['ownerId'],
+            'name': deviceInfo['name'],
+            'addedAt': deviceInfo['addedAt'],
+          });
+
+          print(
+              'Realtime device $deviceId: ownerId=${deviceInfo['ownerId']}, name=${deviceInfo['name']}');
+        } else {
+          realtimeData.add({
+            'deviceId': deviceId,
+            'exists': false,
+          });
+          print('Realtime device $deviceId: NOT FOUND');
+        }
+      }
+
+      Map<String, dynamic> debugInfo = {
+        'userId': _userId,
+        'firestoreDeviceCount': firestoreData.length,
+        'firestoreDevices': firestoreData,
+        'realtimeDevices': realtimeData,
+        'timestamp': DateTime.now().toIso8601String(),
+      };
+
+      print('=== END DEBUG INFO ===');
+      return debugInfo;
+    } catch (e) {
+      print('Debug error: $e');
+      return {'error': e.toString()};
     }
   }
 }
