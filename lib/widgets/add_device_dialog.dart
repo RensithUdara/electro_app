@@ -40,10 +40,6 @@ class _AddDeviceDialogState extends State<AddDeviceDialog> {
   bool _pf3 = false;
   bool _totalKVA = false;
   bool _totalKVAR = false;
-  bool _totalKW = false;
-  bool _totalNetKVAh = false;
-  bool _totalNetKVArh = false;
-  bool _totalNetKWh = false;
   bool _v12 = false;
   bool _v1N = false;
   bool _v23 = false;
@@ -108,10 +104,10 @@ class _AddDeviceDialogState extends State<AddDeviceDialog> {
         pf3: _pf3,
         totalKVA: _totalKVA,
         totalKVAR: _totalKVAR,
-        totalKW: _totalKW,
-        totalNetKVAh: _totalNetKVAh,
-        totalNetKVArh: _totalNetKVArh,
-        totalNetKWh: _totalNetKWh,
+        totalKW: false,
+        totalNetKVAh: false,
+        totalNetKVArh: false,
+        totalNetKWh: false,
         v12: _v12,
         v1N: _v1N,
         v23: _v23,
@@ -637,23 +633,6 @@ class _AddDeviceDialogState extends State<AddDeviceDialog> {
                         'Total Reactive Power',
                         _totalKVAR,
                         (value) => setState(() => _totalKVAR = value)),
-                    _buildCheckbox('Total_KW', 'Total Active Power', _totalKW,
-                        (value) => setState(() => _totalKW = value)),
-                    _buildCheckbox(
-                        'Total_Net_KVAh',
-                        'Total Net KVAh',
-                        _totalNetKVAh,
-                        (value) => setState(() => _totalNetKVAh = value)),
-                    _buildCheckbox(
-                        'Total_Net_KVArh',
-                        'Total Net KVArh',
-                        _totalNetKVArh,
-                        (value) => setState(() => _totalNetKVArh = value)),
-                    _buildCheckbox(
-                        'Total_Net_KWh',
-                        'Total Net KWh',
-                        _totalNetKWh,
-                        (value) => setState(() => _totalNetKWh = value)),
                   ],
                 ),
 
