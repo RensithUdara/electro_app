@@ -617,8 +617,20 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
 
   Widget _buildCheckbox(
       String key, String label, bool value, ValueChanged<bool> onChanged) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: value
+            ? const Color(0xFF1E3A8A).withOpacity(0.05)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: value
+              ? const Color(0xFF1E3A8A).withOpacity(0.2)
+              : Colors.grey[300]!,
+        ),
+      ),
       child: Row(
         children: [
           Checkbox(
@@ -627,12 +639,26 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
             activeColor: const Color(0xFF1E3A8A),
           ),
           Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[700],
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: value ? FontWeight.w600 : FontWeight.normal,
+                    color: value ? const Color(0xFF1E3A8A) : Colors.grey[700],
+                  ),
+                ),
+                Text(
+                  'Parameter: $key',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey[600],
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
