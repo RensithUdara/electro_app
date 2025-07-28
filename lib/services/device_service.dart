@@ -138,6 +138,25 @@ class DeviceService {
     return result;
   }
 
+  // Helper method to determine if device is online based on lastUpdateAt
+  bool _isDeviceOnline(DateTime? lastUpdateAt) {
+    if (lastUpdateAt == null) {
+      print('Device is offline: No lastUpdateAt timestamp');
+      return false;
+    }
+    
+    final now = DateTime.now();
+    final difference = now.difference(lastUpdateAt);
+    
+    print('Device status check: lastUpdate=$lastUpdateAt, now=$now, difference=${difference.inMinutes} minutes');
+    
+    // Device is online if last update was within 5 minutes
+    bool isOnline = difference.inMinutes <= 5;
+    print('Device is ${isOnline ? "ONLINE" : "OFFLINE"} (threshold: 5 minutes)');
+    
+    return isOnline;
+  }
+
   // Helper method to convert from database structure to Device model
   Device _convertFromDatabaseStructure(
       String deviceId, Map<String, dynamic> data) {
@@ -152,6 +171,16 @@ class DeviceService {
 
     // Use user-specific name if available, otherwise use device ID
     String deviceName = currentUserData['userName']?.toString() ?? deviceId;
+
+    // Get lastUpdateAt from the Parameters section (global device parameters)
+    DateTime? lastUpdateAt;
+    final parameters = data['Parameters'] as Map<String, dynamic>? ?? {};
+    if (parameters['lastUpdateAt'] != null) {
+      lastUpdateAt = DateTime.tryParse(parameters['lastUpdateAt'].toString());
+    }
+
+    // Calculate online status based on lastUpdateAt
+    bool isOnline = _isDeviceOnline(lastUpdateAt);
 
     return Device(
       id: deviceId,
@@ -193,6 +222,8 @@ class DeviceService {
       createdAt:
           DateTime.tryParse(currentUserData['addedAt']?.toString() ?? '') ??
               DateTime.now(),
+      lastUpdateAt: lastUpdateAt,
+      isOnline: isOnline,
     );
   }
 
@@ -404,6 +435,8 @@ class DeviceService {
         'kwL2': kwL2,
         'kwL3': kwL3,
         'createdAt': DateTime.now().toIso8601String(),
+        'lastUpdateAt': DateTime.now().toIso8601String(),
+        'isOnline': true, // Newly added device is considered online
       };
       return Device.fromJson(returnData);
     } catch (e) {
@@ -555,6 +588,79 @@ class DeviceService {
       });
     } catch (e) {
       throw Exception('Failed to update device status: $e');
+    }
+  }
+
+  /// Updates the lastUpdateAt timestamp for a device
+  /// This should be called whenever device data is updated from the hardware
+  Future<void> updateDeviceLastUpdateTime(String deviceId) async {
+    try {
+      await _realtimeDb.child(deviceId).child('Parameters').update({
+        'lastUpdateAt': DateTime.now().toIso8601String(),
+      });
+      print('Updated lastUpdateAt for device: $deviceId');
+    } catch (e) {
+      print('Failed to update lastUpdateAt for device $deviceId: $e');
+      throw Exception('Failed to update device timestamp: $e');
+    }
+  }
+
+  /// Batch update lastUpdateAt for multiple devices
+  Future<void> updateMultipleDevicesLastUpdateTime(List<String> deviceIds) async {
+    try {
+      final timestamp = DateTime.now().toIso8601String();
+      
+      for (String deviceId in deviceIds) {
+        await _realtimeDb.child(deviceId).child('Parameters').update({
+          'lastUpdateAt': timestamp,
+        });
+      }
+      print('Updated lastUpdateAt for ${deviceIds.length} devices');
+    } catch (e) {
+      print('Failed to batch update lastUpdateAt: $e');
+      throw Exception('Failed to batch update device timestamps: $e');
+    }
+  }
+
+  /// Get online status for all user devices
+  Future<Map<String, bool>> getUserDevicesOnlineStatus() async {
+    try {
+      if (_userId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      Map<String, bool> onlineStatus = {};
+      
+      // Get user's device IDs from Firestore
+      QuerySnapshot userDevicesSnapshot = await _userDevicesRef.get();
+      
+      for (QueryDocumentSnapshot deviceRef in userDevicesSnapshot.docs) {
+        String deviceId = deviceRef.id;
+        
+        // Get device's lastUpdateAt from Realtime Database
+        DataSnapshot deviceSnapshot = await _realtimeDb.child(deviceId).get();
+        
+        if (deviceSnapshot.exists && deviceSnapshot.value != null) {
+          Map<String, dynamic> deviceData =
+              _convertFirebaseMapToStringMap(deviceSnapshot.value as Map);
+          
+          // Get lastUpdateAt from Parameters section
+          final parameters = deviceData['Parameters'] as Map<String, dynamic>? ?? {};
+          DateTime? lastUpdateAt;
+          if (parameters['lastUpdateAt'] != null) {
+            lastUpdateAt = DateTime.tryParse(parameters['lastUpdateAt'].toString());
+          }
+          
+          onlineStatus[deviceId] = _isDeviceOnline(lastUpdateAt);
+        } else {
+          onlineStatus[deviceId] = false; // Device not found = offline
+        }
+      }
+      
+      return onlineStatus;
+    } catch (e) {
+      print('Failed to get devices online status: $e');
+      return {};
     }
   }
 
@@ -730,6 +836,60 @@ class DeviceService {
       return debugInfo;
     } catch (e) {
       print('Debug error: $e');
+      return {'error': e.toString()};
+    }
+  }
+
+  /// Debug method to test online/offline status calculation
+  Future<Map<String, dynamic>> debugDeviceOnlineStatus(String deviceId) async {
+    try {
+      print('=== DEBUG: Device Online Status for $deviceId ===');
+      
+      // Get device data
+      DataSnapshot deviceSnapshot = await _realtimeDb.child(deviceId).get();
+      
+      if (!deviceSnapshot.exists || deviceSnapshot.value == null) {
+        return {
+          'error': 'Device not found',
+          'deviceId': deviceId,
+        };
+      }
+
+      Map<String, dynamic> deviceData =
+          _convertFirebaseMapToStringMap(deviceSnapshot.value as Map);
+      
+      // Get lastUpdateAt from Parameters
+      final parameters = deviceData['Parameters'] as Map<String, dynamic>? ?? {};
+      String? lastUpdateAtString = parameters['lastUpdateAt']?.toString();
+      DateTime? lastUpdateAt;
+      if (lastUpdateAtString != null) {
+        lastUpdateAt = DateTime.tryParse(lastUpdateAtString);
+      }
+
+      final now = DateTime.now();
+      int? minutesDifference;
+      if (lastUpdateAt != null) {
+        minutesDifference = now.difference(lastUpdateAt).inMinutes;
+      }
+
+      bool isOnline = _isDeviceOnline(lastUpdateAt);
+
+      Map<String, dynamic> debugInfo = {
+        'deviceId': deviceId,
+        'lastUpdateAtString': lastUpdateAtString,
+        'lastUpdateAtParsed': lastUpdateAt?.toIso8601String(),
+        'currentTime': now.toIso8601String(),
+        'minutesDifference': minutesDifference,
+        'isOnline': isOnline,
+        'threshold': '5 minutes',
+        'parametersSection': parameters,
+      };
+
+      print('Debug result: $debugInfo');
+      print('=== END DEBUG ONLINE STATUS ===');
+      return debugInfo;
+    } catch (e) {
+      print('Debug online status error: $e');
       return {'error': e.toString()};
     }
   }
