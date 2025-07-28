@@ -36,6 +36,8 @@ class Device {
   final bool kwL2;
   final bool kwL3;
   final DateTime createdAt;
+  final DateTime? lastUpdateAt;
+  final bool isOnline;
 
   Device({
     required this.id,
@@ -75,6 +77,8 @@ class Device {
     required this.kwL2,
     required this.kwL3,
     required this.createdAt,
+    this.lastUpdateAt,
+    required this.isOnline,
   });
 
   factory Device.fromJson(Map<String, dynamic> json) {
@@ -117,6 +121,10 @@ class Device {
       kwL3: json['kwL3'] ?? false,
       createdAt:
           DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
+      lastUpdateAt: json['lastUpdateAt'] != null 
+          ? DateTime.parse(json['lastUpdateAt']) 
+          : null,
+      isOnline: json['isOnline'] ?? false,
     );
   }
 
@@ -159,6 +167,8 @@ class Device {
       'kwL2': kwL2,
       'kwL3': kwL3,
       'createdAt': createdAt.toIso8601String(),
+      'lastUpdateAt': lastUpdateAt?.toIso8601String(),
+      'isOnline': isOnline,
     };
   }
 }
