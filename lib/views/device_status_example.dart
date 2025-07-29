@@ -80,43 +80,6 @@ class _DeviceStatusExampleState extends State<DeviceStatusExample> {
     );
   }
 
-  /// Debug device online status
-  Future<void> _debugDeviceStatus(String deviceId) async {
-    try {
-      final debugInfo = await _deviceService.debugDeviceOnlineStatus(deviceId);
-      
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text('Debug Info: $deviceId'),
-            content: SingleChildScrollView(
-              child: Text(
-                'Last Update: ${debugInfo['lastUpdateAtString'] ?? 'None'}\n'
-                'Current Time: ${debugInfo['currentTime']}\n'
-                'Minutes Difference: ${debugInfo['minutesDifference'] ?? 'N/A'}\n'
-                'Is Online: ${debugInfo['isOnline']}\n'
-                'Threshold: ${debugInfo['threshold']}\n\n'
-                'Full Debug:\n${debugInfo.toString()}',
-                style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Close'),
-              ),
-            ],
-          ),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Debug error: $e')),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -201,22 +164,9 @@ class _DeviceStatusExampleState extends State<DeviceStatusExample> {
                                 ),
                             ],
                           ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              ElevatedButton(
-                                onPressed: () => _simulateDeviceActivity(device.id),
-                                child: const Text('Ping'),
-                              ),
-                              const SizedBox(width: 8),
-                              ElevatedButton(
-                                onPressed: () => _debugDeviceStatus(device.id),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.orange,
-                                ),
-                                child: const Text('Debug'),
-                              ),
-                            ],
+                          trailing: ElevatedButton(
+                            onPressed: () => _simulateDeviceActivity(device.id),
+                            child: const Text('Ping'),
                           ),
                         ),
                       );
