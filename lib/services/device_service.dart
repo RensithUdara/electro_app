@@ -140,21 +140,13 @@ class DeviceService {
 
   // Helper method to determine if device is online based on lastUpdateAt
   bool _isDeviceOnline(DateTime? lastUpdateAt) {
-    if (lastUpdateAt == null) {
-      print('Device is offline: No lastUpdateAt timestamp');
-      return false;
-    }
+    if (lastUpdateAt == null) return false;
     
     final now = DateTime.now();
     final difference = now.difference(lastUpdateAt);
     
-    print('Device status check: lastUpdate=$lastUpdateAt, now=$now, difference=${difference.inMinutes} minutes');
-    
     // Device is online if last update was within 5 minutes
-    bool isOnline = difference.inMinutes <= 5;
-    print('Device is ${isOnline ? "ONLINE" : "OFFLINE"} (threshold: 5 minutes)');
-    
-    return isOnline;
+    return difference.inMinutes <= 5;
   }
 
   // Helper method to convert from database structure to Device model
@@ -175,8 +167,19 @@ class DeviceService {
     // Get lastUpdateAt from the Parameters section (global device parameters)
     DateTime? lastUpdateAt;
     final parameters = data['Parameters'] as Map<String, dynamic>? ?? {};
-    if (parameters['lastUpdateAt'] != null) {
-      lastUpdateAt = DateTime.tryParse(parameters['lastUpdateAt'].toString());
+    if (parameters['LastUpdateAt'] != null) {
+      // Try to parse the timestamp - it's in local time format "2025-07-29 12:19:21"
+      String lastUpdateStr = parameters['LastUpdateAt'].toString();
+      try {
+        // Parse as local time (don't add Z for UTC)
+        if (lastUpdateStr.contains(' ') && !lastUpdateStr.contains('T')) {
+          lastUpdateStr = lastUpdateStr.replaceFirst(' ', 'T');
+        }
+        lastUpdateAt = DateTime.parse(lastUpdateStr);
+      } catch (e) {
+        print('Error parsing LastUpdateAt for device $deviceId: $lastUpdateStr - $e');
+        lastUpdateAt = null;
+      }
     }
 
     // Calculate online status based on lastUpdateAt
@@ -595,12 +598,21 @@ class DeviceService {
   /// This should be called whenever device data is updated from the hardware
   Future<void> updateDeviceLastUpdateTime(String deviceId) async {
     try {
+      // Format timestamp to match the existing format: "2025-07-29 12:19:21"
+      final now = DateTime.now();
+      final formattedTime = "${now.year.toString().padLeft(4, '0')}-"
+          "${now.month.toString().padLeft(2, '0')}-"
+          "${now.day.toString().padLeft(2, '0')} "
+          "${now.hour.toString().padLeft(2, '0')}:"
+          "${now.minute.toString().padLeft(2, '0')}:"
+          "${now.second.toString().padLeft(2, '0')}";
+      
       await _realtimeDb.child(deviceId).child('Parameters').update({
-        'lastUpdateAt': DateTime.now().toIso8601String(),
+        'LastUpdateAt': formattedTime,
       });
-      print('Updated lastUpdateAt for device: $deviceId');
+      print('Updated LastUpdateAt for device: $deviceId to $formattedTime');
     } catch (e) {
-      print('Failed to update lastUpdateAt for device $deviceId: $e');
+      print('Failed to update LastUpdateAt for device $deviceId: $e');
       throw Exception('Failed to update device timestamp: $e');
     }
   }
@@ -608,16 +620,23 @@ class DeviceService {
   /// Batch update lastUpdateAt for multiple devices
   Future<void> updateMultipleDevicesLastUpdateTime(List<String> deviceIds) async {
     try {
-      final timestamp = DateTime.now().toIso8601String();
+      // Format timestamp to match the existing format: "2025-07-29 12:19:21"
+      final now = DateTime.now();
+      final formattedTime = "${now.year.toString().padLeft(4, '0')}-"
+          "${now.month.toString().padLeft(2, '0')}-"
+          "${now.day.toString().padLeft(2, '0')} "
+          "${now.hour.toString().padLeft(2, '0')}:"
+          "${now.minute.toString().padLeft(2, '0')}:"
+          "${now.second.toString().padLeft(2, '0')}";
       
       for (String deviceId in deviceIds) {
         await _realtimeDb.child(deviceId).child('Parameters').update({
-          'lastUpdateAt': timestamp,
+          'LastUpdateAt': formattedTime,
         });
       }
-      print('Updated lastUpdateAt for ${deviceIds.length} devices');
+      print('Updated LastUpdateAt for ${deviceIds.length} devices to $formattedTime');
     } catch (e) {
-      print('Failed to batch update lastUpdateAt: $e');
+      print('Failed to batch update LastUpdateAt: $e');
       throw Exception('Failed to batch update device timestamps: $e');
     }
   }
@@ -644,11 +663,21 @@ class DeviceService {
           Map<String, dynamic> deviceData =
               _convertFirebaseMapToStringMap(deviceSnapshot.value as Map);
           
-          // Get lastUpdateAt from Parameters section
-          final parameters = deviceData['Parameters'] as Map<String, dynamic>? ?? {};
           DateTime? lastUpdateAt;
-          if (parameters['lastUpdateAt'] != null) {
-            lastUpdateAt = DateTime.tryParse(parameters['lastUpdateAt'].toString());
+          final parameters = deviceData['Parameters'] as Map<String, dynamic>? ?? {};
+          if (parameters['LastUpdateAt'] != null) {
+            // Try to parse the timestamp - it's in local time format "2025-07-29 12:19:21"
+            String lastUpdateStr = parameters['LastUpdateAt'].toString();
+            try {
+              // Parse as local time (don't add Z for UTC)
+              if (lastUpdateStr.contains(' ') && !lastUpdateStr.contains('T')) {
+                lastUpdateStr = lastUpdateStr.replaceFirst(' ', 'T');
+              }
+              lastUpdateAt = DateTime.parse(lastUpdateStr);
+            } catch (e) {
+              print('Error parsing LastUpdateAt for device $deviceId: $lastUpdateStr - $e');
+              lastUpdateAt = null;
+            }
           }
           
           onlineStatus[deviceId] = _isDeviceOnline(lastUpdateAt);
@@ -836,60 +865,6 @@ class DeviceService {
       return debugInfo;
     } catch (e) {
       print('Debug error: $e');
-      return {'error': e.toString()};
-    }
-  }
-
-  /// Debug method to test online/offline status calculation
-  Future<Map<String, dynamic>> debugDeviceOnlineStatus(String deviceId) async {
-    try {
-      print('=== DEBUG: Device Online Status for $deviceId ===');
-      
-      // Get device data
-      DataSnapshot deviceSnapshot = await _realtimeDb.child(deviceId).get();
-      
-      if (!deviceSnapshot.exists || deviceSnapshot.value == null) {
-        return {
-          'error': 'Device not found',
-          'deviceId': deviceId,
-        };
-      }
-
-      Map<String, dynamic> deviceData =
-          _convertFirebaseMapToStringMap(deviceSnapshot.value as Map);
-      
-      // Get lastUpdateAt from Parameters
-      final parameters = deviceData['Parameters'] as Map<String, dynamic>? ?? {};
-      String? lastUpdateAtString = parameters['lastUpdateAt']?.toString();
-      DateTime? lastUpdateAt;
-      if (lastUpdateAtString != null) {
-        lastUpdateAt = DateTime.tryParse(lastUpdateAtString);
-      }
-
-      final now = DateTime.now();
-      int? minutesDifference;
-      if (lastUpdateAt != null) {
-        minutesDifference = now.difference(lastUpdateAt).inMinutes;
-      }
-
-      bool isOnline = _isDeviceOnline(lastUpdateAt);
-
-      Map<String, dynamic> debugInfo = {
-        'deviceId': deviceId,
-        'lastUpdateAtString': lastUpdateAtString,
-        'lastUpdateAtParsed': lastUpdateAt?.toIso8601String(),
-        'currentTime': now.toIso8601String(),
-        'minutesDifference': minutesDifference,
-        'isOnline': isOnline,
-        'threshold': '5 minutes',
-        'parametersSection': parameters,
-      };
-
-      print('Debug result: $debugInfo');
-      print('=== END DEBUG ONLINE STATUS ===');
-      return debugInfo;
-    } catch (e) {
-      print('Debug online status error: $e');
       return {'error': e.toString()};
     }
   }
