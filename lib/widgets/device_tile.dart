@@ -1,10 +1,12 @@
 // ignore_for_file: unused_element
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../models/device.dart';
+import '../services/device_service.dart';
 
-class DeviceTile extends StatelessWidget {
+class DeviceTile extends StatefulWidget {
   final Device device;
   final VoidCallback onTap;
   final VoidCallback onEdit;
@@ -17,6 +19,48 @@ class DeviceTile extends StatelessWidget {
     required this.onEdit,
     required this.onDelete,
   });
+
+  @override
+  State<DeviceTile> createState() => _DeviceTileState();
+}
+
+class _DeviceTileState extends State<DeviceTile> {
+  final DeviceService _deviceService = DeviceService();
+  DateTime? _lastUpdateAt;
+  bool _isDeviceOnline = false;
+  Timer? _statusUpdateTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDeviceStatus();
+    
+    // Set up periodic status updates every minute
+    _statusUpdateTimer = Timer.periodic(const Duration(minutes: 1), (_) {
+      _loadDeviceStatus();
+    });
+  }
+
+  @override
+  void dispose() {
+    _statusUpdateTimer?.cancel();
+    super.dispose();
+  }
+
+  /// Load device status (last update time and online status)
+  Future<void> _loadDeviceStatus() async {
+    try {
+      final device = await _deviceService.getDevice(widget.device.id);
+      if (device != null && mounted) {
+        setState(() {
+          _lastUpdateAt = device.lastUpdateAt;
+          _isDeviceOnline = device.isOnline;
+        });
+      }
+    } catch (e) {
+      print('Error loading device status for ${widget.device.id}: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +78,7 @@ class DeviceTile extends StatelessWidget {
         ],
       ),
       child: InkWell(
-        onTap: onTap,
+        onTap: widget.onTap,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -64,7 +108,7 @@ class DeviceTile extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          device.name,
+                          widget.device.name,
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -73,14 +117,14 @@ class DeviceTile extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'ID: ${device.deviceId}',
+                          'ID: ${widget.device.deviceId}',
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey[600],
                           ),
                         ),
                         Text(
-                          'Meter: ${device.meterId}',
+                          'Meter: ${widget.device.meterId}',
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey[600],
@@ -94,9 +138,9 @@ class DeviceTile extends StatelessWidget {
                   PopupMenuButton<String>(
                     onSelected: (value) {
                       if (value == 'edit') {
-                        onEdit();
+                        widget.onEdit();
                       } else if (value == 'delete') {
-                        onDelete();
+                        widget.onDelete();
                       }
                     },
                     itemBuilder: (BuildContext context) => [
@@ -152,7 +196,7 @@ class DeviceTile extends StatelessWidget {
               // ),
               const SizedBox(height: 12),
 
-              // Creation Date
+              // Status and Creation Date
               Row(
                 children: [
                   Icon(
@@ -161,28 +205,47 @@ class DeviceTile extends StatelessWidget {
                     color: Colors.grey[500],
                   ),
                   const SizedBox(width: 4),
-                  Text(
-                    'Added on ${_formatDate(device.createdAt)}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[500],
+                  Expanded(
+                    child: Text(
+                      _lastUpdateAt != null
+                          ? 'Last updated ${_formatLastUpdateTime(_lastUpdateAt!)}'
+                          : 'Added on ${_formatDate(widget.device.createdAt)}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[500],
+                      ),
                     ),
                   ),
-                  const Spacer(),
                   Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.1),
+                      color: _isDeviceOnline 
+                          ? Colors.green.withOpacity(0.1)
+                          : Colors.red.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: Text(
-                      'Online',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.green[700],
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: _isDeviceOnline ? Colors.green : Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _isDeviceOnline ? 'Online' : 'Offline',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: _isDeviceOnline ? Colors.green[700] : Colors.red[700],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -244,5 +307,20 @@ class DeviceTile extends StatelessWidget {
       'Dec'
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+
+  String _formatLastUpdateTime(DateTime lastUpdate) {
+    final now = DateTime.now();
+    final difference = now.difference(lastUpdate);
+    
+    if (difference.inMinutes < 1) {
+      return 'just now';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}m ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}h ago';
+    } else {
+      return '${difference.inDays}d ago';
+    }
   }
 }
