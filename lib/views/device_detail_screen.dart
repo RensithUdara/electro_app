@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously, unused_element
 
+import 'dart:async';
 import 'dart:math';
 
 import 'package:fl_chart/fl_chart.dart';
@@ -13,6 +14,7 @@ import '../controllers/device_data_controller.dart';
 import '../controllers/realtime_data_controller.dart';
 import '../models/device.dart';
 import '../models/device_data.dart';
+import '../services/device_service.dart';
 import '../widgets/edit_device_dialog.dart';
 
 class DeviceDetailScreen extends StatefulWidget {
@@ -31,6 +33,16 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
 
   // Store reference to controller to avoid looking it up in dispose
   RealtimeDataController? _realtimeController;
+  
+  // DeviceService for getting last update time
+  final DeviceService _deviceService = DeviceService();
+  
+  // Store device last update time and online status
+  DateTime? _lastUpdateAt;
+  bool _isDeviceOnline = false;
+  
+  // Timer for periodic status updates
+  Timer? _statusUpdateTimer;
 
   @override
   void initState() {
@@ -45,6 +57,14 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
           Provider.of<RealtimeDataController>(context, listen: false);
       _realtimeController?.connectToDevice(widget.device);
 
+      // Load device status
+      _loadDeviceStatus();
+      
+      // Set up periodic status updates every minute
+      _statusUpdateTimer = Timer.periodic(const Duration(minutes: 1), (_) {
+        _loadDeviceStatus();
+      });
+
       // Load saved parameter order after a short delay to ensure data is loaded
       Future.delayed(const Duration(milliseconds: 500), () {
         final realtimeController =
@@ -55,6 +75,21 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
         }
       });
     });
+  }
+
+  /// Load device status (last update time and online status)
+  Future<void> _loadDeviceStatus() async {
+    try {
+      final device = await _deviceService.getDevice(widget.device.id);
+      if (device != null) {
+        setState(() {
+          _lastUpdateAt = device.lastUpdateAt;
+          _isDeviceOnline = device.isOnline;
+        });
+      }
+    } catch (e) {
+      print('Error loading device status: $e');
+    }
   }
 
   /// Formats parameter values to display with 2 decimal places
@@ -76,6 +111,9 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
 
   @override
   void dispose() {
+    // Cancel the status update timer
+    _statusUpdateTimer?.cancel();
+    
     // Disconnect from real-time data when leaving the screen using stored reference
     // Use disconnectSafely to avoid notifying listeners during disposal
     _realtimeController?.disconnectSafely();
@@ -135,6 +173,8 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                   .refreshData(widget.device.id);
               Provider.of<RealtimeDataController>(context, listen: false)
                   .refresh();
+              // Also refresh device status
+              _loadDeviceStatus();
             },
           ),
         ],
@@ -801,25 +841,43 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
   }
 
   Widget _buildConnectionStatus(RealtimeDataController realtimeController) {
+    // Format the last update time
+    String timeDisplay = 'Unknown';
+    String statusMessage = 'No update time available';
+    
+    if (_lastUpdateAt != null) {
+      final now = DateTime.now();
+      final difference = now.difference(_lastUpdateAt!);
+      
+      if (difference.inMinutes < 1) {
+        timeDisplay = 'Just now';
+        statusMessage = 'Updated ${difference.inSeconds} seconds ago';
+      } else if (difference.inMinutes < 60) {
+        timeDisplay = '${difference.inMinutes}m ago';
+        statusMessage = 'Updated ${difference.inMinutes} minutes ago';
+      } else if (difference.inHours < 24) {
+        timeDisplay = '${difference.inHours}h ago';
+        statusMessage = 'Updated ${difference.inHours} hours ago';
+      } else {
+        timeDisplay = '${difference.inDays}d ago';
+        statusMessage = 'Updated ${difference.inDays} days ago';
+      }
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color:
-            realtimeController.isConnected ? Colors.green[50] : Colors.red[50],
+        color: _isDeviceOnline ? Colors.green[50] : Colors.red[50],
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: realtimeController.isConnected
-              ? Colors.green[200]!
-              : Colors.red[200]!,
+          color: _isDeviceOnline ? Colors.green[200]! : Colors.red[200]!,
         ),
       ),
       child: Row(
         children: [
           Icon(
-            realtimeController.isConnected ? Icons.wifi : Icons.wifi_off,
-            color: realtimeController.isConnected
-                ? Colors.green[600]
-                : Colors.red[600],
+            _isDeviceOnline ? Icons.access_time : Icons.access_time_filled,
+            color: _isDeviceOnline ? Colors.green[600] : Colors.red[600],
             size: 20,
           ),
           const SizedBox(width: 12),
@@ -828,34 +886,47 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  realtimeController.isConnected
-                      ? 'Real-time Data Connected'
-                      : 'Real-time Data Disconnected',
+                  'Last Updated: $timeDisplay',
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
-                    color: realtimeController.isConnected
-                        ? Colors.green[800]
-                        : Colors.red[800],
+                    color: _isDeviceOnline ? Colors.green[800] : Colors.red[800],
                   ),
                 ),
-                if (realtimeController.errorMessage != null)
-                  Text(
-                    realtimeController.errorMessage!,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.red[600],
-                    ),
+                Text(
+                  statusMessage,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: _isDeviceOnline ? Colors.green[600] : Colors.red[600],
                   ),
+                ),
               ],
             ),
           ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: _isDeviceOnline ? Colors.green[100] : Colors.red[100],
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              _isDeviceOnline ? 'Online' : 'Offline',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: _isDeviceOnline ? Colors.green[700] : Colors.red[700],
+              ),
+            ),
+          ),
           if (realtimeController.isLoading)
-            SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.grey[600]!),
+            Container(
+              margin: const EdgeInsets.only(left: 8),
+              child: SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.grey[600]!),
+                ),
               ),
             ),
         ],
@@ -1272,9 +1343,9 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
               ],
               _buildSummaryItem(
                 'Connection Status',
-                realtimeController.isConnected ? 'Connected' : 'Disconnected',
-                realtimeController.isConnected ? Icons.wifi : Icons.wifi_off,
-                realtimeController.isConnected ? Colors.green : Colors.red,
+                _isDeviceOnline ? 'Online' : 'Offline',
+                _isDeviceOnline ? Icons.access_time : Icons.access_time_filled,
+                _isDeviceOnline ? Colors.green : Colors.red,
               ),
             ],
           ),
