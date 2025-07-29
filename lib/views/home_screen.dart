@@ -5,6 +5,8 @@ import '../controllers/auth_controller.dart';
 import '../controllers/device_controller.dart';
 import '../controllers/notification_controller.dart';
 import '../models/device.dart';
+import '../services/device_service.dart';
+import '../services/device_status_monitor.dart';
 import '../utils/logout_utils.dart';
 import '../widgets/add_device_dialog.dart';
 import '../widgets/device_tile.dart';
@@ -21,9 +23,17 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final DeviceService _deviceService = DeviceService();
+  DeviceStatusMonitor? _statusMonitor;
+
   @override
   void initState() {
     super.initState();
+    
+    // Initialize device status monitoring
+    _statusMonitor = DeviceStatusMonitor(_deviceService);
+    _statusMonitor!.startMonitoring();
+    
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final deviceController =
           Provider.of<DeviceController>(context, listen: false);
@@ -36,6 +46,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    // Stop device status monitoring
+    _statusMonitor?.dispose();
+    
     // Stop device stream when screen is disposed
     final deviceController =
         Provider.of<DeviceController>(context, listen: false);
