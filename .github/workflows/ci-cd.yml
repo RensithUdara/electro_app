@@ -156,7 +156,7 @@ jobs:
   #       uses: actions/checkout@v4
 
   #     - name: Download web build artifacts
-  #       uses: actions/download-artifact@v4
+  #       uses: actions/download-artifact@v5
   #       with:
   #         name: web-build
   #         path: build/web/
@@ -187,19 +187,19 @@ jobs:
           echo "tag=v$VERSION" >> $GITHUB_OUTPUT
 
       - name: Download APK artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: android-apk
           path: ./apk/
 
       - name: Download AAB artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: android-aab
           path: ./aab/
 
       - name: Download web artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: web-build
           path: ./web/
