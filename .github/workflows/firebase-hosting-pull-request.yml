@@ -1,7 +1,11 @@
-# Flutter Web Deploy to Firebase Hosting on PR
-name: Deploy Flutter Web to Firebase Hosting on PR
+# Flutter Web Deploy to Firebase Hosting on PR - DISABLED
+# Uncomment and configure FIREBASE_SERVICE_ACCOUNT_PANEL_MONITOR_691C6 secret to enable
+name: Deploy Flutter Web to Firebase Hosting on PR (DISABLED)
 
-on: pull_request
+on: 
+  # Disabled - uncomment when Firebase secret is configured
+  # pull_request
+  workflow_dispatch: # Manual trigger only
 
 permissions:
   checks: write
@@ -10,7 +14,8 @@ permissions:
 
 jobs:
   build_and_preview:
-    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    # Disabled until Firebase is configured
+    # if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -31,9 +36,13 @@ jobs:
       - name: Build Flutter web
         run: flutter build web --release --web-renderer html
 
-      - name: Deploy to Firebase Hosting Preview
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PANEL_MONITOR_691C6 }}
-          projectId: panel-monitor-691c6
+      # Disabled until Firebase service account is configured
+      # - name: Deploy to Firebase Hosting Preview
+      #   uses: FirebaseExtended/action-hosting-deploy@v0
+      #   with:
+      #     repoToken: ${{ secrets.GITHUB_TOKEN }}
+      #     firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PANEL_MONITOR_691C6 }}
+      #     projectId: panel-monitor-691c6
+
+      - name: Firebase Deployment Disabled
+        run: echo "Firebase deployment is disabled. Configure FIREBASE_SERVICE_ACCOUNT_PANEL_MONITOR_691C6 secret to enable."

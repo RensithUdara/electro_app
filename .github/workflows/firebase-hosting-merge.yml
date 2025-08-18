@@ -1,10 +1,13 @@
-# Flutter Web Deploy to Firebase Hosting on merge
-name: Deploy Flutter Web to Firebase Hosting on merge
+# Flutter Web Deploy to Firebase Hosting on merge - DISABLED
+# Uncomment and configure FIREBASE_SERVICE_ACCOUNT_PANEL_MONITOR_691C6 secret to enable
+name: Deploy Flutter Web to Firebase Hosting on merge (DISABLED)
 
 on:
-  push:
-    branches:
-      - main
+  # Disabled - uncomment when Firebase secret is configured
+  # push:
+  #   branches:
+  #     - main
+  workflow_dispatch: # Manual trigger only
 
 jobs:
   build_and_deploy:
@@ -28,10 +31,14 @@ jobs:
       - name: Build Flutter web
         run: flutter build web --release --web-renderer html
 
-      - name: Deploy to Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PANEL_MONITOR_691C6 }}
-          channelId: live
-          projectId: panel-monitor-691c6
+      # Disabled until Firebase service account is configured
+      # - name: Deploy to Firebase Hosting
+      #   uses: FirebaseExtended/action-hosting-deploy@v0
+      #   with:
+      #     repoToken: ${{ secrets.GITHUB_TOKEN }}
+      #     firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PANEL_MONITOR_691C6 }}
+      #     channelId: live
+      #     projectId: panel-monitor-691c6
+
+      - name: Firebase Deployment Disabled
+        run: echo "Firebase deployment is disabled. Configure FIREBASE_SERVICE_ACCOUNT_PANEL_MONITOR_691C6 secret to enable."
