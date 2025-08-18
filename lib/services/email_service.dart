@@ -6,11 +6,11 @@ import 'package:mailer/smtp_server.dart';
 
 class EmailService {
   // Admin email configuration
-  static const String _adminEmail = 'rensithudaragonalagoda@gmail.com';
+  static const String _adminEmail = 'test@gmail.com';
   static const String _smtpUsername =
-      'rensithudaragonalagoda@gmail.com'; // Replace with your email
+      'test@gmail.com'; // Replace with your email
   static const String _smtpPassword =
-      'gtrkvhgjaqfplaup'; // Replace with your app password
+      'password'; // Replace with your app password
   static const String _smtpHost = 'smtp.gmail.com';
   static const int _smtpPort = 587;
 
