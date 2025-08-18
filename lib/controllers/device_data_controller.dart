@@ -4,7 +4,7 @@ import '../services/device_data_service.dart';
 
 class DeviceDataController extends ChangeNotifier {
   final DeviceDataService _dataService = DeviceDataService();
-  
+
   DeviceDataSummary? _deviceDataSummary;
   List<DeviceData> _recentData = [];
   bool _isLoading = false;

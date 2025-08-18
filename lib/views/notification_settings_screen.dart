@@ -18,7 +18,8 @@ class _NotificationSettingsScreenState
   @override
   void initState() {
     super.initState();
-    _settings = Provider.of<NotificationController>(context, listen: false).settings;
+    _settings =
+        Provider.of<NotificationController>(context, listen: false).settings;
   }
 
   void _updateSetting(String setting, bool value) {
@@ -59,7 +60,7 @@ class _NotificationSettingsScreenState
     final notificationController =
         Provider.of<NotificationController>(context, listen: false);
     await notificationController.updateSettings(_settings);
-    
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -186,7 +187,8 @@ class _NotificationSettingsScreenState
                 subtitle: 'Updates on your feedback',
                 icon: Icons.feedback,
                 value: _settings.feedbackResponses,
-                onChanged: (value) => _updateSetting('feedbackResponses', value),
+                onChanged: (value) =>
+                    _updateSetting('feedbackResponses', value),
               ),
               _buildSwitchTile(
                 title: 'Bug Report Updates',
@@ -216,14 +218,16 @@ class _NotificationSettingsScreenState
                 subtitle: 'Receive notifications on your device',
                 icon: Icons.phone_iphone,
                 value: _settings.pushNotifications,
-                onChanged: (value) => _updateSetting('pushNotifications', value),
+                onChanged: (value) =>
+                    _updateSetting('pushNotifications', value),
               ),
               _buildSwitchTile(
                 title: 'Email Notifications',
                 subtitle: 'Receive notifications via email',
                 icon: Icons.email,
                 value: _settings.emailNotifications,
-                onChanged: (value) => _updateSetting('emailNotifications', value),
+                onChanged: (value) =>
+                    _updateSetting('emailNotifications', value),
               ),
             ]),
 

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 class GoogleIcon extends StatelessWidget {
   final double size;
-  
+
   const GoogleIcon({super.key, this.size = 20});
 
   @override

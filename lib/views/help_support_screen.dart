@@ -701,11 +701,13 @@ class HelpSupportScreen extends StatelessWidget {
                                         if (success) {
                                           // Create notification for feedback
                                           final notificationController =
-                                              Provider.of<NotificationController>(
-                                                  screenContext, listen: false);
+                                              Provider.of<
+                                                      NotificationController>(
+                                                  screenContext,
+                                                  listen: false);
                                           await notificationController
                                               .createFeedbackNotification();
-                                          
+
                                           LoadingDialogHelper.showSuccessDialog(
                                             screenContext,
                                             title: 'Feedback Sent!',
@@ -1145,11 +1147,13 @@ class HelpSupportScreen extends StatelessWidget {
                                           if (success) {
                                             // Create notification for bug report
                                             final notificationController =
-                                                Provider.of<NotificationController>(
-                                                    screenContext, listen: false);
+                                                Provider.of<
+                                                        NotificationController>(
+                                                    screenContext,
+                                                    listen: false);
                                             await notificationController
                                                 .createBugReportNotification();
-                                            
+
                                             LoadingDialogHelper
                                                 .showSuccessDialog(
                                               screenContext,

@@ -4,16 +4,17 @@ import 'device_service.dart';
 /// Service to monitor device online/offline status in real-time
 class DeviceStatusMonitor {
   final DeviceService _deviceService;
-  
+
   Timer? _statusUpdateTimer;
-  final Duration _checkInterval = const Duration(minutes: 1); // Check every minute
-  
+  final Duration _checkInterval =
+      const Duration(minutes: 1); // Check every minute
+
   DeviceStatusMonitor(this._deviceService);
 
   /// Start monitoring device status
   void startMonitoring() {
     print('Starting device status monitoring...');
-    
+
     _statusUpdateTimer = Timer.periodic(_checkInterval, (timer) async {
       await _updateDevicesOnlineStatus();
     });
@@ -29,17 +30,18 @@ class DeviceStatusMonitor {
   /// Update online status for all devices
   Future<void> _updateDevicesOnlineStatus() async {
     try {
-      Map<String, bool> onlineStatus = await _deviceService.getUserDevicesOnlineStatus();
-      
-      int onlineCount = onlineStatus.values.where((isOnline) => isOnline).length;
+      Map<String, bool> onlineStatus =
+          await _deviceService.getUserDevicesOnlineStatus();
+
+      int onlineCount =
+          onlineStatus.values.where((isOnline) => isOnline).length;
       int totalCount = onlineStatus.length;
-      
+
       print('Device Status Update: $onlineCount/$totalCount devices online');
-      
+
       // You can emit this status to a stream or callback if needed
       // For example, to update UI in real-time
       _onStatusUpdate?.call(onlineStatus);
-      
     } catch (e) {
       print('Error updating device status: $e');
     }

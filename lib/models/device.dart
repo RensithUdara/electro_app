@@ -121,8 +121,8 @@ class Device {
       kwL3: json['kwL3'] ?? false,
       createdAt:
           DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
-      lastUpdateAt: json['lastUpdateAt'] != null 
-          ? DateTime.parse(json['lastUpdateAt']) 
+      lastUpdateAt: json['lastUpdateAt'] != null
+          ? DateTime.parse(json['lastUpdateAt'])
           : null,
       isOnline: json['isOnline'] ?? false,
     );

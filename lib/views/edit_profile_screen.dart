@@ -83,8 +83,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         // Create notification for profile update
         final notificationController =
             Provider.of<NotificationController>(context, listen: false);
-        await notificationController.createProfileNotification('profile_update');
-        
+        await notificationController
+            .createProfileNotification('profile_update');
+
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
