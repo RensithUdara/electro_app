@@ -8,7 +8,7 @@ import '../models/user.dart' as models;
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  
+
   // Initialize GoogleSignIn only for non-web platforms
   late final GoogleSignIn? _googleSignIn;
 
@@ -91,7 +91,8 @@ class AuthService {
     try {
       // Check if Google Sign-In is available (non-web platforms)
       if (_googleSignIn == null) {
-        throw Exception('Google Sign-In is not available on this platform. Please use email/password login.');
+        throw Exception(
+            'Google Sign-In is not available on this platform. Please use email/password login.');
       }
 
       // Trigger the authentication flow

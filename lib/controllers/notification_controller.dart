@@ -5,7 +5,8 @@ import '../services/notification_service.dart';
 class NotificationController extends ChangeNotifier {
   final NotificationService _notificationService = NotificationService();
 
-  List<NotificationModel> get notifications => _notificationService.notifications;
+  List<NotificationModel> get notifications =>
+      _notificationService.notifications;
   NotificationSettings get settings => _notificationService.settings;
   int get unreadCount => _notificationService.unreadCount;
 

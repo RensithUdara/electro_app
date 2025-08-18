@@ -34,7 +34,7 @@ class _DeviceTileState extends State<DeviceTile> {
   void initState() {
     super.initState();
     _loadDeviceStatus();
-    
+
     // Set up periodic status updates every minute
     _statusUpdateTimer = Timer.periodic(const Duration(minutes: 1), (_) {
       _loadDeviceStatus();
@@ -220,7 +220,7 @@ class _DeviceTileState extends State<DeviceTile> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: _isDeviceOnline 
+                      color: _isDeviceOnline
                           ? Colors.green.withOpacity(0.1)
                           : Colors.red.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(6),
@@ -242,7 +242,9 @@ class _DeviceTileState extends State<DeviceTile> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: _isDeviceOnline ? Colors.green[700] : Colors.red[700],
+                            color: _isDeviceOnline
+                                ? Colors.green[700]
+                                : Colors.red[700],
                           ),
                         ),
                       ],
@@ -312,7 +314,7 @@ class _DeviceTileState extends State<DeviceTile> {
   String _formatLastUpdateTime(DateTime lastUpdate) {
     final now = DateTime.now();
     final difference = now.difference(lastUpdate);
-    
+
     if (difference.inMinutes < 1) {
       return 'just now';
     } else if (difference.inMinutes < 60) {

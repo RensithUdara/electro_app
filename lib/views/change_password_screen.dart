@@ -67,7 +67,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         final notificationController =
             Provider.of<NotificationController>(context, listen: false);
         await notificationController.createPasswordChangeNotification();
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Password changed successfully!'),

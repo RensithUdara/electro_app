@@ -147,11 +147,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               Expanded(
                 child: ListView.builder(
                   padding: EdgeInsets.fromLTRB(
-                    16, 
-                    controller.unreadCount == 0 ? 24 : 16, // Add extra padding when all read
-                    16, 
-                    16
-                  ),
+                      16,
+                      controller.unreadCount == 0
+                          ? 24
+                          : 16, // Add extra padding when all read
+                      16,
+                      16),
                   itemCount: notifications.length,
                   itemBuilder: (context, index) {
                     final notification = notifications[index];

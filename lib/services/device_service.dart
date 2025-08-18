@@ -141,10 +141,10 @@ class DeviceService {
   // Helper method to determine if device is online based on lastUpdateAt
   bool _isDeviceOnline(DateTime? lastUpdateAt) {
     if (lastUpdateAt == null) return false;
-    
+
     final now = DateTime.now();
     final difference = now.difference(lastUpdateAt);
-    
+
     // Device is online if last update was within 5 minutes
     return difference.inMinutes <= 5;
   }
@@ -177,7 +177,8 @@ class DeviceService {
         }
         lastUpdateAt = DateTime.parse(lastUpdateStr);
       } catch (e) {
-        print('Error parsing LastUpdateAt for device $deviceId: $lastUpdateStr - $e');
+        print(
+            'Error parsing LastUpdateAt for device $deviceId: $lastUpdateStr - $e');
         lastUpdateAt = null;
       }
     }
@@ -606,7 +607,7 @@ class DeviceService {
           "${now.hour.toString().padLeft(2, '0')}:"
           "${now.minute.toString().padLeft(2, '0')}:"
           "${now.second.toString().padLeft(2, '0')}";
-      
+
       await _realtimeDb.child(deviceId).child('Parameters').update({
         'LastUpdateAt': formattedTime,
       });
@@ -618,7 +619,8 @@ class DeviceService {
   }
 
   /// Batch update lastUpdateAt for multiple devices
-  Future<void> updateMultipleDevicesLastUpdateTime(List<String> deviceIds) async {
+  Future<void> updateMultipleDevicesLastUpdateTime(
+      List<String> deviceIds) async {
     try {
       // Format timestamp to match the existing format: "2025-07-29 12:19:21"
       final now = DateTime.now();
@@ -628,13 +630,14 @@ class DeviceService {
           "${now.hour.toString().padLeft(2, '0')}:"
           "${now.minute.toString().padLeft(2, '0')}:"
           "${now.second.toString().padLeft(2, '0')}";
-      
+
       for (String deviceId in deviceIds) {
         await _realtimeDb.child(deviceId).child('Parameters').update({
           'LastUpdateAt': formattedTime,
         });
       }
-      print('Updated LastUpdateAt for ${deviceIds.length} devices to $formattedTime');
+      print(
+          'Updated LastUpdateAt for ${deviceIds.length} devices to $formattedTime');
     } catch (e) {
       print('Failed to batch update LastUpdateAt: $e');
       throw Exception('Failed to batch update device timestamps: $e');
@@ -649,22 +652,23 @@ class DeviceService {
       }
 
       Map<String, bool> onlineStatus = {};
-      
+
       // Get user's device IDs from Firestore
       QuerySnapshot userDevicesSnapshot = await _userDevicesRef.get();
-      
+
       for (QueryDocumentSnapshot deviceRef in userDevicesSnapshot.docs) {
         String deviceId = deviceRef.id;
-        
+
         // Get device's lastUpdateAt from Realtime Database
         DataSnapshot deviceSnapshot = await _realtimeDb.child(deviceId).get();
-        
+
         if (deviceSnapshot.exists && deviceSnapshot.value != null) {
           Map<String, dynamic> deviceData =
               _convertFirebaseMapToStringMap(deviceSnapshot.value as Map);
-          
+
           DateTime? lastUpdateAt;
-          final parameters = deviceData['Parameters'] as Map<String, dynamic>? ?? {};
+          final parameters =
+              deviceData['Parameters'] as Map<String, dynamic>? ?? {};
           if (parameters['LastUpdateAt'] != null) {
             // Try to parse the timestamp - it's in local time format "2025-07-29 12:19:21"
             String lastUpdateStr = parameters['LastUpdateAt'].toString();
@@ -675,17 +679,18 @@ class DeviceService {
               }
               lastUpdateAt = DateTime.parse(lastUpdateStr);
             } catch (e) {
-              print('Error parsing LastUpdateAt for device $deviceId: $lastUpdateStr - $e');
+              print(
+                  'Error parsing LastUpdateAt for device $deviceId: $lastUpdateStr - $e');
               lastUpdateAt = null;
             }
           }
-          
+
           onlineStatus[deviceId] = _isDeviceOnline(lastUpdateAt);
         } else {
           onlineStatus[deviceId] = false; // Device not found = offline
         }
       }
-      
+
       return onlineStatus;
     } catch (e) {
       print('Failed to get devices online status: $e');

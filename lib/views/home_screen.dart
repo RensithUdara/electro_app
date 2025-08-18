@@ -29,11 +29,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize device status monitoring
     _statusMonitor = DeviceStatusMonitor(_deviceService);
     _statusMonitor!.startMonitoring();
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final deviceController =
           Provider.of<DeviceController>(context, listen: false);
@@ -48,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     // Stop device status monitoring
     _statusMonitor?.dispose();
-    
+
     // Stop device stream when screen is disposed
     final deviceController =
         Provider.of<DeviceController>(context, listen: false);

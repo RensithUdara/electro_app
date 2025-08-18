@@ -5,7 +5,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class FirebaseService {
   static FirebaseAuth get auth => FirebaseAuth.instance;
-  static DatabaseReference get realtimeDatabase => FirebaseDatabase.instance.ref();
+  static DatabaseReference get realtimeDatabase =>
+      FirebaseDatabase.instance.ref();
   static FirebaseFirestore get firestore => FirebaseFirestore.instance;
 
   // Check if Firebase is initialized
@@ -18,9 +19,12 @@ class FirebaseService {
   static bool get isLoggedIn => currentUser != null;
 
   // Realtime Database references for device data (actual structure)
-  static DatabaseReference get devicesRef => realtimeDatabase; // Root level access for device IDs
-  static DatabaseReference get deviceDataRef => realtimeDatabase.child('device_data'); // For historical data
-  static DatabaseReference get realtimeDataRef => realtimeDatabase; // For instant readings like {deviceId}/instant
+  static DatabaseReference get devicesRef =>
+      realtimeDatabase; // Root level access for device IDs
+  static DatabaseReference get deviceDataRef =>
+      realtimeDatabase.child('device_data'); // For historical data
+  static DatabaseReference get realtimeDataRef =>
+      realtimeDatabase; // For instant readings like {deviceId}/instant
 
   // Firestore references for user data
   static CollectionReference get usersRef => firestore.collection('users');
