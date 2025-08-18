@@ -32,7 +32,7 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
 
   // Store reference to controller to avoid looking it up in dispose
   RealtimeDataController? _realtimeController;
-  
+
   // Timer for periodic status updates (keeping for potential future use)
   Timer? _statusUpdateTimer;
 
@@ -82,7 +82,7 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
   void dispose() {
     // Cancel the status update timer
     _statusUpdateTimer?.cancel();
-    
+
     // Disconnect from real-time data when leaving the screen using stored reference
     // Use disconnectSafely to avoid notifying listeners during disposal
     _realtimeController?.disconnectSafely();
