@@ -38,6 +38,7 @@ class Device {
   final DateTime createdAt;
   final DateTime? lastUpdateAt;
   final bool isOnline;
+  final List<String> pinnedParameters;
 
   Device({
     required this.id,
@@ -79,6 +80,7 @@ class Device {
     required this.createdAt,
     this.lastUpdateAt,
     required this.isOnline,
+    this.pinnedParameters = const [],
   });
 
   factory Device.fromJson(Map<String, dynamic> json) {
@@ -121,10 +123,11 @@ class Device {
       kwL3: json['kwL3'] ?? false,
       createdAt:
           DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
-      lastUpdateAt: json['lastUpdateAt'] != null
-          ? DateTime.parse(json['lastUpdateAt'])
+      lastUpdateAt: json['lastUpdateAt'] != null 
+          ? DateTime.parse(json['lastUpdateAt']) 
           : null,
       isOnline: json['isOnline'] ?? false,
+      pinnedParameters: (json['pinnedParameters'] as List<dynamic>?)?.cast<String>() ?? [],
     );
   }
 
@@ -169,6 +172,7 @@ class Device {
       'createdAt': createdAt.toIso8601String(),
       'lastUpdateAt': lastUpdateAt?.toIso8601String(),
       'isOnline': isOnline,
+      'pinnedParameters': pinnedParameters,
     };
   }
 }
