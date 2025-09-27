@@ -206,7 +206,7 @@ class _SplashScreenState extends State<SplashScreen>
                   child: FadeTransition(
                     opacity: _textFadeAnimation,
                     child: Text(
-                      "ElectroApp",
+                      "EnergyX",
                       style: GoogleFonts.poppins(
                         fontSize: 28,
                         fontWeight: FontWeight.w700,
