@@ -22,6 +22,20 @@ class RealtimeDataService {
     });
   }
 
+  // Get real-time data once for a specific device
+  Future<Map<String, dynamic>?> getDeviceRealtimeDataOnce(String deviceId) async {
+    try {
+      final snapshot = await _database.child(deviceId).child('Parameters').get();
+      if (snapshot.exists && snapshot.value != null) {
+        return Map<String, dynamic>.from(snapshot.value as Map);
+      }
+      return null;
+    } catch (e) {
+      print('Error getting real-time data for device $deviceId: $e');
+      return null;
+    }
+  }
+
   // Check if device exists in the database
   Future<bool> deviceExists(String deviceId) async {
     try {
