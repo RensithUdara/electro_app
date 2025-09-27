@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -7,6 +9,7 @@ import '../controllers/notification_controller.dart';
 import '../models/device.dart';
 import '../services/device_service.dart';
 import '../services/device_status_monitor.dart';
+import '../services/realtime_data_service.dart';
 import '../utils/logout_utils.dart';
 import '../widgets/add_device_dialog.dart';
 import '../widgets/device_tile.dart';
@@ -25,6 +28,10 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final DeviceService _deviceService = DeviceService();
   DeviceStatusMonitor? _statusMonitor;
+  Timer? _realtimeDataTimer;
+  
+  // Store real-time data for devices with pinned parameters
+  Map<String, Map<String, dynamic>> _deviceRealtimeData = {};
 
   @override
   void initState() {
@@ -40,14 +47,49 @@ class _HomeScreenState extends State<HomeScreen> {
       // Start with regular load, then enable real-time stream
       deviceController.loadDevices().then((_) {
         deviceController.startDeviceStream();
+        // Load real-time data for devices with pinned parameters
+        _loadRealtimeDataForPinnedDevices();
+        // Set up periodic refresh every 30 seconds
+        _realtimeDataTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+          _loadRealtimeDataForPinnedDevices();
+        });
       });
     });
+  }
+
+  /// Load real-time data for devices that have pinned parameters
+  Future<void> _loadRealtimeDataForPinnedDevices() async {
+    final deviceController = Provider.of<DeviceController>(context, listen: false);
+    final realtimeService = RealtimeDataService();
+    
+    for (final device in deviceController.devices) {
+      if (device.pinnedParameters.isNotEmpty) {
+        try {
+          // Get raw data from Firebase Realtime Database
+          final rawData = await realtimeService.getDeviceRealtimeDataOnce(device.deviceId);
+          
+          // Get filtered data based on device configuration
+          final filteredData = realtimeService.getFilteredData(rawData, device);
+          
+          if (filteredData.isNotEmpty) {
+            setState(() {
+              _deviceRealtimeData[device.id] = filteredData;
+            });
+          }
+        } catch (e) {
+          print('Error loading real-time data for device ${device.id}: $e');
+        }
+      }
+    }
   }
 
   @override
   void dispose() {
     // Stop device status monitoring
     _statusMonitor?.dispose();
+
+    // Cancel the real-time data timer
+    _realtimeDataTimer?.cancel();
 
     // Stop device stream when screen is disposed
     final deviceController =
@@ -117,7 +159,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text(
-          'ElectroApp',
+          'EnergyX',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: Colors.white,
@@ -381,6 +423,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       final device = deviceController.devices[index];
                       return DeviceTile(
                         device: device,
+                        realtimeData: _deviceRealtimeData[device.id],
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
@@ -399,7 +442,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               return AlertDialog(
                                 title: const Text('Delete Device'),
                                 content: Text(
-                                    'Are you sure you want to delete ${device.name}?'),
+                                    'Are you sure you want to delete ${_formatDeviceName(device.name)}?'),
                                 actions: [
                                   TextButton(
                                     onPressed: () =>
@@ -439,5 +482,10 @@ class _HomeScreenState extends State<HomeScreen> {
         child: const Icon(Icons.add),
       ),
     );
+  }
+
+  String _formatDeviceName(String name) {
+    if (name.isEmpty) return name;
+    return name[0].toUpperCase() + name.substring(1).toLowerCase();
   }
 }
