@@ -242,7 +242,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 24),
             const Text(
-              'ElectroApp',
+              'EnergyX',
               style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
