@@ -156,7 +156,7 @@ class HelpSupportScreen extends StatelessWidget {
                   _buildContactCard(
                     icon: Icons.email,
                     title: 'Email Support',
-                    subtitle: 'support@electroapp.com',
+                    subtitle: 'support@EnergyX.com',
                     description: 'We respond within 24 hours',
                     color: Colors.blue,
                     onTap: () => _sendEmail(),
@@ -169,7 +169,7 @@ class HelpSupportScreen extends StatelessWidget {
                     subtitle: 'Visit our knowledge base',
                     description: 'Browse tutorials and guides',
                     color: Colors.purple,
-                    onTap: () => _openWebsite('https://help.electroapp.com'),
+                    onTap: () => _openWebsite('https://help.EnergyX.com'),
                   ),
 
                   const SizedBox(height: 30),
@@ -1308,8 +1308,8 @@ class HelpSupportScreen extends StatelessWidget {
   Future<void> _sendEmail() async {
     final Uri emailUri = Uri(
       scheme: 'mailto',
-      path: 'support@electroapp.com',
-      query: 'subject=ElectroApp Support Request',
+      path: 'support@EnergyX.com',
+      query: 'subject=EnergyX Support Request',
     );
     try {
       if (await canLaunchUrl(emailUri)) {
@@ -1317,13 +1317,12 @@ class HelpSupportScreen extends StatelessWidget {
       } else {
         // Copy to clipboard as fallback
         await Clipboard.setData(
-            const ClipboardData(text: 'support@electroapp.com'));
+            const ClipboardData(text: 'support@EnergyX.com'));
         _showInfoSnackBar('Email address copied to clipboard');
       }
     } catch (e) {
       // Copy to clipboard as fallback
-      await Clipboard.setData(
-          const ClipboardData(text: 'support@electroapp.com'));
+      await Clipboard.setData(const ClipboardData(text: 'support@EnergyX.com'));
       _showInfoSnackBar('Email address copied to clipboard');
     }
   }
