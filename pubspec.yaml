@@ -37,6 +37,8 @@ dependencies:
   url_launcher: ^6.1.14
   # Email sending
   mailer: ^6.0.1
+  # QR Code scanning
+  mobile_scanner: ^5.0.1
 
 dev_dependencies:
   flutter_test:
