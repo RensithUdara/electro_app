@@ -14,6 +14,7 @@ import '../controllers/device_data_controller.dart';
 import '../controllers/realtime_data_controller.dart';
 import '../models/device.dart';
 import '../models/device_data.dart';
+import '../utils/notification_utils.dart';
 import '../widgets/edit_device_dialog.dart';
 
 class DeviceDetailScreen extends StatefulWidget {
@@ -35,6 +36,15 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
 
   // Timer for periodic status updates (keeping for potential future use)
   Timer? _statusUpdateTimer;
+
+  // Time period selection for charts
+  String _selectedTimePeriod = '24h'; // Default to 24 hours
+  final List<Map<String, String>> _timePeriods = [
+    {'value': '1h', 'label': '1 Hour'},
+    {'value': '24h', 'label': '24 Hours'},
+    {'value': '7d', 'label': '7 Days'},
+    {'value': '30d', 'label': '30 Days'},
+  ];
 
   @override
   void initState() {
@@ -182,7 +192,7 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            widget.device.name,
+                            _formatDeviceName(widget.device.name),
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -419,13 +429,55 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Real-time Charts',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[800],
-            ),
+          // Header with time period selector
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Charts',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[800],
+                  ),
+                ),
+              ),
+              // Time period selector
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedTimePeriod,
+                    icon: Icon(Icons.arrow_drop_down, color: Colors.grey[600]),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[700],
+                      fontWeight: FontWeight.w500,
+                    ),
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        setState(() {
+                          _selectedTimePeriod = newValue;
+                        });
+                      }
+                    },
+                    items: _timePeriods.map<DropdownMenuItem<String>>((period) {
+                      return DropdownMenuItem<String>(
+                        value: period['value'],
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Text(period['label']!),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
 
@@ -433,7 +485,7 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
           ...realtimeController.filteredData!.entries.map((entry) {
             return Column(
               children: [
-                _buildRealtimeChart(entry.key, entry.value, realtimeController),
+                _buildHistoricalChart(entry.key, entry.value, realtimeController),
                 const SizedBox(height: 20),
               ],
             );
@@ -902,92 +954,126 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
         // Calculate card width for 2 columns with spacing
         final cardWidth = (constraints.maxWidth - 12) / 2;
 
-        return Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: _parameterOrder.map((parameter) {
-            final value = filteredData[parameter];
-            final parameterInfo =
-                realtimeController.getParameterInfo(parameter);
+        return Consumer<DeviceController>(
+          builder: (context, deviceController, child) {
+            // Find the current device to check pinned parameters
+            final currentDevice = deviceController.devices.firstWhere(
+              (device) => device.id == widget.device.id,
+              orElse: () => widget.device,
+            );
 
-            // Check if the value is a placeholder (null, empty, or "--")
-            final isPlaceholder = value == null || value == '--' || value == '';
+            return Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: _parameterOrder.map((parameter) {
+                final value = filteredData[parameter];
+                final parameterInfo =
+                    realtimeController.getParameterInfo(parameter);
 
-            return SizedBox(
-              width: cardWidth,
-              child: LongPressDraggable<String>(
-                data: parameter,
-                onDragStarted: () {
-                  // Provide haptic feedback when drag starts
-                  HapticFeedback.mediumImpact();
-                },
-                onDragCompleted: () {
-                  // Light haptic feedback when drag completes
-                  HapticFeedback.lightImpact();
-                },
-                feedback: Material(
-                  elevation: 8,
-                  borderRadius: BorderRadius.circular(12),
-                  child: SizedBox(
-                    width: cardWidth,
-                    child: _buildRealtimeDataCard(
-                      parameter,
-                      value,
-                      parameterInfo['unit']!,
-                      parameterInfo['description']!,
-                      isDragging: true,
-                      isPlaceholder: isPlaceholder,
-                    ),
-                  ),
-                ),
-                childWhenDragging: SizedBox(
+                // Check if the value is a placeholder (null, empty, or "--")
+                final isPlaceholder = value == null || value == '--' || value == '';
+                final isPinned = currentDevice.pinnedParameters.contains(parameter);
+
+                return SizedBox(
                   width: cardWidth,
-                  child: _buildRealtimeDataCard(
-                    parameter,
-                    value,
-                    parameterInfo['unit']!,
-                    parameterInfo['description']!,
-                    isPlaceholder: true,
-                  ),
-                ),
-                child: DragTarget<String>(
-                  onAcceptWithDetails: (draggedParameterDetails) {
-                    final draggedParameter = draggedParameterDetails.data;
-                    if (draggedParameter != parameter) {
-                      setState(() {
-                        final draggedIndex =
-                            _parameterOrder.indexOf(draggedParameter);
-                        final targetIndex = _parameterOrder.indexOf(parameter);
-
-                        _parameterOrder.removeAt(draggedIndex);
-                        _parameterOrder.insert(targetIndex, draggedParameter);
-                      });
-
-                      // Save the new order
-                      _saveParameterOrder();
-                    }
-                  },
-                  builder: (context, candidateData, rejectedData) {
-                    final isHovered = candidateData.isNotEmpty;
-                    return AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      transform: isHovered
-                          ? (Matrix4.identity()..scale(1.05))
-                          : Matrix4.identity(),
+                  child: LongPressDraggable<String>(
+                    data: parameter,
+                    onDragStarted: () {
+                      // Provide haptic feedback when drag starts
+                      HapticFeedback.mediumImpact();
+                    },
+                    onDragCompleted: () {
+                      // Light haptic feedback when drag completes
+                      HapticFeedback.lightImpact();
+                    },
+                    feedback: Material(
+                      elevation: 8,
+                      borderRadius: BorderRadius.circular(12),
+                      child: SizedBox(
+                        width: cardWidth,
+                        child: _buildRealtimeDataCard(
+                          parameter,
+                          value,
+                          parameterInfo['unit']!,
+                          parameterInfo['description']!,
+                          isDragging: true,
+                          isPlaceholder: isPlaceholder,
+                          isPinned: isPinned,
+                        ),
+                      ),
+                    ),
+                    childWhenDragging: SizedBox(
+                      width: cardWidth,
                       child: _buildRealtimeDataCard(
                         parameter,
                         value,
                         parameterInfo['unit']!,
                         parameterInfo['description']!,
-                        isHovered: isHovered,
-                        isPlaceholder: isPlaceholder,
+                        isPlaceholder: true,
+                        isPinned: isPinned,
                       ),
-                    );
-                  },
-                ),
-              ),
+                    ),
+                    child: DragTarget<String>(
+                      onAcceptWithDetails: (draggedParameterDetails) {
+                        final draggedParameter = draggedParameterDetails.data;
+                        if (draggedParameter != parameter) {
+                          setState(() {
+                            final draggedIndex =
+                                _parameterOrder.indexOf(draggedParameter);
+                            final targetIndex = _parameterOrder.indexOf(parameter);
+
+                            _parameterOrder.removeAt(draggedIndex);
+                            _parameterOrder.insert(targetIndex, draggedParameter);
+                          });
+
+                          // Save the new order
+                          _saveParameterOrder();
+                        }
+                      },
+                      builder: (context, candidateData, rejectedData) {
+                        final isHovered = candidateData.isNotEmpty;
+                        return AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          transform: isHovered
+                              ? (Matrix4.identity()..scale(1.05))
+                              : Matrix4.identity(),
+                          child: _buildRealtimeDataCard(
+                            parameter,
+                            value,
+                            parameterInfo['unit']!,
+                            parameterInfo['description']!,
+                            isHovered: isHovered,
+                            isPlaceholder: isPlaceholder,
+                            onPinToggle: (paramName) async {
+                              // Determine current pin status to know the action
+                              final wasAlreadyPinned = widget.device.pinnedParameters.contains(paramName);
+                              final action = wasAlreadyPinned ? 'unpinned' : 'pinned';
+                              
+                              await deviceController.toggleParameterPin(
+                                widget.device.id, 
+                                paramName
+                              );
+                              
+                              // Show in-app notification
+                              if (mounted) {
+                                NotificationUtils.showParameterPinNotification(
+                                  context,
+                                  action,
+                                  paramName,
+                                  widget.device.name,
+                                );
+                              }
+                            },
+                            isPinned: isPinned,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                );
+              }).toList(),
             );
-          }).toList(),
+          },
         );
       },
     );
@@ -997,7 +1083,9 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
       String parameter, dynamic value, String unit, String description,
       {bool isDragging = false,
       bool isPlaceholder = false,
-      bool isHovered = false}) {
+      bool isHovered = false,
+      Function(String)? onPinToggle,
+      bool isPinned = false}) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1043,6 +1131,28 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+              if (!isPlaceholder && onPinToggle != null)
+                GestureDetector(
+                  onTap: () => onPinToggle(parameter),
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: isPinned 
+                          ? const Color(0xFF1E3A8A).withOpacity(0.1)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Icon(
+                      isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+                      size: 16,
+                      color: isPinned 
+                          ? const Color(0xFF1E3A8A) 
+                          : Colors.grey[500],
+                    ),
+                  ),
+                ),
+              if (!isPlaceholder)
+                const SizedBox(width: 8),
               if (!isPlaceholder)
                 Icon(
                   Icons.drag_indicator,
@@ -1251,6 +1361,231 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // New method to build historical charts with time period data
+  Widget _buildHistoricalChart(String parameter, dynamic currentValue, 
+      RealtimeDataController realtimeController) {
+    final parameterInfo = realtimeController.getParameterInfo(parameter);
+    final isPlaceholder = currentValue == null || currentValue == '--' || currentValue == '';
+
+    return Container(
+      height: 280,
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with parameter info and current value
+          Row(
+            children: [
+              Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: _getParameterColor(parameter),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      parameterInfo['description'] ?? parameter,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1E3A8A),
+                      ),
+                    ),
+                    if (!isPlaceholder)
+                      Text(
+                        '${parameterInfo['unit'] ?? ''}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isPlaceholder 
+                      ? Colors.grey[300]
+                      : _getParameterColor(parameter).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  isPlaceholder ? '--' : _formatParameterValue(currentValue),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                    color: isPlaceholder 
+                        ? Colors.grey[600]
+                        : _getParameterColor(parameter),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          
+          // Chart area
+          Expanded(
+            child: FutureBuilder<List<ChartData>>(
+              future: Provider.of<DeviceDataController>(context, listen: false)
+                  .getHistoricalData(widget.device.id, parameter, _selectedTimePeriod),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                    ),
+                  );
+                }
+
+                if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.insert_chart_outlined,
+                          size: 32,
+                          color: Colors.grey[400],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'No historical data',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[500],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                final chartData = snapshot.data!;
+                return LineChart(
+                  LineChartData(
+                    gridData: FlGridData(
+                      show: true,
+                      drawVerticalLine: false,
+                      horizontalInterval: null,
+                      getDrawingHorizontalLine: (value) {
+                        return FlLine(
+                          color: Colors.grey[300]!,
+                          strokeWidth: 1,
+                        );
+                      },
+                    ),
+                    titlesData: FlTitlesData(
+                      show: true,
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 30,
+                          interval: chartData.length > 10 ? (chartData.length / 5).ceilToDouble() : 2,
+                          getTitlesWidget: (double value, TitleMeta meta) {
+                            if (value.toInt() >= 0 && value.toInt() < chartData.length) {
+                              return SideTitleWidget(
+                                axisSide: meta.axisSide,
+                                child: Text(
+                                  chartData[value.toInt()].label,
+                                  style: const TextStyle(
+                                    color: Colors.grey,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              );
+                            }
+                            return const Text('');
+                          },
+                        ),
+                      ),
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          interval: null,
+                          reservedSize: 40,
+                          getTitlesWidget: (double value, TitleMeta meta) {
+                            return Text(
+                              value.toStringAsFixed(0),
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 9,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                    ),
+                    borderData: FlBorderData(
+                      show: true,
+                      border: Border.all(color: Colors.grey[300]!),
+                    ),
+                    lineBarsData: [
+                      LineChartBarData(
+                        spots: chartData.asMap().entries.map((entry) {
+                          return FlSpot(entry.key.toDouble(), entry.value.value);
+                        }).toList(),
+                        isCurved: true,
+                        color: _getParameterColor(parameter),
+                        barWidth: 2.5,
+                        isStrokeCapRound: true,
+                        dotData: FlDotData(
+                          show: chartData.length <= 12,
+                          getDotPainter: (spot, percent, barData, index) =>
+                              FlDotCirclePainter(
+                            radius: 3,
+                            color: _getParameterColor(parameter),
+                            strokeWidth: 1.5,
+                            strokeColor: Colors.white,
+                          ),
+                        ),
+                        belowBarData: BarAreaData(
+                          show: true,
+                          color: _getParameterColor(parameter).withOpacity(0.1),
+                        ),
+                      ),
+                    ],
+                    minX: 0,
+                    maxX: (chartData.length - 1).toDouble(),
+                    minY: chartData.map((e) => e.value).reduce((a, b) => a < b ? a : b) * 0.9,
+                    maxY: chartData.map((e) => e.value).reduce((a, b) => a > b ? a : b) * 1.1,
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -1678,5 +2013,10 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
         ),
       ],
     );
+  }
+
+  String _formatDeviceName(String name) {
+    if (name.isEmpty) return name;
+    return name[0].toUpperCase() + name.substring(1).toLowerCase();
   }
 }
