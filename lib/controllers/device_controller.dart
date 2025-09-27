@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 import '../models/device.dart';
 import '../services/device_service.dart';
 import '../services/notification_service.dart';
+import '../controllers/auth_controller.dart';
 
 class DeviceController extends ChangeNotifier {
   final DeviceService _deviceService = DeviceService();
   final NotificationService _notificationService = NotificationService();
+  final AuthController _authController = AuthController();
 
   List<Device> _devices = [];
   bool _isLoading = false;
@@ -224,6 +226,89 @@ class DeviceController extends ChangeNotifier {
       );
     } catch (e) {
       _errorMessage = 'Failed to remove device: ${e.toString()}';
+      notifyListeners();
+    }
+  }
+
+  Future<void> toggleParameterPin(String deviceId, String parameterName) async {
+    try {
+      // Find the device
+      final deviceIndex = _devices.indexWhere((d) => d.id == deviceId);
+      if (deviceIndex == -1) return;
+
+      final device = _devices[deviceIndex];
+      List<String> newPinnedParameters = List<String>.from(device.pinnedParameters);
+
+      // Determine the action and create notification
+      String action;
+      if (newPinnedParameters.contains(parameterName)) {
+        newPinnedParameters.remove(parameterName);
+        action = 'unpinned';
+      } else {
+        newPinnedParameters.add(parameterName);
+        action = 'pinned';
+      }
+
+      // Update device in database
+      await _deviceService.updateDevice(deviceId, {'pinnedParameters': newPinnedParameters});
+
+      // Create notification with current user context
+      final currentUserId = _authController.currentUser?.id;
+      await _notificationService.createParameterPinNotification(
+        action: action,
+        parameterName: parameterName,
+        deviceName: device.name,
+        userId: currentUserId,
+      );
+
+      // Update local device list
+      final updatedDevice = Device(
+        id: device.id,
+        name: device.name,
+        deviceId: device.deviceId,
+        meterId: device.meterId,
+        averagePF: device.averagePF,
+        avgI: device.avgI,
+        avgVLL: device.avgVLL,
+        avgVLN: device.avgVLN,
+        frequency: device.frequency,
+        i1: device.i1,
+        i2: device.i2,
+        i3: device.i3,
+        pf1: device.pf1,
+        pf2: device.pf2,
+        pf3: device.pf3,
+        totalKVA: device.totalKVA,
+        totalKVAR: device.totalKVAR,
+        totalKW: device.totalKW,
+        totalNetKVAh: device.totalNetKVAh,
+        totalNetKVArh: device.totalNetKVArh,
+        totalNetKWh: device.totalNetKWh,
+        v12: device.v12,
+        v1N: device.v1N,
+        v23: device.v23,
+        v2N: device.v2N,
+        v31: device.v31,
+        v3N: device.v3N,
+        kvarL1: device.kvarL1,
+        kvarL2: device.kvarL2,
+        kvarL3: device.kvarL3,
+        kvaL1: device.kvaL1,
+        kvaL2: device.kvaL2,
+        kvaL3: device.kvaL3,
+        kwL1: device.kwL1,
+        kwL2: device.kwL2,
+        kwL3: device.kwL3,
+        createdAt: device.createdAt,
+        lastUpdateAt: device.lastUpdateAt,
+        isOnline: device.isOnline,
+        pinnedParameters: newPinnedParameters,
+      );
+
+      _devices[deviceIndex] = updatedDevice;
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = 'Failed to toggle parameter pin status: ${e.toString()}';
       notifyListeners();
     }
   }
