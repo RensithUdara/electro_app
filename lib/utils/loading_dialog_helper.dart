@@ -73,7 +73,6 @@ class LoadingDialogHelper {
       }
     }
   }
-
   /// Show success dialog with animation
   static void showSuccessDialog(
     BuildContext context, {
