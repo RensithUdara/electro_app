@@ -30,6 +30,10 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
   late bool _pf3;
   late bool _totalKVA;
   late bool _totalKVAR;
+  late bool _totalKW;
+  late bool _totalNetKVAh;
+  late bool _totalNetKVArh;
+  late bool _totalNetKWh;
   late bool _v12;
   late bool _v1N;
   late bool _v23;
@@ -64,6 +68,10 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
     _pf3 = widget.device.pf3;
     _totalKVA = widget.device.totalKVA;
     _totalKVAR = widget.device.totalKVAR;
+    _totalKW = widget.device.totalKW;
+    _totalNetKVAh = widget.device.totalNetKVAh;
+    _totalNetKVArh = widget.device.totalNetKVArh;
+    _totalNetKWh = widget.device.totalNetKWh;
     _v12 = widget.device.v12;
     _v1N = widget.device.v1N;
     _v23 = widget.device.v23;
@@ -110,10 +118,10 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
         pf3: _pf3,
         totalKVA: _totalKVA,
         totalKVAR: _totalKVAR,
-        totalKW: false,
-        totalNetKVAh: false,
-        totalNetKVArh: false,
-        totalNetKWh: false,
+        totalKW: _totalKW,
+        totalNetKVAh: _totalNetKVAh,
+        totalNetKVArh: _totalNetKVArh,
+        totalNetKWh: _totalNetKWh,
         v12: _v12,
         v1N: _v1N,
         v23: _v23,
@@ -136,7 +144,7 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content:
-                Text('Device "${widget.device.name}" updated successfully!'),
+                Text('Device "${_formatDeviceName(widget.device.name)}" updated successfully!'),
             backgroundColor: Colors.green,
           ),
         );
@@ -246,7 +254,7 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
                                   ),
                                 ),
                                 Text(
-                                  widget.device.name,
+                                  _formatDeviceName(widget.device.name),
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -358,6 +366,39 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
                             ),
                             const SizedBox(height: 12),
 
+                            // Select All Option
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[50],
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: Colors.grey[300]!,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Checkbox(
+                                    value: _areAllParametersSelected(),
+                                    onChanged: (value) {
+                                      _selectAllParameters(value ?? false);
+                                    },
+                                    activeColor: const Color(0xFF1E3A8A),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    'Select All Parameters',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+
                             // Power Factor and Average Values
                             _buildSectionHeader(
                                 'Power Factor & Average Values'),
@@ -414,6 +455,29 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
                                 'Total Reactive Power',
                                 _totalKVAR,
                                 (value) => setState(() => _totalKVAR = value)),
+                            _buildCheckbox(
+                                'Total_kW',
+                                'Total Active Power',
+                                _totalKW,
+                                (value) => setState(() => _totalKW = value)),
+
+                            // Total Energy Measurements
+                            _buildSectionHeader('Total Energy Measurements'),
+                            _buildCheckbox(
+                                'Total_net_kVAh',
+                                'Total Net Apparent Energy',
+                                _totalNetKVAh,
+                                (value) => setState(() => _totalNetKVAh = value)),
+                            _buildCheckbox(
+                                'Total_net_kVArh',
+                                'Total Net Reactive Energy',
+                                _totalNetKVArh,
+                                (value) => setState(() => _totalNetKVArh = value)),
+                            _buildCheckbox(
+                                'Total_net_kWh',
+                                'Total Net Active Energy',
+                                _totalNetKWh,
+                                (value) => setState(() => _totalNetKWh = value)),
 
                             // Voltage Measurements
                             _buildSectionHeader('Voltage Measurements'),
@@ -630,5 +694,74 @@ class _EditDeviceDialogState extends State<EditDeviceDialog> {
         ],
       ),
     );
+  }
+
+  bool _areAllParametersSelected() {
+    return _averagePF &&
+        _avgI &&
+        _avgVLL &&
+        _avgVLN &&
+        _frequency &&
+        _i1 &&
+        _i2 &&
+        _i3 &&
+        _pf1 &&
+        _pf2 &&
+        _pf3 &&
+        _totalKVA &&
+        _totalKVAR &&
+        _v12 &&
+        _v1N &&
+        _v23 &&
+        _v2N &&
+        _v31 &&
+        _v3N &&
+        _kvarL1 &&
+        _kvarL2 &&
+        _kvarL3 &&
+        _kvaL1 &&
+        _kvaL2 &&
+        _kvaL3 &&
+        _kwL1 &&
+        _kwL2 &&
+        _kwL3;
+  }
+
+  void _selectAllParameters(bool value) {
+    setState(() {
+      _averagePF = value;
+      _avgI = value;
+      _avgVLL = value;
+      _avgVLN = value;
+      _frequency = value;
+      _i1 = value;
+      _i2 = value;
+      _i3 = value;
+      _pf1 = value;
+      _pf2 = value;
+      _pf3 = value;
+      _totalKVA = value;
+      _totalKVAR = value;
+      _v12 = value;
+      _v1N = value;
+      _v23 = value;
+      _v2N = value;
+      _v31 = value;
+      _v3N = value;
+      _kvarL1 = value;
+      _kvarL2 = value;
+      _kvarL3 = value;
+      _kvaL1 = value;
+      _kvaL2 = value;
+      _kvaL3 = value;
+      _kwL1 = value;
+      _kwL2 = value;
+      _kwL3 = value;
+    });
+  }
+
+  String _formatDeviceName(String name) {
+    if (name.isEmpty) return name;
+    return name[0].toUpperCase() + name.substring(1).toLowerCase();
   }
 }
