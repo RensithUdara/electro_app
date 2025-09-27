@@ -141,12 +141,12 @@ class DeviceService {
   // Helper method to determine if device is online based on lastUpdateAt
   bool _isDeviceOnline(DateTime? lastUpdateAt) {
     if (lastUpdateAt == null) return false;
-
+    
     final now = DateTime.now();
     final difference = now.difference(lastUpdateAt);
-
-    // Device is online if last update was within 5 minutes
-    return difference.inMinutes <= 5;
+    
+    // Device is online if last update was within 1 minute
+    return difference.inMinutes <= 1;
   }
 
   // Helper method to convert from database structure to Device model
@@ -167,9 +167,9 @@ class DeviceService {
     // Get lastUpdateAt from the Parameters section (global device parameters)
     DateTime? lastUpdateAt;
     final parameters = data['Parameters'] as Map<String, dynamic>? ?? {};
-    if (parameters['LastUpdateAt'] != null) {
-      // Try to parse the timestamp - it's in local time format "2025-07-29 12:19:21"
-      String lastUpdateStr = parameters['LastUpdateAt'].toString();
+    if (parameters['Timestamp'] != null) {
+      // Try to parse the timestamp - it's in local time format "2025-08-18 15:53:13"
+      String lastUpdateStr = parameters['Timestamp'].toString();
       try {
         // Parse as local time (don't add Z for UTC)
         if (lastUpdateStr.contains(' ') && !lastUpdateStr.contains('T')) {
@@ -177,8 +177,7 @@ class DeviceService {
         }
         lastUpdateAt = DateTime.parse(lastUpdateStr);
       } catch (e) {
-        print(
-            'Error parsing LastUpdateAt for device $deviceId: $lastUpdateStr - $e');
+        print('Error parsing Timestamp for device $deviceId: $lastUpdateStr - $e');
         lastUpdateAt = null;
       }
     }
@@ -202,32 +201,33 @@ class DeviceService {
       pf1: (userParams['PF1'] ?? 0) == 1,
       pf2: (userParams['PF2'] ?? 0) == 1,
       pf3: (userParams['PF3'] ?? 0) == 1,
-      totalKVA: (userParams['Total_KVA'] ?? 0) == 1,
-      totalKVAR: (userParams['Total_KVAR'] ?? 0) == 1,
-      totalKW: (userParams['Total_KW'] ?? 0) == 1,
-      totalNetKVAh: (userParams['Total_Net_KVAh'] ?? 0) == 1,
-      totalNetKVArh: (userParams['Total_Net_KVArh'] ?? 0) == 1,
-      totalNetKWh: (userParams['Total_Net_KWh'] ?? 0) == 1,
+      totalKVA: (userParams['Total_kVA'] ?? 0) == 1,
+      totalKVAR: (userParams['Total_kVAR'] ?? 0) == 1,
+      totalKW: (userParams['Total_kW'] ?? 0) == 1,
+      totalNetKVAh: (userParams['Total_net_kVAh'] ?? 0) == 1,
+      totalNetKVArh: (userParams['Total_net_kVArh'] ?? 0) == 1,
+      totalNetKWh: (userParams['Total_net_kWh'] ?? 0) == 1,
       v12: (userParams['V12'] ?? 0) == 1,
       v1N: (userParams['V1N'] ?? 0) == 1,
       v23: (userParams['V23'] ?? 0) == 1,
       v2N: (userParams['V2N'] ?? 0) == 1,
       v31: (userParams['V31'] ?? 0) == 1,
       v3N: (userParams['V3N'] ?? 0) == 1,
-      kvarL1: (userParams['KVAR_L1'] ?? 0) == 1,
-      kvarL2: (userParams['KVAR_L2'] ?? 0) == 1,
-      kvarL3: (userParams['KVAR_L3'] ?? 0) == 1,
-      kvaL1: (userParams['KVA_L1'] ?? 0) == 1,
-      kvaL2: (userParams['KVA_L2'] ?? 0) == 1,
-      kvaL3: (userParams['KVA_L3'] ?? 0) == 1,
-      kwL1: (userParams['KW_L1'] ?? 0) == 1,
-      kwL2: (userParams['KW_L2'] ?? 0) == 1,
-      kwL3: (userParams['KW_L3'] ?? 0) == 1,
+      kvarL1: (userParams['kVAR_L1'] ?? 0) == 1,
+      kvarL2: (userParams['kVAR_L2'] ?? 0) == 1,
+      kvarL3: (userParams['kVAR_L3'] ?? 0) == 1,
+      kvaL1: (userParams['kVA_L1'] ?? 0) == 1,
+      kvaL2: (userParams['kVA_L2'] ?? 0) == 1,
+      kvaL3: (userParams['kVA_L3'] ?? 0) == 1,
+      kwL1: (userParams['kW_L1'] ?? 0) == 1,
+      kwL2: (userParams['kW_L2'] ?? 0) == 1,
+      kwL3: (userParams['kW_L3'] ?? 0) == 1,
       createdAt:
           DateTime.tryParse(currentUserData['addedAt']?.toString() ?? '') ??
               DateTime.now(),
       lastUpdateAt: lastUpdateAt,
       isOnline: isOnline,
+      pinnedParameters: (currentUserData['pinnedParameters'] as List<dynamic>?)?.cast<String>() ?? [],
     );
   }
 
@@ -320,27 +320,27 @@ class DeviceService {
         'PF1': pf1 ? 1 : 0,
         'PF2': pf2 ? 1 : 0,
         'PF3': pf3 ? 1 : 0,
-        'Total_KVA': totalKVA ? 1 : 0,
-        'Total_KVAR': totalKVAR ? 1 : 0,
-        'Total_KW': totalKW ? 1 : 0,
-        'Total_Net_KVAh': totalNetKVAh ? 1 : 0,
-        'Total_Net_KVArh': totalNetKVArh ? 1 : 0,
-        'Total_Net_KWh': totalNetKWh ? 1 : 0,
+        'Total_kVA': totalKVA ? 1 : 0,
+        'Total_kVAR': totalKVAR ? 1 : 0,
+        'Total_kW': totalKW ? 1 : 0,
+        'Total_net_kVAh': totalNetKVAh ? 1 : 0,
+        'Total_net_kVArh': totalNetKVArh ? 1 : 0,
+        'Total_net_kWh': totalNetKWh ? 1 : 0,
         'V12': v12 ? 1 : 0,
         'V1N': v1N ? 1 : 0,
         'V23': v23 ? 1 : 0,
         'V2N': v2N ? 1 : 0,
         'V31': v31 ? 1 : 0,
         'V3N': v3N ? 1 : 0,
-        'KVAR_L1': kvarL1 ? 1 : 0,
-        'KVAR_L2': kvarL2 ? 1 : 0,
-        'KVAR_L3': kvarL3 ? 1 : 0,
-        'KVA_L1': kvaL1 ? 1 : 0,
-        'KVA_L2': kvaL2 ? 1 : 0,
-        'KVA_L3': kvaL3 ? 1 : 0,
-        'KW_L1': kwL1 ? 1 : 0,
-        'KW_L2': kwL2 ? 1 : 0,
-        'KW_L3': kwL3 ? 1 : 0,
+        'kVAR_L1': kvarL1 ? 1 : 0,
+        'kVAR_L2': kvarL2 ? 1 : 0,
+        'kVAR_L3': kvarL3 ? 1 : 0,
+        'kVA_L1': kvaL1 ? 1 : 0,
+        'kVA_L2': kvaL2 ? 1 : 0,
+        'kVA_L3': kvaL3 ? 1 : 0,
+        'kW_L1': kwL1 ? 1 : 0,
+        'kW_L2': kwL2 ? 1 : 0,
+        'kW_L3': kwL3 ? 1 : 0,
       });
 
       // Update global device info only if it doesn't exist (preserve original device metadata)
@@ -518,6 +518,18 @@ class DeviceService {
         });
       }
 
+      // Handle pinnedParameters (user-specific setting)
+      if (updates.containsKey('pinnedParameters')) {
+        await _realtimeDb
+            .child(deviceId)
+            .child('Users')
+            .child(_userId!)
+            .update({
+          'pinnedParameters': updates['pinnedParameters'],
+          'lastModified': DateTime.now().toIso8601String(),
+        });
+      }
+
       // Handle user-specific Parameters updates - convert boolean to 1/0
       Map<String, dynamic> userParams = {};
       final paramMap = {
@@ -532,27 +544,27 @@ class DeviceService {
         'pf1': 'PF1',
         'pf2': 'PF2',
         'pf3': 'PF3',
-        'totalKVA': 'Total_KVA',
-        'totalKVAR': 'Total_KVAR',
-        'totalKW': 'Total_KW',
-        'totalNetKVAh': 'Total_Net_KVAh',
-        'totalNetKVArh': 'Total_Net_KVArh',
-        'totalNetKWh': 'Total_Net_KWh',
+        'totalKVA': 'Total_kVA',
+        'totalKVAR': 'Total_kVAR',
+        'totalKW': 'Total_kW',
+        'totalNetKVAh': 'Total_net_kVAh',
+        'totalNetKVArh': 'Total_net_kVArh',
+        'totalNetKWh': 'Total_net_kWh',
         'v12': 'V12',
         'v1N': 'V1N',
         'v23': 'V23',
         'v2N': 'V2N',
         'v31': 'V31',
         'v3N': 'V3N',
-        'kvarL1': 'KVAR_L1',
-        'kvarL2': 'KVAR_L2',
-        'kvarL3': 'KVAR_L3',
-        'kvaL1': 'KVA_L1',
-        'kvaL2': 'KVA_L2',
-        'kvaL3': 'KVA_L3',
-        'kwL1': 'KW_L1',
-        'kwL2': 'KW_L2',
-        'kwL3': 'KW_L3',
+        'kvarL1': 'kVAR_L1',
+        'kvarL2': 'kVAR_L2',
+        'kvarL3': 'kVAR_L3',
+        'kvaL1': 'kVA_L1',
+        'kvaL2': 'kVA_L2',
+        'kvaL3': 'kVA_L3',
+        'kwL1': 'kW_L1',
+        'kwL2': 'kW_L2',
+        'kwL3': 'kW_L3',
       };
 
       for (String key in paramMap.keys) {
@@ -599,7 +611,7 @@ class DeviceService {
   /// This should be called whenever device data is updated from the hardware
   Future<void> updateDeviceLastUpdateTime(String deviceId) async {
     try {
-      // Format timestamp to match the existing format: "2025-07-29 12:19:21"
+      // Format timestamp to match the existing format: "2025-08-18 15:53:13"
       final now = DateTime.now();
       final formattedTime = "${now.year.toString().padLeft(4, '0')}-"
           "${now.month.toString().padLeft(2, '0')}-"
@@ -607,22 +619,21 @@ class DeviceService {
           "${now.hour.toString().padLeft(2, '0')}:"
           "${now.minute.toString().padLeft(2, '0')}:"
           "${now.second.toString().padLeft(2, '0')}";
-
+      
       await _realtimeDb.child(deviceId).child('Parameters').update({
-        'LastUpdateAt': formattedTime,
+        'Timestamp': formattedTime,
       });
-      print('Updated LastUpdateAt for device: $deviceId to $formattedTime');
+      print('Updated Timestamp for device: $deviceId to $formattedTime');
     } catch (e) {
-      print('Failed to update LastUpdateAt for device $deviceId: $e');
+      print('Failed to update Timestamp for device $deviceId: $e');
       throw Exception('Failed to update device timestamp: $e');
     }
   }
 
   /// Batch update lastUpdateAt for multiple devices
-  Future<void> updateMultipleDevicesLastUpdateTime(
-      List<String> deviceIds) async {
+  Future<void> updateMultipleDevicesLastUpdateTime(List<String> deviceIds) async {
     try {
-      // Format timestamp to match the existing format: "2025-07-29 12:19:21"
+      // Format timestamp to match the existing format: "2025-08-18 15:53:13"
       final now = DateTime.now();
       final formattedTime = "${now.year.toString().padLeft(4, '0')}-"
           "${now.month.toString().padLeft(2, '0')}-"
@@ -630,16 +641,15 @@ class DeviceService {
           "${now.hour.toString().padLeft(2, '0')}:"
           "${now.minute.toString().padLeft(2, '0')}:"
           "${now.second.toString().padLeft(2, '0')}";
-
+      
       for (String deviceId in deviceIds) {
         await _realtimeDb.child(deviceId).child('Parameters').update({
-          'LastUpdateAt': formattedTime,
+          'Timestamp': formattedTime,
         });
       }
-      print(
-          'Updated LastUpdateAt for ${deviceIds.length} devices to $formattedTime');
+      print('Updated Timestamp for ${deviceIds.length} devices to $formattedTime');
     } catch (e) {
-      print('Failed to batch update LastUpdateAt: $e');
+      print('Failed to batch update Timestamp: $e');
       throw Exception('Failed to batch update device timestamps: $e');
     }
   }
@@ -652,23 +662,22 @@ class DeviceService {
       }
 
       Map<String, bool> onlineStatus = {};
-
+      
       // Get user's device IDs from Firestore
       QuerySnapshot userDevicesSnapshot = await _userDevicesRef.get();
-
+      
       for (QueryDocumentSnapshot deviceRef in userDevicesSnapshot.docs) {
         String deviceId = deviceRef.id;
-
+        
         // Get device's lastUpdateAt from Realtime Database
         DataSnapshot deviceSnapshot = await _realtimeDb.child(deviceId).get();
-
+        
         if (deviceSnapshot.exists && deviceSnapshot.value != null) {
           Map<String, dynamic> deviceData =
               _convertFirebaseMapToStringMap(deviceSnapshot.value as Map);
-
+          
           DateTime? lastUpdateAt;
-          final parameters =
-              deviceData['Parameters'] as Map<String, dynamic>? ?? {};
+          final parameters = deviceData['Parameters'] as Map<String, dynamic>? ?? {};
           if (parameters['LastUpdateAt'] != null) {
             // Try to parse the timestamp - it's in local time format "2025-07-29 12:19:21"
             String lastUpdateStr = parameters['LastUpdateAt'].toString();
@@ -679,18 +688,17 @@ class DeviceService {
               }
               lastUpdateAt = DateTime.parse(lastUpdateStr);
             } catch (e) {
-              print(
-                  'Error parsing LastUpdateAt for device $deviceId: $lastUpdateStr - $e');
+              print('Error parsing LastUpdateAt for device $deviceId: $lastUpdateStr - $e');
               lastUpdateAt = null;
             }
           }
-
+          
           onlineStatus[deviceId] = _isDeviceOnline(lastUpdateAt);
         } else {
           onlineStatus[deviceId] = false; // Device not found = offline
         }
       }
-
+      
       return onlineStatus;
     } catch (e) {
       print('Failed to get devices online status: $e');
