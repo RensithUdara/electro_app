@@ -193,7 +193,7 @@ class _SignupScreenState extends State<SignupScreen> {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Join ElectroApp to monitor your devices',
+              'Join EnergyX to monitor your devices',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
