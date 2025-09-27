@@ -319,6 +319,138 @@ class NotificationService {
     );
   }
 
+  // Create notification for parameter pin actions
+  Future<void> createParameterPinNotification({
+    required String action,
+    required String parameterName,
+    required String deviceName,
+    String? userId,
+  }) async {
+    if (!_settings.deviceAlerts) return;
+
+    String title;
+    String body;
+
+    if (action == 'pinned') {
+      title = 'Pinned to dashboard';
+      body = 'Parameter "$parameterName" from device "$deviceName" has been pinned to dashboard';
+    } else {
+      title = 'Unpinned from dashboard';
+      body = 'Parameter "$parameterName" from device "$deviceName" has been unpinned from dashboard';
+    }
+
+    // Show popup notification (local notification)
+    try {
+      const androidNotificationDetails = AndroidNotificationDetails(
+        'parameter_pin_channel',
+        'Parameter Pin Notifications',
+        channelDescription: 'Notifications for parameter pin/unpin actions',
+        importance: Importance.high,
+        priority: Priority.high,
+        showWhen: true,
+        icon: '@mipmap/ic_launcher',
+      );
+
+      const iosNotificationDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      );
+
+      const notificationDetails = NotificationDetails(
+        android: androidNotificationDetails,
+        iOS: iosNotificationDetails,
+      );
+
+      await _localNotifications.show(
+        DateTime.now().millisecondsSinceEpoch.remainder(100000),
+        title,
+        body,
+        notificationDetails,
+        payload: 'parameter_pin_notification',
+      );
+
+      print('Parameter pin popup notification shown: $title - $body');
+    } catch (e) {
+      print('Error showing parameter pin popup notification: $e');
+    }
+
+    // Add to notification control panel (user-specific storage)
+    await _addUserSpecificNotification(
+      title: title,
+      body: body,
+      type: 'parameter_pin',
+      userId: userId,
+      data: {
+        'action': action,
+        'parameterName': parameterName,
+        'deviceName': deviceName,
+      },
+    );
+  }
+
+  // Add notification with user-specific storage
+  Future<void> _addUserSpecificNotification({
+    required String title,
+    required String body,
+    required String type,
+    String? userId,
+    Map<String, dynamic>? data,
+  }) async {
+    final notification = NotificationModel(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      title: title,
+      body: body,
+      type: type,
+      timestamp: DateTime.now(),
+      data: data,
+    );
+
+    _notifications.insert(0, notification);
+    await _saveUserSpecificNotifications(userId);
+  }
+
+  // Save notifications with user-specific key
+  Future<void> _saveUserSpecificNotifications(String? userId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final notificationsKey = userId != null 
+          ? '${_notificationsKey}_$userId' 
+          : _notificationsKey;
+      
+      final notificationsJson = jsonEncode(
+        _notifications.map((n) => n.toJson()).toList(),
+      );
+      await prefs.setString(notificationsKey, notificationsJson);
+    } catch (e) {
+      print('Error saving user-specific notifications: $e');
+    }
+  }
+
+  // Load notifications with user-specific key
+  Future<void> loadUserSpecificNotifications(String? userId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final notificationsKey = userId != null 
+          ? '${_notificationsKey}_$userId' 
+          : _notificationsKey;
+      
+      final notificationsJson = prefs.getString(notificationsKey);
+
+      if (notificationsJson != null) {
+        final List<dynamic> notificationsList = jsonDecode(notificationsJson);
+        _notifications = notificationsList
+            .map((json) => NotificationModel.fromJson(json))
+            .toList();
+      } else {
+        _notifications = [];
+      }
+    } catch (e) {
+      print('Error loading user-specific notifications: $e');
+      _notifications = [];
+    }
+  }
+
   // Mark notification as read
   Future<void> markAsRead(String notificationId) async {
     final index = _notifications.indexWhere((n) => n.id == notificationId);
