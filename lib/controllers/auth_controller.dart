@@ -4,10 +4,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
 import '../services/auth_service.dart';
 import '../services/local_database_service.dart';
+import '../services/notification_service.dart';
 
 class AuthController extends ChangeNotifier {
   final AuthService _authService = AuthService();
   final LocalDatabaseService _localDb = LocalDatabaseService();
+  final NotificationService _notificationService = NotificationService();
 
   User? _currentUser;
   bool _isLoading = false;
@@ -43,6 +45,9 @@ class AuthController extends ChangeNotifier {
       final user = await _authService.login(email, password);
       if (user != null) {
         _currentUser = user;
+
+        // Load user-specific notifications
+        await _notificationService.loadUserSpecificNotifications(user.id);
 
         // Save credentials if remember me is checked
         final shouldRemember = rememberMe ?? _rememberMe;
@@ -131,6 +136,8 @@ class AuthController extends ChangeNotifier {
       final currentFirebaseUser = _authService.currentUser;
       if (currentFirebaseUser != null) {
         _currentUser = currentFirebaseUser;
+        // Load user-specific notifications
+        await _notificationService.loadUserSpecificNotifications(currentFirebaseUser.id);
         notifyListeners();
         return;
       }
@@ -144,6 +151,8 @@ class AuthController extends ChangeNotifier {
           email: activeSession['email'] as String,
           phoneNumber: activeSession['phone_number'] as String? ?? '',
         );
+        // Load user-specific notifications
+        await _notificationService.loadUserSpecificNotifications(_currentUser!.id);
         notifyListeners();
         return;
       }
@@ -164,6 +173,8 @@ class AuthController extends ChangeNotifier {
             email: userEmail,
             phoneNumber: prefs.getString('user_phone') ?? '',
           );
+          // Load user-specific notifications
+          await _notificationService.loadUserSpecificNotifications(_currentUser!.id);
           notifyListeners();
         }
       }
