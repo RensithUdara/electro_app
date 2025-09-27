@@ -5,8 +5,7 @@ import '../services/notification_service.dart';
 class NotificationController extends ChangeNotifier {
   final NotificationService _notificationService = NotificationService();
 
-  List<NotificationModel> get notifications =>
-      _notificationService.notifications;
+  List<NotificationModel> get notifications => _notificationService.notifications;
   NotificationSettings get settings => _notificationService.settings;
   int get unreadCount => _notificationService.unreadCount;
 
@@ -79,6 +78,28 @@ class NotificationController extends ChangeNotifier {
   // Create bug report notification
   Future<void> createBugReportNotification() async {
     await _notificationService.createBugReportNotification();
+    notifyListeners();
+  }
+
+  // Create parameter pin notification
+  Future<void> createParameterPinNotification({
+    required String action,
+    required String parameterName,
+    required String deviceName,
+    String? userId,
+  }) async {
+    await _notificationService.createParameterPinNotification(
+      action: action,
+      parameterName: parameterName,
+      deviceName: deviceName,
+      userId: userId,
+    );
+    notifyListeners();
+  }
+
+  // Load user-specific notifications
+  Future<void> loadUserNotifications(String? userId) async {
+    await _notificationService.loadUserSpecificNotifications(userId);
     notifyListeners();
   }
 }
