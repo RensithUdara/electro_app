@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../controllers/device_controller.dart';
 import '../services/device_service.dart';
+import '../views/qr_scanner_screen.dart';
 
 class AddDeviceDialog extends StatefulWidget {
   const AddDeviceDialog({super.key});
@@ -40,6 +41,10 @@ class _AddDeviceDialogState extends State<AddDeviceDialog> {
   bool _pf3 = false;
   bool _totalKVA = false;
   bool _totalKVAR = false;
+  bool _totalKW = false;
+  bool _totalNetKVAh = false;
+  bool _totalNetKVArh = false;
+  bool _totalNetKWh = false;
   bool _v12 = false;
   bool _v1N = false;
   bool _v23 = false;
@@ -82,6 +87,66 @@ class _AddDeviceDialogState extends State<AddDeviceDialog> {
     }
   }
 
+  // Handle QR code scanning
+  Future<void> _scanQRCode() async {
+    try {
+      final result = await Navigator.push<Map<String, String>>(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const QRScannerScreen(),
+        ),
+      );
+
+      if (result != null && mounted) {
+        // Auto-fill the device credentials from QR scan
+        _deviceIdController.text = result['Device_ID'] ?? '';
+        _passwordController.text = result['Device_Pwd'] ?? '';
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Device credentials scanned successfully!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+
+        // Auto-validate the scanned credentials
+        if (_formKey.currentState!.validate()) {
+          final isValid = await _validateDeviceCredentials();
+          if (isValid) {
+            // Automatically move to next step if validation succeeds
+            setState(() => _currentStep++);
+            
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Device authenticated successfully!'),
+                backgroundColor: Colors.green,
+                duration: Duration(seconds: 2),
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Scanned credentials are invalid. Please verify the QR code.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('QR scan failed: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _addDevice() async {
     if (_formKey.currentState!.validate()) {
       final deviceController =
@@ -104,10 +169,10 @@ class _AddDeviceDialogState extends State<AddDeviceDialog> {
         pf3: _pf3,
         totalKVA: _totalKVA,
         totalKVAR: _totalKVAR,
-        totalKW: false,
-        totalNetKVAh: false,
-        totalNetKVArh: false,
-        totalNetKWh: false,
+        totalKW: _totalKW,
+        totalNetKVAh: _totalNetKVAh,
+        totalNetKVArh: _totalNetKVArh,
+        totalNetKWh: _totalNetKWh,
         v12: _v12,
         v1N: _v1N,
         v23: _v23,
@@ -326,7 +391,7 @@ class _AddDeviceDialogState extends State<AddDeviceDialog> {
             controller: _nameController,
             decoration: InputDecoration(
               labelText: 'Device Name',
-              hintText: 'e.g., 123456',
+              hintText: 'e.g., MainPanel',
               prefixIcon: const Icon(Icons.devices),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -340,13 +405,32 @@ class _AddDeviceDialogState extends State<AddDeviceDialog> {
                 borderSide: const BorderSide(color: Color(0xFF1E3A8A)),
               ),
             ),
+            onChanged: (value) {
+              // Auto-capitalize first letter as user types
+              if (value.isNotEmpty && value[0] != value[0].toUpperCase()) {
+                final formattedValue = value[0].toUpperCase() + value.substring(1);
+                _nameController.value = _nameController.value.copyWith(
+                  text: formattedValue,
+                  selection: TextSelection.fromPosition(
+                    TextPosition(offset: formattedValue.length),
+                  ),
+                );
+              }
+            },
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter device name';
               }
-              if (value.length < 3) {
-                return 'Device name must be at least 3 characters';
+              // if (value.length < 3) {
+              //   return 'Device name must be at least 3 characters';
+              // }
+              
+              // Check if first character is capitalized
+              final firstChar = value.trim()[0];
+              if (!RegExp(r'^[A-Z]').hasMatch(firstChar)) {
+                return 'Device name must start with a capital letter';
               }
+              
               return null;
             },
           ),
@@ -433,6 +517,26 @@ class _AddDeviceDialogState extends State<AddDeviceDialog> {
               }
               return null;
             },
+          ),
+
+          const SizedBox(height: 20),
+
+          // QR Code Scanner Button
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _scanQRCode,
+              icon: const Icon(Icons.qr_code_scanner, size: 20),
+              label: const Text('Scan QR Code'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                side: const BorderSide(color: Color(0xFF1E3A8A)),
+                foregroundColor: const Color(0xFF1E3A8A),
+              ),
+            ),
           ),
 
           const SizedBox(height: 20),
@@ -582,6 +686,39 @@ class _AddDeviceDialogState extends State<AddDeviceDialog> {
                 ),
                 const SizedBox(height: 16),
 
+                // Select All Option
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Colors.grey[300]!,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Checkbox(
+                        value: _areAllParametersSelected(),
+                        onChanged: (value) {
+                          _selectAllParameters(value ?? false);
+                        },
+                        activeColor: const Color(0xFF1E3A8A),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Select All Parameters',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
                 // Basic Measurements
                 _buildSectionHeader('Basic Measurements'),
                 Column(
@@ -624,15 +761,35 @@ class _AddDeviceDialogState extends State<AddDeviceDialog> {
                 Column(
                   children: [
                     _buildCheckbox(
-                        'Total_KVA',
+                        'Total_kVA',
                         'Total Apparent Power',
                         _totalKVA,
                         (value) => setState(() => _totalKVA = value)),
                     _buildCheckbox(
-                        'Total_KVAR',
+                        'Total_kVAR',
                         'Total Reactive Power',
                         _totalKVAR,
                         (value) => setState(() => _totalKVAR = value)),
+                    _buildCheckbox(
+                        'Total_kW',
+                        'Total Active Power',
+                        _totalKW,
+                        (value) => setState(() => _totalKW = value)),
+                    _buildCheckbox(
+                        'Total_net_kVAh',
+                        'Total Net Apparent Energy',
+                        _totalNetKVAh,
+                        (value) => setState(() => _totalNetKVAh = value)),
+                    _buildCheckbox(
+                        'Total_net_kVArh',
+                        'Total Net Reactive Energy',
+                        _totalNetKVArh,
+                        (value) => setState(() => _totalNetKVArh = value)),
+                    _buildCheckbox(
+                        'Total_net_kWh',
+                        'Total Net Active Energy',
+                        _totalNetKWh,
+                        (value) => setState(() => _totalNetKWh = value)),
                   ],
                 ),
 
@@ -821,5 +978,69 @@ class _AddDeviceDialogState extends State<AddDeviceDialog> {
         ),
       ],
     );
+  }
+
+  bool _areAllParametersSelected() {
+    return _averagePF &&
+        _avgI &&
+        _avgVLL &&
+        _avgVLN &&
+        _frequency &&
+        _i1 &&
+        _i2 &&
+        _i3 &&
+        _pf1 &&
+        _pf2 &&
+        _pf3 &&
+        _totalKVA &&
+        _totalKVAR &&
+        _v12 &&
+        _v1N &&
+        _v23 &&
+        _v2N &&
+        _v31 &&
+        _v3N &&
+        _kvarL1 &&
+        _kvarL2 &&
+        _kvarL3 &&
+        _kvaL1 &&
+        _kvaL2 &&
+        _kvaL3 &&
+        _kwL1 &&
+        _kwL2 &&
+        _kwL3;
+  }
+
+  void _selectAllParameters(bool value) {
+    setState(() {
+      _averagePF = value;
+      _avgI = value;
+      _avgVLL = value;
+      _avgVLN = value;
+      _frequency = value;
+      _i1 = value;
+      _i2 = value;
+      _i3 = value;
+      _pf1 = value;
+      _pf2 = value;
+      _pf3 = value;
+      _totalKVA = value;
+      _totalKVAR = value;
+      _v12 = value;
+      _v1N = value;
+      _v23 = value;
+      _v2N = value;
+      _v31 = value;
+      _v3N = value;
+      _kvarL1 = value;
+      _kvarL2 = value;
+      _kvarL3 = value;
+      _kvaL1 = value;
+      _kvaL2 = value;
+      _kvaL3 = value;
+      _kwL1 = value;
+      _kwL2 = value;
+      _kwL3 = value;
+    });
   }
 }
