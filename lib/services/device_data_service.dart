@@ -32,6 +32,83 @@ class DeviceDataService {
     }
   }
 
+  // New method to get historical data for specific time periods
+  Future<List<ChartData>> getHistoricalData(String deviceId, String parameter, String timePeriod) async {
+    try {
+      final now = DateTime.now();
+      DateTime startTime;
+      int dataPoints;
+      
+      // Calculate start time and expected data points based on period
+      switch (timePeriod) {
+        case '1h':
+          startTime = now.subtract(const Duration(hours: 1));
+          dataPoints = 12; // 5-minute intervals
+          break;
+        case '24h':
+          startTime = now.subtract(const Duration(hours: 24));
+          dataPoints = 24; // 1-hour intervals
+          break;
+        case '7d':
+          startTime = now.subtract(const Duration(days: 7));
+          dataPoints = 7; // 1-day intervals
+          break;
+        case '30d':
+          startTime = now.subtract(const Duration(days: 30));
+          dataPoints = 30; // 1-day intervals
+          break;
+        default:
+          startTime = now.subtract(const Duration(hours: 24));
+          dataPoints = 24;
+      }
+
+      // Try to get real data from Firestore
+      QuerySnapshot snapshot = await _firestore
+          .collection('device_data')
+          .doc(deviceId)
+          .collection('readings')
+          .where('timestamp', isGreaterThanOrEqualTo: startTime.toIso8601String())
+          .orderBy('timestamp', descending: false)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        return _processHistoricalData(snapshot, parameter, timePeriod, startTime, dataPoints);
+      } else {
+        // Generate mock data for demonstration when no real data exists
+        return _generateMockHistoricalData(parameter, timePeriod, startTime, dataPoints);
+      }
+    } catch (e) {
+      // On error, generate mock data for demonstration
+      final now = DateTime.now();
+      DateTime startTime;
+      int dataPoints;
+      
+      switch (timePeriod) {
+        case '1h':
+          startTime = now.subtract(const Duration(hours: 1));
+          dataPoints = 12;
+          break;
+        case '24h':
+          startTime = now.subtract(const Duration(hours: 24));
+          dataPoints = 24;
+          break;
+        case '7d':
+          startTime = now.subtract(const Duration(days: 7));
+          dataPoints = 7;
+          break;
+        case '30d':
+          startTime = now.subtract(const Duration(days: 30));
+          dataPoints = 30;
+          break;
+        default:
+          startTime = now.subtract(const Duration(hours: 24));
+          dataPoints = 24;
+      }
+      
+      return _generateMockHistoricalData(parameter, timePeriod, startTime, dataPoints);
+    }
+  }
+
   DeviceDataSummary? _processFirebaseData(QuerySnapshot snapshot) {
     final dataPoints = <DeviceData>[];
 
@@ -243,5 +320,193 @@ class DeviceDataService {
       }
       return null;
     });
+  }
+
+  // Process historical data from Firestore
+  List<ChartData> _processHistoricalData(QuerySnapshot snapshot, String parameter, 
+      String timePeriod, DateTime startTime, int expectedDataPoints) {
+    final dataPoints = <DeviceData>[];
+
+    for (var doc in snapshot.docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      final point = DeviceData.fromJson(data);
+      dataPoints.add(point);
+    }
+
+    // Sort by timestamp
+    dataPoints.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+
+    // Group data based on time period
+    final chartData = <ChartData>[];
+
+    switch (timePeriod) {
+      case '1h':
+        // Group by 5-minute intervals
+        for (int i = 0; i < expectedDataPoints; i++) {
+          final intervalStart = startTime.add(Duration(minutes: i * 5));
+          final intervalEnd = intervalStart.add(const Duration(minutes: 5));
+          
+          final intervalPoints = dataPoints
+              .where((point) => point.timestamp.isAfter(intervalStart) && 
+                                point.timestamp.isBefore(intervalEnd))
+              .toList();
+
+          double value = intervalPoints.isNotEmpty 
+              ? _getParameterValue(intervalPoints.last, parameter)
+              : 0.0;
+
+          chartData.add(ChartData(
+            label: '${intervalStart.hour}:${intervalStart.minute.toString().padLeft(2, '0')}',
+            value: value,
+            timestamp: intervalStart,
+          ));
+        }
+        break;
+
+      case '24h':
+        // Group by 1-hour intervals
+        for (int i = 0; i < expectedDataPoints; i++) {
+          final hourStart = startTime.add(Duration(hours: i));
+          final hourEnd = hourStart.add(const Duration(hours: 1));
+          
+          final hourPoints = dataPoints
+              .where((point) => point.timestamp.isAfter(hourStart) && 
+                                point.timestamp.isBefore(hourEnd))
+              .toList();
+
+          double avgValue = hourPoints.isNotEmpty 
+              ? hourPoints.map((p) => _getParameterValue(p, parameter))
+                  .reduce((a, b) => a + b) / hourPoints.length
+              : 0.0;
+
+          chartData.add(ChartData(
+            label: '${hourStart.hour}:00',
+            value: avgValue,
+            timestamp: hourStart,
+          ));
+        }
+        break;
+
+      case '7d':
+      case '30d':
+        // Group by 1-day intervals
+        for (int i = 0; i < expectedDataPoints; i++) {
+          final dayStart = DateTime(startTime.year, startTime.month, startTime.day + i);
+          final dayEnd = dayStart.add(const Duration(days: 1));
+          
+          final dayPoints = dataPoints
+              .where((point) => point.timestamp.isAfter(dayStart) && 
+                                point.timestamp.isBefore(dayEnd))
+              .toList();
+
+          double avgValue = dayPoints.isNotEmpty 
+              ? dayPoints.map((p) => _getParameterValue(p, parameter))
+                  .reduce((a, b) => a + b) / dayPoints.length
+              : 0.0;
+
+          chartData.add(ChartData(
+            label: '${dayStart.day}/${dayStart.month}',
+            value: avgValue,
+            timestamp: dayStart,
+          ));
+        }
+        break;
+    }
+
+    return chartData;
+  }
+
+  // Generate mock data when no real data exists
+  List<ChartData> _generateMockHistoricalData(String parameter, String timePeriod, 
+      DateTime startTime, int dataPoints) {
+    final random = Random();
+    final chartData = <ChartData>[];
+    
+    // Base value depending on parameter type
+    double baseValue = _getBaseValueForParameter(parameter);
+
+    switch (timePeriod) {
+      case '1h':
+        for (int i = 0; i < dataPoints; i++) {
+          final intervalStart = startTime.add(Duration(minutes: i * 5));
+          final variation = (random.nextDouble() - 0.5) * 0.2 * baseValue;
+          
+          chartData.add(ChartData(
+            label: '${intervalStart.hour}:${intervalStart.minute.toString().padLeft(2, '0')}',
+            value: baseValue + variation,
+            timestamp: intervalStart,
+          ));
+        }
+        break;
+
+      case '24h':
+        for (int i = 0; i < dataPoints; i++) {
+          final hourStart = startTime.add(Duration(hours: i));
+          final variation = (random.nextDouble() - 0.5) * 0.3 * baseValue;
+          
+          chartData.add(ChartData(
+            label: '${hourStart.hour}:00',
+            value: baseValue + variation,
+            timestamp: hourStart,
+          ));
+        }
+        break;
+
+      case '7d':
+      case '30d':
+        for (int i = 0; i < dataPoints; i++) {
+          final dayStart = DateTime(startTime.year, startTime.month, startTime.day + i);
+          final variation = (random.nextDouble() - 0.5) * 0.4 * baseValue;
+          
+          chartData.add(ChartData(
+            label: '${dayStart.day}/${dayStart.month}',
+            value: baseValue + variation,
+            timestamp: dayStart,
+          ));
+        }
+        break;
+    }
+
+    return chartData;
+  }
+
+  // Helper method to extract parameter value from DeviceData
+  double _getParameterValue(DeviceData data, String parameter) {
+    switch (parameter.toLowerCase()) {
+      case 'voltage':
+        return data.voltage;
+      case 'current':
+        return data.current;
+      case 'power':
+        return data.power;
+      case 'energy':
+        return data.energy;
+      default:
+        return data.power; // Default to power if parameter not found
+    }
+  }
+
+  // Helper method to get base value for different parameter types
+  double _getBaseValueForParameter(String parameter) {
+    switch (parameter.toLowerCase()) {
+      case 'voltage':
+      case 'v':
+        return 220.0;
+      case 'current':
+      case 'i':
+        return 5.0;
+      case 'power':
+      case 'kw':
+        return 100.0;
+      case 'energy':
+      case 'kwh':
+        return 50.0;
+      case 'frequency':
+        return 50.0;
+      case 'pf':
+        return 0.85;
+      default:
+        return 100.0;
+    }
   }
 }
