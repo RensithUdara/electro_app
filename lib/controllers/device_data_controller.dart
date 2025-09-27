@@ -4,7 +4,7 @@ import '../services/device_data_service.dart';
 
 class DeviceDataController extends ChangeNotifier {
   final DeviceDataService _dataService = DeviceDataService();
-
+  
   DeviceDataSummary? _deviceDataSummary;
   List<DeviceData> _recentData = [];
   bool _isLoading = false;
@@ -39,5 +39,14 @@ class DeviceDataController extends ChangeNotifier {
 
   Future<void> refreshData(String deviceId) async {
     await loadDeviceData(deviceId);
+  }
+
+  // Method to get historical data for charts
+  Future<List<ChartData>> getHistoricalData(String deviceId, String parameter, String timePeriod) async {
+    try {
+      return await _dataService.getHistoricalData(deviceId, parameter, timePeriod);
+    } catch (e) {
+      throw Exception('Failed to load historical data: $e');
+    }
   }
 }
