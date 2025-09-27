@@ -25,8 +25,7 @@ class DeviceData {
       current: (json['current'] ?? 0.0).toDouble(),
       power: (json['power'] ?? 0.0).toDouble(),
       energy: (json['energy'] ?? 0.0).toDouble(),
-      timestamp:
-          DateTime.parse(json['timestamp'] ?? DateTime.now().toIso8601String()),
+      timestamp: DateTime.parse(json['timestamp'] ?? DateTime.now().toIso8601String()),
     );
   }
 
@@ -106,8 +105,7 @@ class ChartData {
     return ChartData(
       label: json['label'] ?? '',
       value: (json['value'] ?? 0.0).toDouble(),
-      timestamp:
-          DateTime.parse(json['timestamp'] ?? DateTime.now().toIso8601String()),
+      timestamp: DateTime.parse(json['timestamp'] ?? DateTime.now().toIso8601String()),
     );
   }
 
